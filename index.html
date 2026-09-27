@@ -838,6 +838,11 @@ function specsFor() {
   ];
 }
 
+// xAI model names from docs.x.ai/developers/models (checked Sep 27, 2026). All five take text + images.
+// grok-4.7 is what the docs recommend for chat and code. Older saved names (grok-4-fast, grok-4) are migrated to it.
+const XAI_DEFAULT = "grok-4.7";
+const XAI_MODELS = ["grok-4.7", "grok-4.6", "grok-4.5", "grok-4.3", "grok-4.20-0309-non-reasoning"];
+const XAI_MODEL_NOTE = { "grok-4.7": "best, default", "grok-4.20-0309-non-reasoning": "fastest, cheapest" };
 const defaultState = () => ({
   truck: { engine: "5.7L TBI L05 / VIN K", drive: "2WD", trans: "4L60E", miles: "", notes: "", vin: "" },
   done: {},
@@ -845,7 +850,7 @@ const defaultState = () => ({
   log: [],
   xp: 0,
   grokKey: "",
-  grokModel: "grok-4-fast",
+  grokModel: XAI_DEFAULT,
   grokChat: [],
   autoGrok: false,
   have: {},
@@ -1616,7 +1621,7 @@ function validateImport(d) {
     const ok = arr.filter(x => typeof x === "string" && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(x)).slice(-6);
     if (ok.length) out.photos[k] = ok;
   }
-  if (typeof d.grokModel === "string") out.grokModel = d.grokModel;
+  if (typeof d.grokModel === "string") out.grokModel = XAI_MODELS.includes(d.grokModel) ? d.grokModel : XAI_DEFAULT;
   if (typeof d.autoGrok === "boolean") out.autoGrok = d.autoGrok;
   out.have = {};
   if (isObj(d.have)) for (const [k, v] of Object.entries(d.have)) if (ITEMS[k] && v === true) out.have[k] = true;
@@ -1666,7 +1671,7 @@ function validateImport(d) {
     out.scans[k] = { t: typeof v.t === "string" ? v.t.slice(0, 40) : "", step: typeof v.step === "string" && findStep(v.step) ? v.step : "profile",
       source: ["barcode", "grok", "barcode+grok"].includes(v.source) ? v.source : "grok", kind: r.kind, r, applied: v.applied === true };
   }
-  if (typeof d.scanModel === "string" && /^[\w.-]{0,40}$/.test(d.scanModel)) out.scanModel = d.scanModel;
+  if (typeof d.scanModel === "string") out.scanModel = XAI_MODELS.includes(d.scanModel) ? d.scanModel : "";
   if (typeof out.truck.vin === "string") out.truck.vin = cleanVin(out.truck.vin).slice(0, 17);
   return out;
 }
@@ -1771,15 +1776,15 @@ function renderGrok() {
       <label class="sub">xAI API key</label>
       <input type="password" id="grokKey" value="${esc(state.grokKey)}" placeholder="xai-..." onchange="state.grokKey=this.value; save();" />
       <div style="height:8px"></div>
-      <label class="sub">Model</label>
-      <select onchange="state.grokModel=this.value; save();">
-        ${["grok-4-fast","grok-4","grok-4.5"].map(m => `<option ${state.grokModel===m?"selected":""}>${m}</option>`).join("")}
+      <label class="sub" for="grokModel">Model</label>
+      <select id="grokModel" onchange="state.grokModel=this.value; save();">
+        ${XAI_MODELS.map(m => `<option value="${m}" ${state.grokModel === m ? "selected" : ""}>${m}${XAI_MODEL_NOTE[m] ? " (" + XAI_MODEL_NOTE[m] + ")" : ""}</option>`).join("")}
       </select>
       <div style="height:8px"></div>
       <label class="sub" for="scanModel">Photo reading model (for Scan photo)</label>
       <select id="scanModel" onchange="state.scanModel=this.value; save();">
         <option value="" ${state.scanModel ? "" : "selected"}>Auto (${SCAN_MODEL})</option>
-        ${[...SCAN_MODELS, ...(state.scanModel && !SCAN_MODELS.includes(state.scanModel) ? [state.scanModel] : [])].map(m => `<option value="${esc(m)}" ${state.scanModel === m ? "selected" : ""}>${esc(m)}</option>`).join("")}
+        ${SCAN_MODELS.map(m => `<option value="${m}" ${state.scanModel === m ? "selected" : ""}>${m}</option>`).join("")}
       </select>
       <div class="row" style="margin-top:10px;align-items:center">
         <label class="pill"><input type="checkbox" ${state.autoGrok?"checked":""} onchange="state.autoGrok=this.checked; save();"> Auto-ask after each checked step</label>
@@ -1807,21 +1812,14 @@ async function askGrok(q, silent) {
   if (!silent) renderGrok();
   toast("Grok is thinking...");
   const body = {
-    model: state.grokModel || "grok-4-fast",
+    model: state.grokModel || XAI_DEFAULT,
     messages: [
       { role: "system", content: "You are a budget-minded 1988-1998 GMT400 truck engine builder. Use the job context. Give short, ordered steps. Flag safety. Suggest cheap durable parts. If asked for 3D parts, give PETG print settings and dimensions." },
       { role: "user", content: contextPack() + "\n\nQuestion:\n" + q }
     ]
   };
   try {
-    const res = await fetch("https://api.x.ai/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + state.grokKey },
-      body: JSON.stringify(body)
-    });
-    let data;
-    try { data = await res.json(); } catch { data = { error: { message: "HTTP " + res.status + " with a non-JSON response" } }; }
-    if (!res.ok && data && data.error && typeof data.error === "string") data = { error: { message: "HTTP " + res.status + ": " + data.error } };
+    const { data } = await xaiFetch(body);
     const text = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : (data.error && data.error.message) || JSON.stringify(data).slice(0,400);
     state.grokChat.push({ role: "assistant", text });
     state.log.unshift({ t: new Date().toISOString(), text: "Grok: " + q.slice(0,80) });
@@ -2487,16 +2485,44 @@ function askPrintHelp() {
   askGrok("Help me size a 3D-printed " + PRINTS[printUI.kind].name + " for a 1994 C1500. Ask me the 3 measurements you need, then give OpenSCAD-ready dimensions and material (ASA/nylon in the engine bay, PETG in the cab). Never print load-bearing engine or transmission mounts, fuel parts, or anything near the exhaust.");
   setTab("grok");
 }
+// One place for every xAI call. If the saved model is gone (model not found / no access), tell the user in
+// plain words, switch the setting to the default and try once more with it.
+function xaiModelMissing(res, data) {
+  if (![400, 403, 404].includes(res.status)) return false;
+  const m = JSON.stringify((data && (data.error || data.code || data.message)) || data || "").toLowerCase();
+  return /model/.test(m) && /(not found|does not exist|doesn't exist|not exist|unknown|invalid|not available|no access|not have access|deprecated|retired)/.test(m);
+}
+async function xaiFetch(body, kind) {
+  const post = async () => {
+    const res = await fetch("https://api.x.ai/v1/chat/completions", {
+      method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + state.grokKey }, body: JSON.stringify(body)
+    });
+    let data;
+    try { data = await res.json(); } catch { data = { error: { message: "HTTP " + res.status + " with a non-JSON response" } }; }
+    if (!res.ok && data && typeof data.error === "string") data = { ...data, error: { message: data.error } };
+    return { res, data };
+  };
+  let r = await post();
+  if (xaiModelMissing(r.res, r.data)) {
+    const bad = body.model;
+    if (bad !== XAI_DEFAULT) {
+      if (kind === "scan") state.scanModel = ""; else state.grokModel = XAI_DEFAULT;
+      save();
+      toast(`The model “${bad}” isn't available, so the app switched to ${XAI_DEFAULT}. You can change it in More → Grok settings.`, 6000, true);
+      body.model = XAI_DEFAULT;
+      r = await post();
+    }
+    if (xaiModelMissing(r.res, r.data)) r.data = { error: { message: `Grok couldn't use the model “${body.model}”. Pick another model in More → Grok settings.` } };
+  }
+  return r;
+}
+function xaiText(r) {
+  const d = r.data;
+  if (d && d.choices && d.choices[0] && d.choices[0].message) return d.choices[0].message.content;
+  throw new Error((d && d.error && (d.error.message || d.error)) || "HTTP " + r.res.status);
+}
 async function callXai(messages) {
-  const res = await fetch("https://api.x.ai/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + state.grokKey },
-    body: JSON.stringify({ model: state.grokModel || "grok-4-fast", messages })
-  });
-  let data;
-  try { data = await res.json(); } catch { throw new Error("HTTP " + res.status + " with a non-JSON response"); }
-  if (data.choices && data.choices[0] && data.choices[0].message) return data.choices[0].message.content;
-  throw new Error((data.error && (data.error.message || data.error)) || "HTTP " + res.status);
+  return xaiText(await xaiFetch({ model: state.grokModel || XAI_DEFAULT, messages }));
 }
 function grokDesignPrompt(desc) {
   return "Design a 3D-printable part for a 1994 Chevy C1500 (GMT400) rebuild.\nDescription and measurements (mm): " + desc +
@@ -2550,6 +2576,7 @@ const NOTE_PHRASES = [
 let noteBusy = {};   // id -> {state:"busy"} | {state:"error", message}
 let noteSheetRef = null;
 
+var migratedOnLoad; // (var without initializer: normNoteState runs during load(), before this line executes)
 function normNoteState(st) {
   const isObj = v => v && typeof v === "object" && !Array.isArray(v);
   if (!isObj(st.itemNotes)) st.itemNotes = {};
@@ -2560,7 +2587,8 @@ function normNoteState(st) {
   if (typeof st.noteHintSeen !== "boolean") st.noteHintSeen = false;
   if (!isObj(st.infoCache)) st.infoCache = {};
   if (!isObj(st.scans)) st.scans = {};
-  if (typeof st.scanModel !== "string") st.scanModel = "";
+  if (typeof st.scanModel !== "string" || (st.scanModel && !XAI_MODELS.includes(st.scanModel))) { if (st.scanModel) migratedOnLoad = true; st.scanModel = ""; }
+  if (!XAI_MODELS.includes(st.grokModel)) { st.grokModel = XAI_DEFAULT; migratedOnLoad = true; } // retired names (grok-4-fast, grok-4) -> current default
   if (!isObj(st.truck)) st.truck = { ...defaultState().truck };
   if (typeof st.truck.vin !== "string") st.truck.vin = "";
   return st;
@@ -3283,16 +3311,9 @@ function infoContext(ref) {
   const built = stripTags(infoBody(ref).replace(/<a [^>]*>.*?<\/a>/g, "").replace(/<\/(div|li|p|span)>/g, "$& ")).replace(/\s+/g, " ").trim().slice(0, 1800);
   return (base + "\n\nWhat the app already tells them: " + built + "\n\nGive practical insight: where to source it cheaply, gotchas, what to check, and alternatives.").slice(0, 8000);
 }
+// (no max_tokens: grok-4.7 reasons first, and a small cap can leave the answer empty)
 async function callXaiText(messages) {
-  const res = await fetch("https://api.x.ai/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + state.grokKey },
-    body: JSON.stringify({ model: state.grokModel || "grok-4-fast", messages, temperature: 0.3, max_tokens: 900 })
-  });
-  let data;
-  try { data = await res.json(); } catch { throw new Error("HTTP " + res.status + " with a non-JSON response"); }
-  if (data.choices && data.choices[0] && data.choices[0].message) return data.choices[0].message.content;
-  throw new Error((data.error && (data.error.message || data.error)) || "HTTP " + res.status);
+  return xaiText(await xaiFetch({ model: state.grokModel || XAI_DEFAULT, messages, temperature: 0.3 }));
 }
 async function runInfoGrok() {
   const ref = noteSheetRef;
@@ -3441,15 +3462,7 @@ function noteContext(ref, text) {
   return L.join("\n").slice(0, 6000);
 }
 async function callXaiJson(messages) {
-  const res = await fetch("https://api.x.ai/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + state.grokKey },
-    body: JSON.stringify({ model: state.grokModel || "grok-4-fast", messages, temperature: 0.2, max_tokens: 600, response_format: { type: "json_object" } })
-  });
-  let data;
-  try { data = await res.json(); } catch { throw new Error("HTTP " + res.status + " with a non-JSON response"); }
-  if (data.choices && data.choices[0] && data.choices[0].message) return data.choices[0].message.content;
-  throw new Error((data.error && (data.error.message || data.error)) || "HTTP " + res.status);
+  return xaiText(await xaiFetch({ model: state.grokModel || XAI_DEFAULT, messages, temperature: 0.2, response_format: { type: "json_object" } }));
 }
 async function runNoteGrok(ref, text) {
   const t = parseTarget(ref);
@@ -3562,8 +3575,8 @@ function gotoNote(id) {
 // ================= Scan a photo to fill info =================
 // Reads a VIN barcode on the phone (BarcodeDetector, no key needed), or with the xAI key asks Grok to read the
 // sticker/odometer/label/receipt. Nothing is applied until you tick it and tap Apply; every apply is one Undo.
-const SCAN_MODEL = "grok-4.7";                     // default vision model (Grok settings → Photo reading model overrides)
-const SCAN_MODELS = ["grok-4.7", "grok-4.6", "grok-4.5", "grok-4.3"];
+const SCAN_MODEL = XAI_DEFAULT;                    // default vision model (Grok settings → Photo reading model overrides)
+const SCAN_MODELS = XAI_MODELS;                    // all take images (docs: Modalities Text, Image → Text)
 const SCAN_KINDS = ["vin_plate", "rpo_sticker", "odometer", "part_label", "casting_number", "trans_tag", "receipt", "other"];
 const SCAN_KIND_LABEL = { vin_plate: "VIN plate", rpo_sticker: "RPO sticker", odometer: "Odometer", part_label: "Part label", casting_number: "Casting number",
   trans_tag: "Transmission tag", receipt: "Receipt", other: "Photo" };
@@ -3720,18 +3733,13 @@ async function callXaiVision(dataUrl, stepId) {
       { role: "user", content: [{ type: "image_url", image_url: { url: dataUrl, detail: "high" } }, { type: "text", text: ctx }] }],
     response_format: { type: "json_object" }
   };
-  const post = () => fetch("https://api.x.ai/v1/chat/completions", {
-    method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + state.grokKey }, body: JSON.stringify(body)
-  });
-  let res = await post(), data;
-  try { data = await res.json(); } catch { throw new Error("HTTP " + res.status + " with a non-JSON response"); }
-  if (res.status === 400 && /response_format|json/i.test(JSON.stringify(data.error || data))) { // some models refuse JSON mode with images: ask once more without it
+  let r = await xaiFetch(body, "scan");
+  if (r.res.status === 400 && /response_format|json/i.test(JSON.stringify(r.data.error || r.data))) { // some models refuse JSON mode with images: ask once more without it
     delete body.response_format;
-    res = await post();
-    try { data = await res.json(); } catch { throw new Error("HTTP " + res.status + " with a non-JSON response"); }
+    r = await xaiFetch(body, "scan");
   }
-  const txt = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-  if (typeof txt !== "string") throw new Error((data.error && (data.error.message || data.error)) || "HTTP " + res.status);
+  const txt = xaiText(r);
+  if (typeof txt !== "string") throw new Error("HTTP " + r.res.status);
   const raw = parsePlanText(txt);
   if (raw === null) throw new Error("the reply wasn't valid JSON");
   return sanitizeScan(raw);
@@ -3868,7 +3876,7 @@ function scanProposals(entry) {
     warns.push("Grok wasn't sure about this photo. Check each line before you apply it.");
     props.forEach(p => { p.on = false; });
   }
-  return { lines, warns, props, same };
+  return { lines: [...new Set(lines)], warns: [...new Set(warns)], props, same };
 }
 function itemName(id) { return String((ITEMS[id] || {}).name || id).split(/[,(]/)[0].trim(); }
 
@@ -4133,7 +4141,7 @@ function render() {
 
 renderHeader();
 render(); // renders with photo placeholders; photos fill in once IndexedDB has loaded
-initPhotos().finally(() => { render(); initBackups(); });
+initPhotos().finally(() => { if (migratedOnLoad) { migratedOnLoad = false; save(); } render(); initBackups(); });
 </script>
 </body>
 </html>
