@@ -175,26 +175,6 @@
   .nsheet .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
   .nsheet details { font-size: 12px; color: var(--muted); margin-top: 6px; }
   .nsheet details li { margin: 4px 0; }
-  /* ---- More info ---- */
-  .nseg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: #0c1622; border: 1px solid var(--line); border-radius: 12px; padding: 3px; margin-top: 10px; }
-  .nseg button { background: transparent; border: 0; border-radius: 9px; min-height: 38px; color: var(--muted); font-weight: 700; font-size: 14px; cursor: pointer; }
-  .nseg button[aria-selected=true] { background: var(--accent); color: #052016; }
-  .isec { background: var(--panel2); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; margin-top: 10px; font-size: 13px; color: #d5e4f1; overflow-wrap: anywhere; }
-  .isec.warnish { border-color: #4a3b17; } .isec.warnish .ihead { color: var(--warn); }
-  .isec.danger { background: #2a1519; border-color: #5a2a32; color: #ffd0d0; } .isec.danger .ihead { color: #ffb4b4; }
-  .ihead { font-size: 11px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
-  .ip { margin: 4px 0 0; line-height: 1.45; }
-  .ilist { margin: 4px 0 0 18px; padding: 0; } .ilist li { margin: 4px 0; line-height: 1.4; }
-  .ilist a, .isec .sub a { color: #a9c4ff; }
-  .ikv { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr); gap: 5px 10px; align-items: baseline; }
-  .ilinks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-  .ichips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .nlink { display: inline-flex; align-items: center; gap: 4px; min-height: 38px; padding: 0 11px; border-radius: 10px; background: #1b2d40; border: 1px solid var(--line); color: var(--text); font-size: 13px; font-weight: 600; text-decoration: none; max-width: 100%; text-align: left; cursor: pointer; font-family: inherit; }
-  .nlink.used { background: #2a2210; border-color: #4a3b17; color: #ffd98a; }
-  .nlink.ijump { color: #7dffc4; }
-  .ians { margin-top: 8px; line-height: 1.5; background: #0c1622; border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; }
-  .ians p { margin: 4px 0; } .ians ul { margin: 4px 0 4px 18px; padding: 0; } .ians li { margin: 3px 0; }
-  .ians-h { font-weight: 800; color: var(--accent); margin-top: 8px !important; }
   .nhint { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
   .noterow { background: var(--panel2); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; }
   .noterow .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
@@ -715,7 +695,6 @@ const defaultState = () => ({
   adjust: { price: {}, skip: {}, added: [] },
   changes: [],
   noteHintSeen: false,
-  infoCache: {},       // "More info" -> last Grok deep dive per item: {text, t, title}
   lastExportAt: 0,     // ms; last time a backup file was saved (export or Save backup)
   backupNagUntil: 0,   // ms; "Not today" on the backup reminder
   firstProgressAt: 0   // ms; when this phone first had progress worth backing up
@@ -968,7 +947,7 @@ async function restoreSnapshot(id) {
   const keep = { grokKey: state.grokKey, storageNoteDismissed: state.storageNoteDismissed, noteHintSeen: state.noteHintSeen || !!v.noteHintSeen,
     lastExportAt: state.lastExportAt, backupNagUntil: state.backupNagUntil, firstProgressAt: state.firstProgressAt };
   const { photos, ...rest } = v;
-  noteBusy = {}; infoBusy = {};
+  noteBusy = {};
   state = normNoteState({ ...defaultState(), ...rest, ...keep });
   state.log.unshift({ t: new Date().toISOString(), text: "Restored snapshot from " + fmtTime(rec.t) });
   openPhaseId = null;
@@ -1451,12 +1430,6 @@ function validateImport(d) {
     .map(c => ({ id: c.id, target: c.target, source: c.source === "grok" ? "grok" : "local", summary: typeof c.summary === "string" ? c.summary.slice(0, 240) : "", t: typeof c.t === "string" ? c.t : "",
       ops: c.ops.filter(o => isObj(o) && PATHS.includes(o.path) && typeof o.key === "string") }));
   if (typeof d.noteHintSeen === "boolean") out.noteHintSeen = d.noteHintSeen;
-  // "More info" Grok deep dives (absent in older exports -> empty)
-  out.infoCache = {};
-  if (isObj(d.infoCache)) for (const [k, v] of Object.entries(d.infoCache).slice(0, 400)) {
-    if (!isObj(v) || typeof v.text !== "string" || !v.text.trim() || k.length > 120 || !parseTarget({ id: k })) continue;
-    out.infoCache[k] = { text: v.text.slice(0, 6000), t: typeof v.t === "string" ? v.t : "", title: typeof v.title === "string" ? v.title.slice(0, 120) : k };
-  }
   return out;
 }
 
@@ -1490,7 +1463,7 @@ function importLog(input) {
     photoCache = v.photos;
     const keep = { grokKey: state.grokKey, storageNoteDismissed: state.storageNoteDismissed, noteHintSeen: state.noteHintSeen || !!v.noteHintSeen,
       lastExportAt: state.lastExportAt, backupNagUntil: state.backupNagUntil, firstProgressAt: state.firstProgressAt || Date.now() };
-    noteBusy = {}; infoBusy = {};
+    noteBusy = {};
     const { photos, ...rest } = v;
     state = { ...defaultState(), ...rest, ...keep };
     state.log.unshift({ t: new Date().toISOString(), text: "Imported backup (" + nDone + " steps, " + nPhotos + " photos)" });
@@ -1508,7 +1481,7 @@ async function resetAll() {
   catch (err) { console.warn(err); toast("⚠ Could not clear photos from storage", 4000, true); }
   photoCache = {};
   state = defaultState();
-  noteBusy = {}; infoBusy = {};
+  noteBusy = {};
   openPhaseId = null;
   if (save()) toast("Quest reset");
   render();
@@ -2332,7 +2305,6 @@ function normNoteState(st) {
   st.adjust = { price: isObj(a.price) ? a.price : {}, skip: isObj(a.skip) ? a.skip : {}, added: Array.isArray(a.added) ? a.added : [] };
   if (!Array.isArray(st.changes)) st.changes = [];
   if (typeof st.noteHintSeen !== "boolean") st.noteHintSeen = false;
-  if (!isObj(st.infoCache)) st.infoCache = {};
   return st;
 }
 function stripTags(s) { return String(s || "").replace(/<[^>]*>/g, ""); }
@@ -2628,438 +2600,17 @@ function allNotesHtml() {
 }
 
 // ---- the sheet ----
-// ---- More info (built in, works offline) ----
-const PRICE_CHECKED = "Sep 27, 2026";
-const PRICE_SEEN = {"t_jackstands":[{"seen":"$49.99/pair (Daytona 3-ton ratcheting)","where":"Harbor Freight","url":"https://www.harborfreight.com/automotive/jacks-jack-stands/jack-stands/3-ton-heavy-duty-ratcheting-jack-stands-metallic-purple-71189.html"}],"t_floorjack":[{"seen":"$205.50 regular","where":"Harbor Freight","url":"https://www.harborfreight.com/3-ton-low-profile-floor-jack-with-rapid-pump-slate-gray-70482.html"},{"seen":"$99.99 coupon (expired Aug 2026)","where":"Harbor Freight coupons","url":"https://go.harborfreight.com/coupons/2026/08/184665-70482/"}],"t_hoist":[{"seen":"$25/day, $104/week","where":"Talisman Rentals (Marietta, GA)","url":"https://www.talismanrentals.com/products/engine-hoist/2011645000020237127"},{"seen":"$45/day, $180/week","where":"Pasco Rentals","url":"https://www.pascorentals.com/rent/automotive-tools/engine-hoist/"},{"seen":"$33/day","where":"Rentals and More (Round Lake Park, IL)","url":"https://www.rentalsandmoreinc.com/automotivetools"},{"seen":"$38/day","where":"M&K Rentals","url":"https://www.mandkrentals.com/for-rent/engine-lift-cherry-picker"},{"seen":"AutoZone/O'Reilly don't loan hoists; $30–$80/day typical","where":"enginehoist.net guide","url":"https://enginehoist.net/autozone-engine-hoist-rental/"},{"seen":"$369.99; $289.99 Inside Track member price to 10/1/2026","where":"Harbor Freight (buy)","url":"https://www.harborfreight.com/2-ton-capacity-asme-pase-certified-foldable-shop-crane-58755.html"}],"t_leveler":[{"seen":"3/4-ton: $39.99 (HF price page) / $115.99 shown on product page","where":"Harbor Freight","url":"https://go.harborfreight.com/sku/67441/"},{"seen":"$115.99","where":"Harbor Freight","url":"https://www.harborfreight.com/automotive/lifts-cranes-stands/3-4-quarter-ton-capacity-heavy-duty-load-leveler-67441.html"}],"t_stand":[{"seen":"$109.99 ($89.99 past coupons)","where":"Harbor Freight","url":"https://www.harborfreight.com/1000-lb-capacity-engine-stand-59201.html"},{"seen":"rent $11/day","where":"Rentals and More (Round Lake Park, IL)","url":"https://www.rentalsandmoreinc.com/automotivetools"}],"t_transjack":[{"seen":"$25–$85/day","where":"Rental survey (A-1, Crown, AAA Rentals etc.)","url":"https://www.a-1rentalcenter.com/rental-equipment/jacks/transmission-jack/"},{"seen":"$179.95","where":"Harbor Freight (buy)","url":"https://www.harborfreight.com/450-lb-low-lift-transmission-jack-70262.html"}],"t_extinguisher":[{"seen":"$49.97 (Kidde 5.5 lb garage); ABC models up to $89","where":"Home Depot","url":"https://www.homedepot.com/p/Kidde-Garage-and-Workshop-3-A-40-B-C-Class-ABC-5-5-lb-Fire-Extinguisher-21030928-21030928/302631340"}],"t_ppe":[{"seen":"gloves $12.99/100","where":"Harbor Freight","url":"https://www.harborfreight.com/safety/gloves/5-mil-nitrile-powder-free-gloves-100-pack-large-light-blue-68497.html"},{"seen":"goggles $6.99/3-pack","where":"Harbor Freight","url":"https://www.harborfreight.com/safety-goggles-3-pack-66538.html"}],"t_sockets":[{"seen":"225-pc $349.99 list; $99.99 coupon (Aug 2026)","where":"Harbor Freight","url":"https://www.harborfreight.com/mechanics-tool-set-225-piece-62664.html"}],"t_breaker":[{"seen":"18 in $14.99; 25 in $17.99","where":"Harbor Freight","url":"https://www.harborfreight.com/12-in-drive-18-in-breaker-bar-60818.html"}],"t_torque12":[{"seen":"$52.00 (10–150 ft-lb)","where":"Harbor Freight","url":"https://www.harborfreight.com/12-in-drive-10-to-150-ft-lb-click-torque-wrench-63882.html"},{"seen":"$14.99 Pittsburgh Pro click wrench coupon (expired 8/13/2026)","where":"Harbor Freight coupons","url":"https://go.harborfreight.com/coupons/2026/06/184704-63880/"}],"t_torque_inlb":[{"seen":"$119.99 (ICON 40–200 in-lb)","where":"Harbor Freight","url":"https://www.harborfreight.com/38-in-drive-40-to-200-in-lb-professional-compact-click-torque-wrench-56614.html"}],"t_prybar":[{"seen":"3-pc $11.99","where":"Harbor Freight","url":"https://www.harborfreight.com/pry-bar-set-3-piece-68339.html"},{"seen":"$6.98 Inside Track price through 10/1/2026","where":"Harbor Freight coupons","url":"https://go.harborfreight.com/coupons/2026/08/184730-68339/"}],"t_fueltool":[{"seen":"3-pc $10.99","where":"Harbor Freight","url":"https://www.harborfreight.com/3-piece-quick-disconnect-tool-set-38732.html"},{"seen":"6-pc $12.72","where":"Harbor Freight","url":"https://www.harborfreight.com/fuel-line-and-ac-quick-disconnect-tool-6-piece-63595.html"}],"t_drainpan":[{"seen":"16 qt $19.99 ($14.99 coupon to 10/8/2026)","where":"Harbor Freight","url":"https://www.harborfreight.com/16-qt-oil-container-with-drain-pan-72771.html"}],"t_balancer":[{"seen":"free with refundable deposit","where":"AutoZone Loan-A-Tool","url":"https://www.autozone.com/loan-a-tools/loaner-harmonic-balancer-installer"}],"t_scraper":[{"seen":"ICON scraper $11.99","where":"Harbor Freight coupons","url":"https://go.harborfreight.com/coupons/2026/08/184705-57099/"}],"t_feeler":[{"seen":"32-pc $4.99","where":"Harbor Freight","url":"https://www.harborfreight.com/feeler-gauge-32-piece-63665.html"}],"t_straightedge":[{"seen":"$49","where":"Phenix","url":"https://phenixcarrollton.com/Precision-Machinist-Straight-Edge-001-Inch-Accuracy-Steel-c-682011"},{"seen":"OEMTOOLS $59.99","where":"AutoZone","url":"https://www.autozone.com/test-scan-and-specialty-tools/straight-edge/p/oemtools-24in-straight-edge/949552_0_0"}],"t_micrometer":[{"seen":"3-pc $404.54 (listing)","where":"Harbor Freight","url":"https://www.harborfreight.com/micrometer-set-3-piece-64202.html"}],"t_boregauge":[{"seen":"$63–$80","where":"Hardware Factory Store / lawnpartsman (HFS)","url":"https://lawnpartsman.com/products/hfs-r-dial-indicator-bore-gage-0005-gauge-2-6-range-16242"}],"t_ringcomp":[{"seen":"$19.99 (4 in)","where":"Harbor Freight","url":"https://www.harborfreight.com/4-inch-piston-ring-compressor-97709.html"}],"t_rodboots":[{"seen":"RBP-16 $11.99","where":"Goodson","url":"https://goodson.com/products/rbp-16-rod-bolt-protectors"},{"seen":"$6.49","where":"Toolifya","url":"https://toolifya.com/product/rod-bolt-protectors-16-pack-rbp-16/"}],"t_chaser":[{"seen":"ARP 7/16-14 chaser $30.41","where":"Kanzen Motorsports","url":"https://shop.kanzenmotorsports.com/arp-7-16in-14-thread-cleaning-chaser-tap/"},{"seen":"multi-piece chaser sets ~$19.95; ARP up to $42.04","where":"Search results","url":"https://shop.kanzenmotorsports.com/arp-7-16in-14-thread-cleaning-chaser-tap/"}],"t_primer":[{"seen":"Proform 66896 ~$24–$27.99","where":"Poorman Motorsports","url":"https://poormanmotorsports.com/proform-66896-engine-oil-pump-primer-with-bushing-fits-chevy-v8-v6-engines-uses-38-drill"},{"seen":"$36.99","where":"AutoZone (seen in search results)","url":""}],"t_timinglight":[{"seen":"$39.99 (Cen-Tech xenon w/ advance)","where":"Harbor Freight","url":"https://www.harborfreight.com/timing-light-with-advance-40963.html"},{"seen":"$49.99 (Maddox)","where":"Harbor Freight","url":"https://www.harborfreight.com/advance-timing-light-71006.html"}],"t_oilgauge":[{"seen":"$74.99","where":"AutoZone","url":"https://www.autozone.com/shop-and-garage-tools/oil-pressure-tester"}],"p_penetrant":[{"seen":"PB B'laster 11 oz $5.97","where":"Walmart","url":"https://www.walmart.com/ip/PB-Blaster-16PBDS-Penetrant-Rust-Remover-Machine-Tool-Lubricants-11oz-1-pack/934902678"},{"seen":"PB B'laster 11 oz $10.19","where":"AutoZone","url":"https://www.autozone.com/p/b-laster-penetrating-oil-16-pb-ds/515413"}],"p_brakeclean":[{"seen":"CRC Brakleen 14 oz $7.59; 19 oz $8.49","where":"AutoZone","url":"https://www.autozone.com/p/crc-brake-cleaner-05084/315541"}],"p_rtv":[{"seen":"3.5 oz $13–$15","where":"Walmart (and search results)","url":"https://www.walmart.com/ip/Permatex-82194-Ultra-Grey-Rigid-High-Torque-RTV-Silicone-Gasket-Maker-3-5-oz/503971182"}],"p_threadlock":[{"seen":"6 ml $6–$13","where":"Whale Supply (and search results)","url":"https://whalesupply.com/adhesives-tapes/loctite-242-threadlocker-blue-medium-strength-6-ml-tube-487229/"}],"p_asmlube":[{"seen":"$4.68","where":"JB Tools","url":"https://www.jbtools.com/permatex-81950-ultra-slick-engine-assembly-lube/"},{"seen":"$7.97–$10.30","where":"Pit Stop USA / others","url":"https://pitstopusa.com/products/permatex-r-ultra-slick-engine-assembly-lube-4-oz-bottle"}],"p_plastigage":[{"seen":"$5.79 each","where":"AutoZone","url":"https://www.autozone.com/test-scan-and-specialty-tools/plastigage"}],"p_headsealant":[{"seen":"6 ml $4.99–$6.97","where":"JB Tools / PGT / Pit Stop USA","url":"https://www.jbtools.com/permatex-59214-high-temperature-thread-sealant/"}],"p_gasketset":[{"seen":"$101.69","where":"JEGS","url":"https://www.jegs.com/i/Fel-Pro/375/260-1269/10002/-1"},{"seen":"Fel-Pro 2601269 $101.89; Enginetech C350LM $51.79 (budget)","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,engine,engine+kit+gasket+set,10392"},{"seen":"$112.99","where":"Summit Racing","url":"https://www.summitracing.com/parts/fel-260-1269"},{"seen":"$134.99","where":"Northern Auto Parts","url":"https://northernautoparts.com/fel-pro-gaskets-260-1269/"},{"seen":"$138.55","where":"Wheelfront","url":"https://wheelfront.com/shop/product/fel-pro-engine-gasket-set-sbc-87-95-w-tbi-260-1269/"}],"p_rings":[{"seen":"Sealed Power E251X $44.79; E377K moly $93.79","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,engine,piston+ring,5640"},{"seen":"E-251K $48.05","where":"PartsHawk","url":"https://partshawk.com/sealed-power-e-251k-engine-piston-ring-set.html"}],"p_mainbrg":[{"seen":"Sealed Power 6688M $51.79; Clevite MS909HX $84.79","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,engine,crankshaft+main+bearing,5220"},{"seen":"Clevite MS-909P $56.99–$69.36","where":"GoTurbo / NeverEnoughAuto / others","url":"https://goturbo.net/m77ms909p-main-bearing-set-ms-909p"}],"p_rodbrg":[{"seen":"Clevite CB663P8 set $33.79; singles CB663 $10.83–$12.29 per rod (×8 = up to $98)","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,engine,connecting+rod+bearing,5212"},{"seen":"CB-663P(8) $35.99–$47.95","where":"Summit Racing / others","url":"https://www.summitracing.com/parts/CLE-CB663P8"}],"p_cambrg":[{"seen":"Enginetech CC400 $11.76","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,engine,camshaft+bearing,5208"},{"seen":"Clevite SH-290S $33.99","where":"Summit Racing","url":"https://www.summitracing.com/parts/cle-sh290s"},{"seen":"SH-290S $28.99","where":"Racecar Engineering","url":"https://racecareng.com/shop/engines-and-components/engine-bearings/cam-bearings/clevite-77-bearings-cam-bearing-set-sh290s/"}],"p_oilpump":[{"seen":"Melling M-55 $33.95–$41.99","where":"90racing / others","url":"https://90racing.com/products/melling-m55"},{"seen":"Sealed Power 2244146 $38.79; Melling M55HV $40.79","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,engine,oil+pump,5564"}],"p_pickup":[{"seen":"Enginetech S55S2 $13.52 – Melling 12564 $33.79","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,engine,oil+pump+pickup+tube+/+screen,5576"}],"p_timing":[{"seen":"Cloyes C3059K $18.02","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,engine,timing+chain+%26+component+kit,5756"},{"seen":"Cloyes C-3064K $25.99","where":"Competition Products","url":"https://www.competitionproducts.com/Cloyes-Heavy-Duty-Timing-Set-Chev-305-350-w_Roller-Cam/productinfo/CLOC3064K/"},{"seen":"C3064K $31.47","where":"Amazon","url":"https://www.amazon.com/Cloyes-C3064K-3Pc-Timing-Set/dp/B000C0D10E"},{"seen":"C3064K $41.49","where":"Mechanic Surplus","url":"https://www.mechanicsurplus.com/products/Cloyes-C3064k-3pc-Timing-Set-141235098.html"}],"p_freeze":[{"seen":"Dorman 02650 steel $11.25; 02660 brass $24.89","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,engine,core+/+expansion+plug,5332"}],"p_headbolts":[{"seen":"$20.79 (ARP 1343601 $83.79)","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,engine,cylinder+head+bolt,5308"},{"seen":"$24.97","where":"Upstart Auto Parts","url":"https://upstartautoparts.com/Fel-Pro--ES72856--Engine-Cylinder-Head-Bolt-Set_p_23176.html"},{"seen":"$28.99","where":"Race-Leader","url":"https://www.race-leader.com/item/4614803-head-bolt-set-1-head"}],"p_cam":[{"seen":"$291.88","where":"PartsHawk","url":"https://partshawk.com/melling-mc1320-engine-camshaft.html"},{"seen":"~$359.29","where":"Walmart Business","url":"https://business.walmart.com/ip/Melling-Engine-Camshaft-P-N-MC1320/191906813"},{"seen":"$366.69","where":"NeverEnoughAuto","url":"https://neverenoughauto.com/i-24130186-melling-mc1320-stock-replacement-camshaft.html"}],"p_lifters":[{"seen":"Qualcast 362148 $12.61 each (×16 = $202)","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,engine,valve+lifter,5548"},{"seen":"Sealed Power HT2148-16 sets ~$214–$288","where":"Amazon / Grand Prix Auto / others","url":"https://www.amazon.com/Sealed-Power-SEAHT2148-16-Hydraulic-Roller/dp/B00C2NGZVG"}],"p_pushrods":[{"seen":"sets ~$40–$115; COMP 7808-16 seen at $55.95","where":"Search results (Engine Pro / COMP / AMS sets)","url":"https://www.amsracing.net/products/ams-racing-7-200-hardened-steel-5-16-pushrods-set-for-chevrolet-sbc-283-327-305-350-w-oe-roller-cams"}],"p_damper":[{"seen":"SKP SK594002 $42.79; Dorman 594002 $53.79; Dayco PB1046N $66.79","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,engine,harmonic+balancer,5512"}],"p_waterpump":[{"seen":"Gates 43114 $27.79; Dayco DP963 $29.79; ACDelco 252719 $49.79","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,cooling+system,water+pump,2208"}],"p_thermostat":[{"seen":"Motorad 300195 $3.68; Gates 33508 $5.66","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,cooling+system,thermostat,2200"}],"p_tbikit":[{"seen":"Wells 2G1947 $24.79","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,fuel+%26+air,fuel+injector+repair+kit,11222"},{"seen":"SMP 1704 $28.61–$42.61","where":"Blazen Auto / Autoplicity / others","url":"https://autoplicity.com/12939-fuel-injection-throttle-body-repair-kit"}],"p_fuelfilter":[{"seen":"Luber-finer G481 $8.16; WIX 33481 $12.24","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,fuel+%26+air,fuel+filter,6200"},{"seen":"ACDelco-type GF481 $12.95+","where":"National Parts Depot","url":"https://www.npdlink.com/product/fuel-filter-ac-delco/115124"}],"p_sparkplugs":[{"seen":"ACDelco CR43TS $1.25 ea – Rapidfire $3.19 ea","where":"RockAuto (earlier lookup; page later rate-limited)","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,ignition,spark+plug,7212"}],"p_ignition":[{"seen":"cap $8.65–$18.83; rotor $3.85–$5.21; wires $17.67–$33.79","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,ignition,spark+plug+wire,7224"}],"p_mounts":[{"seen":"DEA A2621 $8.01 – Anchor 2621 $11.36 each; Anchor kit 300058 $29.79","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,engine,motor+mount,5552"}],"p_flexplate":[{"seen":"$31–$46","where":"RockAuto (earlier lookup)","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,transmission-automatic,flexplate,8608"}],"p_oil":[{"seen":"Super Tech synthetic blend $16.98; full synthetic $17.97; high-mileage $19.98 (5 qt)","where":"Walmart","url":"https://www.walmart.com/ip/Super-Tech-Full-Synthetic-SAE-5W-30-Motor-Oil-5-Quarts/17133942"}],"p_oilfilter":[{"seen":"WIX 51060 $5.17; ACDelco PF1218 $5.83; Mahle OC114 $7.25","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,engine,oil+filter,5340"}],"p_coolant":[{"seen":"Prestone concentrate $14.24–$17.97/gal","where":"Walmart","url":"https://www.walmart.com/ip/Prestone-Extended-Life-Antifreeze-Coolant/16879960"}],"p_hoses":[{"seen":"$10.52–$19.71 each (e.g. Gates 22013 $12.87 + 21710 $17.92)","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,cooling+system,radiator+hose,10068"}],"p_belt":[{"seen":"from $8.16 (RoadMax)","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,belt+drive,belt,8900"},{"seen":"$17.13 sale / $23.93 regular (99.15 in)","where":"V-Belt Guys","url":"https://www.vbeltguys.com/products/1994-chevrolet-c1500-pickup-replacement-belt-5-7l-engine-serpentine-w-ac-w-ap-w-120a"}],"p_transfilter":[{"seen":"WIX 58904 $15.56","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,transmission-automatic,filter,8600"},{"seen":"$15.54","where":"GM Transmission Parts","url":"https://www.gmtransmissionparts.com/filter-gasket-kit-4l60e-1993-1997-shallow-pan/"},{"seen":"$28.65","where":"Transmission Parts Now","url":"https://transpartsnow.com/filter-service-kit-1993-97-shallow-filter-4l60e-74011e/"}],"p_transseals":[{"seen":"$4–$12 for both","where":"RockAuto (earlier lookup)","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,transmission-automatic,fluid+pump+seal,8004"}],"p_atf":[{"seen":"Valvoline Dexron VI $6.88–$8.48/qt","where":"Walmart","url":"https://www.walmart.com/ip/Valvoline-Dexron-VI-Mercon-LV-Full-Synthetic-Automatic-Transmission-Fluid-ATF-1-QT/153429990"}],"p_coolerflush":[{"seen":"Lubegard 13.25 oz $16.49","where":"AutoZone","url":"https://www.autozone.com/motor-oil-and-transmission-fluid/transmission-line-cleaner/p/lubegard-transmission-cooler-flush-13-25oz/36205_0_0"}],"p_converter":[{"seen":"TC Remanufacturing B29DGF $107.79 / B29DHPF $119.99 (GM new $348.99)","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,transmission-automatic,torque+converter,8668"}],"p_coolerlines":[{"seen":"$23.79–$27.79 each","where":"RockAuto (earlier lookup)","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,transmission-automatic,fluid+cooler+line+/+hose,10343"}],"p_transmount":[{"seen":"$5–$7","where":"RockAuto (earlier lookup)","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,transmission-automatic,transmission+mount,8616"}],"p_convbolts":[{"seen":"GM 01262774 $3.01 each","where":"RockAuto","url":"https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386,transmission-automatic,torque+converter+bolt,48815"}],"p_breakin":[{"seen":"COMP 159 12 oz $20.95–$23.95","where":"JEGS / COMP","url":"https://www.jegs.com/i/COMP-Cams/249/159/10002/-1"}],"s_clean":[{"seen":"hot tank/jet wash $60; thermal $80","where":"Performance Engine & Machine (Middleton, WI)","url":"https://www.perfengine.com/Pricing.html"},{"seen":"thermal clean block $60","where":"Ellis Machine Shop (Batesville, AR)","url":"https://www.ellismachineshop.com/pricing"},{"seen":"hot tank & inspect $125","where":"Paragon Engines (Baxter, TN)","url":"http://paragonengines.com/machineshoppricing"}],"s_cambrg":[{"seen":"$30","where":"Performance Engine & Machine (Middleton, WI)","url":"https://www.perfengine.com/Pricing.html"},{"seen":"$40","where":"Ellis Machine Shop (Batesville, AR)","url":"https://www.ellismachineshop.com/pricing"},{"seen":"$100 (roller cam bearing sets)","where":"GAM Racing Engines (Greeley, CO) 2026 sheet","url":"https://www.gamracingengines.com/Price_sheet_2026-1-3.pdf"},{"seen":"$110","where":"Paragon Engines (Baxter, TN)","url":"http://paragonengines.com/machineshoppricing"}],"s_hone":[{"seen":"$12/cyl ($18 w/ plates)","where":"Performance Engine & Machine (Middleton, WI)","url":"https://www.perfengine.com/Pricing.html"},{"seen":"$15/hole ($20 w/ plate)","where":"Ellis Machine Shop (Batesville, AR)","url":"https://www.ellismachineshop.com/pricing"},{"seen":"hone & deglaze $18/cyl","where":"GAM Racing Engines (Greeley, CO)","url":"https://www.gamracingengines.com/Price_sheet_2026-1-3.pdf"},{"seen":"hone w/ torque plates $440","where":"Paragon Engines (Baxter, TN)","url":"http://paragonengines.com/machineshoppricing"}],"s_crankpolish":[{"seen":"$40","where":"Performance Engine & Machine (Middleton, WI)","url":"https://www.perfengine.com/Pricing.html"},{"seen":"light-duty $60; medium-duty $90","where":"GAM Racing Engines (Greeley, CO)","url":"https://www.gamracingengines.com/Price_sheet_2026-1-3.pdf"},{"seen":"micro-polish & clean $95","where":"Paragon Engines (Baxter, TN)","url":"http://paragonengines.com/machineshoppricing"}],"s_valvejob":[{"seen":"V8 pair $120","where":"Ellis Machine Shop (Batesville, AR)","url":"https://www.ellismachineshop.com/pricing"},{"seen":"V8 $250","where":"Performance Engine & Machine (Middleton, WI)","url":"https://www.perfengine.com/Pricing.html"},{"seen":"multi-angle $315","where":"Paragon Engines (Baxter, TN)","url":"http://paragonengines.com/machineshoppricing"}],"s_bore":[{"seen":"$12 bore + $12 hone per cyl","where":"Performance Engine & Machine (Middleton, WI)","url":"https://www.perfengine.com/Pricing.html"},{"seen":"$15 bore + $15 hone per hole","where":"Ellis Machine Shop (Batesville, AR)","url":"https://www.ellismachineshop.com/pricing"},{"seen":"bore .030 $315 + hone w/ plates $440","where":"Paragon Engines (Baxter, TN)","url":"http://paragonengines.com/machineshoppricing"}],"s_crankgrind":[{"seen":"$125","where":"Ellis Machine Shop (Batesville, AR)","url":"https://www.ellismachineshop.com/pricing"},{"seen":"$150","where":"Performance Engine & Machine (Middleton, WI)","url":"https://www.perfengine.com/Pricing.html"},{"seen":"light-duty V8 $210","where":"GAM Racing Engines (Greeley, CO)","url":"https://www.gamracingengines.com/Price_sheet_2026-1-3.pdf"},{"seen":"grind & polish $345","where":"Paragon Engines (Baxter, TN)","url":"http://paragonengines.com/machineshoppricing"}],"s_magna":[{"seen":"block $30; crank $20","where":"Performance Engine & Machine (Middleton, WI)","url":"https://www.perfengine.com/Pricing.html"},{"seen":"clean & mag crank $95","where":"Paragon Engines (Baxter, TN)","url":"http://paragonengines.com/machineshoppricing"}],"s_deck":[{"seen":"clean-up $60 ($150 w/ BHJ tooling)","where":"Ellis Machine Shop (Batesville, AR)","url":"https://www.ellismachineshop.com/pricing"},{"seen":"$150","where":"Performance Engine & Machine (Middleton, WI)","url":"https://www.perfengine.com/Pricing.html"},{"seen":"true decks w/ BHJ fixture $270","where":"GAM Racing Engines (Greeley, CO)","url":"https://www.gamracingengines.com/Price_sheet_2026-1-3.pdf"},{"seen":"deck block parallel $285","where":"Paragon Engines (Baxter, TN)","url":"http://paragonengines.com/machineshoppricing"}],"s_rods":[{"seen":"$10/rod","where":"Ellis Machine Shop (Batesville, AR)","url":"https://www.ellismachineshop.com/pricing"},{"seen":"check & hone $16/rod","where":"GAM Racing Engines (Greeley, CO)","url":"https://www.gamracingengines.com/Price_sheet_2026-1-3.pdf"}]};
-const RA_CATALOG = "https://www.rockauto.com/en/catalog/chevrolet,1994,c1500+pickup,5.7l+v8,1031386";
-const encQ = s => encodeURIComponent(String(s).replace(/\s+/g, " ").trim());
-const SHOP = {
-  rockauto: q => "https://www.rockauto.com/en/partsearch/?partnum=" + encQ(q),
-  autozone: q => "https://www.autozone.com/searchresult?searchText=" + encQ(q),
-  oreilly: q => "https://www.oreillyauto.com/search?q=" + encQ(q),
-  advance: q => "https://shop.advanceautoparts.com/web/SearchResults?searchTerm=" + encQ(q),
-  summit: q => "https://www.summitracing.com/search?keyword=" + encQ(q),
-  amazon: q => "https://www.amazon.com/s?k=" + encQ(q),
-  ebay: q => "https://www.ebay.com/sch/i.html?_nkw=" + encQ(q),
-  fb: q => "https://www.facebook.com/marketplace/phoenix/search/?query=" + encQ(q),
-  clParts: q => "https://phoenix.craigslist.org/search/pta?query=" + encQ(q),
-  clTools: q => "https://phoenix.craigslist.org/search/tla?query=" + encQ(q),
-  hf: q => "https://www.harborfreight.com/search?q=" + encQ(q),
-  yt: q => "https://www.youtube.com/results?search_query=" + encQ(q),
-  maps: q => "https://www.google.com/maps/search/" + encQ(q)
-};
-const LOANER = {
-  az: "https://www.autozone.com/lp/loan-a-tool",
-  orly: "https://www.oreillyauto.com/loaner-tools",
-  hfRecalls: "https://www.harborfreight.com/customer-support/product-support/recalls"
-};
-const B_QUALITY = "Spend here. The Specs tab's budget ladder puts bearings, gaskets, the timing set, the oil pump and seals on the buy-quality list. Stick to the brands named above from a real store. Mystery parts are the false economy.";
-const B_MID = "A known brand at the low end of the range is fine. A stock rebuild doesn't need racing or heavy-duty versions.";
-const B_CHEAP = "The cheapest name brand is fine. Store brands work too if the label meets the same spec.";
-const U_NEW = "Buy new. It's a wear part, and a used one can cost you the rebuild to save a few dollars.";
-const U_CONS = "It's a consumable, so buy new.";
-// Curated per item. q = what to search for (brand + part number when the price check found one).
-// pn = numbers/brands already in the price data. Nothing here is a guessed listing.
-const INFO_ITEM = {
-  p_penetrant: { q: "PB Blaster penetrating oil", budget: B_CHEAP, used: U_CONS, fit: ["Spray exhaust studs, manifold bolts and mount bolts the night before, then again before you wrench."] },
-  p_brakeclean: { q: "brake parts cleaner non-chlorinated", budget: B_CHEAP, used: U_CONS, fit: ["Final wipe on every mating surface before gaskets or RTV. Keep it off paint and plastic."] },
-  p_rtv: { q: "Permatex Ultra Grey RTV", pn: ["Permatex Ultra Grey"], budget: B_CHEAP, used: U_CONS, fit: ["Use it only on the intake end seals/corners, in a thin bead. Extra squeeze-out can end up in the oil pan and pickup screen."] },
-  p_threadlock: { q: "Loctite 242 blue threadlocker", pn: ["Loctite 242 (blue, removable)"], budget: B_CHEAP, used: U_CONS },
-  p_asmlube: { q: "Permatex Ultra Slick assembly lube", pn: ["Permatex Ultra Slick 4 oz"], budget: B_CHEAP, used: U_CONS, fit: ["Coat bearings, cam lobes, lifter rollers and pushrod ends. Rings and bores get oil, not thick lube."] },
-  p_plastigage: { q: "Plastigage green", pn: ["Plastigage green (reads roughly 0.001–0.003 in)"], budget: B_CHEAP, used: U_CONS, fit: ["Green is the range for main and rod clearance. Don't turn the crank while it's in place."] },
-  p_headsealant: { q: "Permatex 59214 thread sealant", pn: ["Permatex 59214"], budget: B_CHEAP, used: U_CONS, fit: ["Goes on the head bolts that enter the water jacket (Specs tab)."] },
-  p_exhgasket: { q: "1994 C1500 5.7 exhaust manifold to pipe gasket", budget: B_MID, used: U_NEW, fit: ["It depends on your Y-pipe style. Look at the old donut/flange before ordering.", "Plan for snapped studs: have new studs/nuts on hand, or a tap and extractor."] },
-  p_gasketset: { q: "Fel-Pro 260-1269", pn: ["Fel-Pro 260-1269", "Budget alt: Enginetech C350LM"], budget: B_QUALITY, used: U_NEW, fit: ["It's listed for 1987–95 small-block Chevy with TBI. Check the contents list (head, intake, pan, timing cover, rear main).", "1986-up blocks use a one-piece rear main seal. Make sure the set's seal matches."] },
-  p_rings: { q: "Sealed Power E251X", pn: ["Sealed Power E251X", "Sealed Power E-251K", "Sealed Power E377K (moly)"], budget: B_QUALITY, used: U_NEW, fit: ["Order after the machine shop gives the finished bore size (standard 350 bore is 4.000 in; oversize sets are labeled .030 etc.).", "Match the oil-ring groove depth on your pistons: deep .200 vs shallow .165.", "File-fit or at least check every gap in its own bore. Don't trust the box."] },
-  p_mainbrg: { q: "Sealed Power 6688M", pn: ["Sealed Power 6688M", "Clevite MS909HX / MS-909P"], budget: B_QUALITY, used: U_NEW, fit: ["Size to the crank after polish or grind (STD, .010, .020…). The shop stamps or tells you the size."] },
-  p_rodbrg: { q: "Clevite CB663P8", pn: ["Clevite CB663P8"], budget: B_QUALITY, used: U_NEW, fit: ["Same crank size as the mains, unless the shop says the rod journals were ground differently."] },
-  p_cambrg: { q: "Clevite SH-290S", pn: ["Enginetech CC400", "Clevite SH-290S"], budget: B_QUALITY, used: U_NEW, fit: ["The machine shop installs them (Phase 5). Buy the set, or let the shop supply it."] },
-  p_oilpump: { q: "Melling M55", pn: ["Melling M-55 (standard volume)", "Melling M55HV (high volume)", "Sealed Power 2244146"], budget: B_QUALITY, used: U_NEW, fit: ["Standard volume is fine for a stock build.", "Check the intermediate shaft and its plastic/steel collar. A worn shaft means no oil pressure."] },
-  p_pickup: { q: "Melling 12564", pn: ["Enginetech S55S2", "Melling 12564"], budget: B_MID, used: U_NEW, fit: ["Match it to your pan depth, and set it 3/8–1/2 in off the pan floor.", "It's press-fit. Seat it squarely so it can't wiggle, because a loose pickup sucks air."] },
-  p_timing: { q: "Cloyes C3064K", pn: ["Cloyes C3059K", "Cloyes C3064K"], budget: B_QUALITY, used: U_NEW, fit: ["Get the factory-roller-cam version. Roller blocks use a cam thrust setup that flat-tappet sets don't fit."] },
-  p_freeze: { q: "Dorman 02650", pn: ["Dorman 02650 (steel)", "Dorman 02660 (brass)"], budget: B_MID, used: U_NEW, fit: ["Brass resists rust and is worth the small difference.", "Count the plugs and sizes on your bare block before ordering."] },
-  p_headbolts: { q: "Fel-Pro ES72856", pn: ["Fel-Pro ES72856 (stock style)", "ARP 1343601 (about $84 up)"], budget: "Only buy them if the old bolts are rusty, necked or damaged. Stock Gen I bolts aren't torque-to-yield (Specs tab). If you do buy, don't mix them with leftover bolts of unknown origin.", used: U_NEW, fit: ["ES72856 covers one head in the listing seen. Check whether you need two sets for both heads.", "Water-jacket bolts get Permatex 59214 sealant."] },
-  p_cam: { q: "Melling MC1320", pn: ["Melling MC1320"], budget: "Only buy it if the lobes or journals are worn. If you do, get a stock-replacement hydraulic roller. Don't downgrade to a flat tappet.", used: "A used cam is only OK with its own matching lifters. Never run used lifters on a different cam.", fit: ["It's sold as a Vortec 350 cam, and it's commonly used in 87–95 roller blocks. Confirm fitment with the seller for a 1994 L05 before you pay."] },
-  p_lifters: { q: "Sealed Power HT2148-16", pn: ["Qualcast 362148 (each)", "Sealed Power HT2148-16"], budget: B_MID, used: "Reuse your own only if the rollers spin smoothly with no flat spots, and put each back on its own lobe. Don't buy used.", fit: ["These are the factory-style tall hydraulic roller lifters used with dog bones and a spider."] },
-  p_pushrods: { q: "7.200 pushrod 5/16 small block Chevy roller", pn: ["Factory roller length 7.200 in (per the parts list)"], budget: B_MID, used: "Reusing your own is fine if they roll straight on glass and the tips aren't worn. Keep them in order.", fit: ["Verify the length before ordering. Roll each one on glass to check straightness."] },
-  p_damper: { q: "Dorman 594002", pn: ["SKP SK594002", "Dorman 594002", "Dayco PB1046N"], budget: B_MID, used: "A used one is a gamble: check that the rubber isn't cracked and the outer ring hasn't walked.", fit: ["Replace it if the outer ring has walked or the rubber is cracked.", "Install it with the installer tool (AutoZone loaner). Never hammer it on."] },
-  p_pistons: { q: "350 oversize pistons 1994 5.7 L05", budget: "Only if the block is bored. Buy the exact oversize the machine shop gives you, and let them check the fit.", used: U_NEW, fit: ["The shop needs the pistons in hand before the final hone.", "Match compression height and dish so the compression stays stock-like."] },
-  p_waterpump: { q: "Gates 43114", pn: ["Gates 43114", "Dayco DP963", "ACDelco 252719"], budget: B_MID, used: U_NEW, fit: ["Compare it side by side with your old pump (inlet side, shaft length, pulley bolt pattern) before you install it."] },
-  p_thermostat: { q: "Gates 33508 thermostat 195", pn: ["Motorad 300195", "Gates 33508"], budget: B_CHEAP, used: U_NEW, fit: ["It's 195°F. The gasket is in the Fel-Pro set."] },
-  p_tbikit: { q: "Wells 2G1947", pn: ["Wells 2G1947", "SMP 1704"], budget: B_MID, used: U_NEW, fit: ["The V8 TBI uses the Rochester Model 220 throttle body. Match the kit to it."] },
-  p_fuelfilter: { q: "WIX 33481", pn: ["Luber-finer G481", "WIX 33481", "ACDelco GF481 → superseded by GF652"], budget: B_CHEAP, used: U_NEW, fit: ["Note the flow arrow and the line fitting type before you remove the old one."] },
-  p_sparkplugs: { q: "ACDelco CR43TS", pn: ["ACDelco CR43TS"], budget: B_CHEAP, used: U_NEW, fit: ["Gap them to the underhood label (often .035 in)."] },
-  p_ignition: { q: "1994 C1500 5.7 distributor cap rotor spark plug wires", budget: B_MID, used: U_NEW, fit: ["Photo the cap with the wire order before you pull it. Firing order is in Specs."] },
-  p_mounts: { q: "Anchor 2621", pn: ["DEA A2621", "Anchor 2621", "Anchor kit 300058"], budget: B_MID, used: "Buy new. They're cheap, and the rubber ages.", fit: ["4WD uses different mounts. Verify against your truck's drive."] },
-  p_flexplate: { q: "1994 C1500 5.7 4L60E flexplate", budget: B_MID, used: "Used is OK if it has no cracks around the bolt holes, the ring gear teeth aren't chewed, and it sits flat.", fit: ["Match the tooth count and converter bolt pattern to your old one before you buy."] },
-  p_oil: { q: "5W-30 motor oil 5 quart", budget: B_CHEAP, used: U_CONS, fit: ["You need one jug to fill and one for the 500-mile change."] },
-  p_oilfilter: { q: "WIX 51060", pn: ["WIX 51060", "ACDelco PF1218", "Mahle OC114"], budget: B_CHEAP, used: U_CONS },
-  p_coolant: { q: "antifreeze concentrate 1 gallon", budget: B_CHEAP, used: U_CONS, fit: ["Mix it 50/50, and don't mix inhibitor types (Specs tab)."] },
-  p_hoses: { q: "Gates 22013", pn: ["Gates 22013 + 21710 (example pair seen)"], budget: B_MID, used: U_NEW, fit: ["It depends on the radiator width (26/34/41 in). Measure yours first."] },
-  p_belt: { q: "1994 C1500 5.7 serpentine belt", budget: B_MID, used: U_NEW, fit: ["The length depends on A/C, air pump and alternator (97.55–99.15 in). Check the routing sticker, or measure the old belt."] },
-  p_transfilter: { q: "WIX 58904", pn: ["WIX 58904"], budget: B_MID, used: U_NEW, fit: ["It fits the 1993–97 shallow pan. Check your pan depth first (some trucks have a deep pan)."] },
-  p_transseals: { q: "4L60E front pump seal tailshaft seal", budget: B_QUALITY, used: U_NEW },
-  p_atf: { q: "Dexron VI ATF", budget: B_CHEAP, used: U_CONS, fit: ["GM lists Dexron VI as the replacement for older Dexron fluids."] },
-  p_coolerflush: { q: "transmission cooler line flush", budget: B_CHEAP, used: U_CONS, fit: ["Flush both lines and the radiator cooler. A dirty cooler is on the false-economy list."] },
-  p_converter: { q: "TC Remanufacturing B29DGF", pn: ["TC Remanufacturing B29DGF", "TC Remanufacturing B29DHPF"], budget: "A reman from a known rebuilder is the budget path. A tired converter full of clutch debris is on the false-economy list.", used: "A used one is a gamble, because you can't see inside. Reman is safer.", fit: ["Only buy it if the old one shed clutch material.", "Reman units often carry a core charge. Check the listing."] },
-  p_coolerlines: { q: "1994 C1500 4L60E transmission cooler line", budget: B_MID, used: "Used is OK if they're not kinked or rusted through. Flush them either way.", fit: ["Only if kinked, rusted or clogged. Check both lines."] },
-  p_transmount: { q: "1994 C1500 4L60E transmission mount", budget: B_MID, used: U_NEW, fit: ["2WD and 4WD can differ. Check that it matches your drive."] },
-  p_convbolts: { q: "GM 01262774", pn: ["GM 01262774"], budget: B_MID, used: "Reusing your originals is common if the threads are clean.", fit: ["If they're hard to start, the converter isn't seated. Stop."] },
-  p_breakin: { q: "ZDDP break-in additive", budget: B_CHEAP, used: U_CONS, fit: ["It's not needed for the stock roller cam. It's only for a flat-tappet cam."] },
-  // tools: buy / rent / borrow, Harbor Freight vs better, used tips
-  t_organize: { q: "zip bags painters tape marker", buy: "You probably own these. Bag and label as you go.", hf: "Anything works." },
-  t_jackstands: { q: "3 ton jack stands", buy: "Buy them. You'll use them for years, and nobody loans them for weeks.", hf: "Harbor Freight stands are what a lot of DIYers use. Check any HF pair (new or used) against HF's recall list: some Pittsburgh 3-ton and 6-ton stands were recalled in 2020.", used: "Check the ratchet teeth and pawl, look for cracked welds or bent legs, and make sure the pin locks.", links: [["HF recall list", LOANER.hfRecalls]] },
-  t_floorjack: { q: "3 ton floor jack", buy: "Buy one (or borrow). Nobody rents floor jacks cheaply.", hf: "An HF floor jack is fine for lifting. Always put stands under the load.", used: "It should hold overnight without sinking and shouldn't leak. Check that the saddle and wheels turn." },
-  t_hoist: { q: "engine hoist", buy: "Rent it twice (out and in) or borrow one. A used one bought now and sold again after the job can cost less than two rentals.", hf: "An HF 2-ton foldable is the usual DIY buy ($290–$370 seen).", used: "Check the ram for leaks, look at the boom and leg welds, and make sure the pins and casters are all there." },
-  t_leveler: { q: "engine load leveler", buy: "Buy it, or borrow it with the hoist.", hf: "An HF leveler is fine.", used: "Check the screw threads and that the chain and hooks aren't stretched." },
-  t_stand: { q: "engine stand 1000 lb", buy: "Buy it. The block sits on it for weeks, so buying beats renting ($11/day seen).", hf: "An HF 1000 lb stand handles a small block. Use grade-8 bolts with full thread engagement.", used: "Check the head pivot pin, the welds and the casters. Stands resell easily after the job." },
-  t_transjack: { q: "transmission jack", buy: "Rent it twice, or use a floor jack with a trans adapter and a helper.", hf: "HF 450 lb low-lift $179.95 seen.", used: "It should hold without creeping, and the tilt screws and safety strap should work." },
-  t_extinguisher: { q: "ABC fire extinguisher 5 lb", buy: "Buy it new. Check that the gauge is in the green.", hf: "Any UL-rated ABC unit.", used: "Skip used ones unless they're recently serviced and tagged." },
-  t_ppe: { q: "nitrile gloves safety goggles", buy: "Buy them.", hf: "HF gloves and goggles are fine." },
-  t_sockets: { q: "metric SAE socket set", buy: "You probably own a set. Fill the gaps (10–21 mm, 1/2–3/4 in).", hf: "HF Pittsburgh/ICON sets are fine for DIY.", used: "Pawn shops and garage sales often have full sets. Check the ratchet mechanism." },
-  t_breaker: { q: "1/2 breaker bar", buy: "Buy one (cheap).", hf: "The HF breaker bar is fine." },
-  t_torque12: { q: "1/2 click torque wrench", buy: "Buy one, or borrow it: AutoZone's Loan-A-Tool program names torque wrenches.", hf: "An HF click wrench is fine for DIY. Store it at its lowest setting, and never use it as a breaker bar.", used: "Only if you can check it against another wrench. Dropped wrenches read wrong." },
-  t_torque_inlb: { q: "inch pound torque wrench", buy: "Buy one, or check whether the loaner lists carry an inch-pound wrench.", hf: "Only the ICON price was checked. Cheaper ones exist, but weren't checked.", used: "Same as any torque wrench: verify it before you trust it." },
-  t_prybar: { q: "pry bar set", buy: "Buy a set (cheap).", hf: "HF is fine." },
-  t_fueltool: { q: "fuel line disconnect tool set", buy: "Buy a set, or check the AutoZone/O'Reilly loaner lists.", hf: "An HF disconnect set is fine." },
-  t_drainpan: { q: "oil drain pan", buy: "Buy two (oil/ATF and coolant).", hf: "Any works. Get one with a pour spout." },
-  t_balancer: { q: "harmonic balancer puller installer", buy: "Borrow it. The data here uses AutoZone's free Loan-A-Tool (deposit = tool price, refunded on return within 90 days). O'Reilly has a loaner program too; check their list.", hf: "Buying is only worth it if you'll reuse it.", used: "Make sure the installer threads match the crank snout (7/16-20 on a small block)." },
-  t_scraper: { q: "gasket scraper", buy: "Buy one.", hf: "Fine. Use plastic razor blades on aluminum and steel on iron." },
-  t_feeler: { q: "feeler gauge set", buy: "Buy a set.", hf: "Fine for ring gap." },
-  t_straightedge: { q: "precision straightedge 24 in", buy: "Skip it and let the machine shop check deck and head flatness.", hf: "A cheap bar isn't precise enough. If you buy, get a ground straightedge." },
-  t_micrometer: { q: "outside micrometer set 0-3", buy: "Usually skip it: having the machine shop measure is cheaper.", hf: "HF mics are OK for occasional checks if you zero them against the standard.", used: "Check that the standards come with it and that it zeroes." },
-  t_boregauge: { q: "dial bore gauge", buy: "Usually skip it: the machine shop measures bores.", hf: "Fine for a one-time check if you set it with a micrometer." },
-  t_ringcomp: { q: "piston ring compressor", buy: "Buy one, or check the loaner lists.", hf: "The HF band type works. A tapered sleeve for your exact bore is easier but costs more." },
-  t_rodboots: { q: "rod bolt protectors", buy: "Buy them. Vacuum line pieces also work in a pinch." },
-  t_chaser: { q: "7/16-14 thread chaser", buy: "Buy a chaser, not a cutting tap.", hf: "Any chaser. The point is cleaning threads, not cutting them." },
-  t_primer: { q: "small block Chevy oil pump primer tool", buy: "Buy one (cheap), or check the loaner lists.", used: "Make sure the tip fits the pump shaft hex." },
-  t_timinglight: { q: "inductive timing light", buy: "Buy one, or check the loaner lists.", hf: "HF timing lights are fine." },
-  t_oilgauge: { q: "mechanical oil pressure test gauge", buy: "Buy one, or check the loaner lists.", hf: "Fine for a first-start check." }
-};
-// Steps: common mistakes, rough first-timer time, YouTube search.
-const STEP_INFO = {
-  profile: { time: "15–30 min", yt: "how to read GM RPO codes glove box sticker", mistakes: ["Ordering parts for the wrong engine because you guessed from the badge.", "Not photographing the VIN and RPO sticker for later."] },
-  safety: { time: "1–2 hours", yt: "engine removal garage setup safety jack stands", mistakes: ["Working under the truck on the jack alone.", "Jacking on the oil pan.", "No extinguisher within reach."] },
-  tools: { time: "1–3 hours (plus shopping)", yt: "tools needed to rebuild small block chevy 350", mistakes: ["Buying expensive measuring tools the machine shop would use anyway.", "No way to label bolts and connectors."] },
-  bayclear: { time: "3–6 hours", yt: "1994 chevy c1500 5.7 engine removal disconnect", mistakes: ["Not labeling connectors and vacuum lines.", "Opening the A/C system.", "Twisting TBI fuel lines instead of using the right disconnect."] },
-  under: { time: "3–6 hours", yt: "1994 chevy c1500 4l60e transmission removal", mistakes: ["Forgetting the converter bolts or a hidden bellhousing bolt.", "Letting the converter slide off.", "Snapping rusty exhaust studs without soaking them first."] },
-  lift: { time: "2–4 hours", yt: "chevy c1500 350 engine pull with hoist load leveler", mistakes: ["Lifting with something still attached (ground strap, harness, cooler lines).", "Chain angle too steep, without a leveler."] },
-  separate: { time: "1–2 hours", yt: "small block chevy mount engine on engine stand flexplate removal", mistakes: ["Short or weak bolts to the stand.", "Not marking the flexplate orientation."] },
-  topend: { time: "3–5 hours", yt: "small block chevy 350 teardown heads intake removal", mistakes: ["Mixing up pushrods and lifters.", "Gouging aluminum or head surfaces with a steel scraper."] },
-  bottom: { time: "3–5 hours", yt: "small block chevy 350 bottom end teardown", mistakes: ["Pulling the damper by the outer ring.", "Mixing up rod or main caps. Mark them and keep them oriented.", "Skipping the ridge check before pushing pistons out."] },
-  measure: { time: "2–4 hours (or let the shop do it)", yt: "how to measure engine block crank bearing clearance plastigage", mistakes: ["Measuring cold parts in a hot garage and trusting tenths.", "Ordering pistons or rings before the shop gives a size."] },
-  parts: { time: "2–4 hours of research and ordering", yt: "small block chevy rebuild parts what to buy budget", mistakes: ["No-name gasket sets and mystery bearings.", "Ordering before the shop reports sizes.", "Not checking fitment notes (4WD, pan depth, one head vs two)."] },
-  shop: { time: "1–2 hours of calls; shop turnaround often takes weeks", yt: "what does a machine shop do to an engine block rebuild", mistakes: ["No written quote.", "Letting the shop deck heavily on a TBI 350 without asking about quench and intake alignment.", "Not bringing the new bearings and pistons for fit checks."] },
-  shortblock: { time: "6–10 hours", yt: "small block chevy 350 short block assembly rings bearings", mistakes: ["Not measuring ring gap in each bore.", "Forgetting rod bolt protectors.", "Dry bearings, or torquing without lube."] },
-  longblock: { time: "5–8 hours", yt: "small block chevy 350 cylinder head install hydraulic roller lifters", mistakes: ["No sealant on water-jacket head bolts.", "Wrong torque sequence.", "Rocker nuts set with the lifter on the lobe."] },
-  intake: { time: "3–5 hours", yt: "small block chevy tbi intake install distributor oil pump drive", mistakes: ["Too much RTV at the intake ends.", "Oil pump hex not seated before the distributor goes in.", "Distributor a tooth off."] },
-  transprep: { time: "2–4 hours", yt: "4l60e torque converter install seat and cooler line flush", mistakes: ["Skipping the cooler flush.", "Converter not fully seated (you should feel it drop in over three engagements)."] },
-  mate: { time: "3–6 hours", yt: "chevy c1500 350 engine install mate to 4l60e transmission", mistakes: ["Pulling the engine and trans together with bolts instead of letting them seat.", "Forcing converter bolts."] },
-  hookup: { time: "4–8 hours", yt: "1994 chevy c1500 engine install reconnect wiring hoses tbi", mistakes: ["A missed ground strap.", "A tool or rag left on the intake.", "Coolant filled fast, with air trapped in the heater core."] },
-  start: { time: "2–3 hours", yt: "first start rebuilt small block chevy prime oil pump set timing tbi", mistakes: ["Not priming the oil system.", "Letting it idle with no oil pressure.", "Setting timing with the set-timing connector still plugged in."] },
-  miles: { time: "About 500 miles of driving plus a 1-hour oil change", yt: "rebuilt engine break in first 500 miles oil change", mistakes: ["Long constant-speed highway runs right away.", "Skipping the early oil change.", "Ignoring a small ATF or coolant drip."] }
-};
-// Specs: what it means, how to check, tool to use.
-const SPEC_INFO = [
-  [/firing order|cylinder banks/i, { mean: "The order the cylinders fire. The plug wires must follow it around the cap in the rotor's direction.", how: "Find the #1 terminal on the cap, then route wires in firing order in the rotor's direction (clockwise on a small block V8).", tools: ["t_timinglight"] }],
-  [/stock cam/i, { mean: "The 1994 L05/L03 left the factory with a hydraulic roller cam: tall lifters, dog-bone guides and a spider hold-down.", how: "With the intake off, look for the spider plate and dog bones in the lifter valley.", tools: [] }],
-  [/head bolts/i, { mean: "Torque that clamps the head gasket. Stock Gen I bolts aren't torque-to-yield.", how: "Clean the threads with a chaser, oil the bolts or apply sealant, then torque in stages from the center out.", tools: ["t_chaser", "t_torque12"] }],
-  [/sealant/i, { mean: "Some head bolt holes go into coolant. Without sealant, coolant weeps up the threads.", how: "Coat the threads of the water-jacket bolts before torquing.", tools: [] }],
-  [/intake bolts/i, { mean: "Clamping force on the intake gaskets. Too much can crack or warp.", how: "Follow the intake gasket or manual sequence, in two or three passes.", tools: ["t_torque12", "t_torque_inlb"] }],
-  [/rocker nuts/i, { mean: "Sets valve lash for hydraulic lifters (preload).", how: "Turn the engine so the lifter sits on the base circle (valve closed), zero the lash, then torque or add preload as the line says.", tools: ["t_torque12"] }],
-  [/oil clearance/i, { mean: "The oil film gap between the bearing and the crank. Too tight wipes bearings, too loose kills oil pressure.", how: "Lay Plastigage across a dry journal, torque the cap, remove it, and read the flattened width against the scale.", tools: ["t_micrometer", "t_torque12"] }],
-  [/ring gap/i, { mean: "The end gap of each ring in its bore. Too tight and it butts together when hot and scuffs the bore.", how: "Push the ring square into the bore with an upside-down piston and measure the gap with feeler gauges.", tools: ["t_feeler"] }],
-  [/break-in/i, { mean: "The first minutes that seat the cam/lifters and the rings.", how: "Prime the oil first, watch oil pressure, and vary the rpm. Follow the cam card for a flat tappet.", tools: ["t_primer", "t_oilgauge"] }],
-  [/timing/i, { mean: "The spark advance at idle that the ECM starts from.", how: "Unplug the set-timing connector, aim a timing light at the damper marks, turn the distributor to the label spec, lock it and reconnect.", tools: ["t_timinglight"] }],
-  [/coolant/i, { mean: "The 50/50 mix sets the freeze and boil protection. Trapped air causes hot spots.", how: "Fill slowly with the heater on hot, run it with the cap off to burp, and top up cold.", tools: ["t_drainpan"] }],
-  [/atf/i, { mean: "The 4L60E needs the right level hot. Low slips, overfilled foams.", how: "Put some in before the first start, then check the dipstick hot, in park, idling.", tools: [] }]
-];
-const BAY_INFO = {
-  engine: { mean: "The engine sets which parts fit. Everything in the parts list is priced for the 5.7 L05.", how: ["8th VIN digit: K = 5.7 L05, H = 5.0 L03, Z = 4.3 V6.", "The RPO sticker in the glove box lists the engine code (L05 / L03 / LB4)."], yt: "how to decode 1994 chevy truck VIN engine code" },
-  drive: { mean: "2WD and 4WD trucks differ in motor mounts, front driveshaft/transfer case removal, and some trans parts.", how: ["The model tells you: C1500 = 2WD, K1500 = 4WD.", "A transfer case and front driveshaft mean 4WD."], yt: "chevy c1500 vs k1500 difference" },
-  trans: { mean: "The trans sets the filter, fluid amount, converter and mount.", how: ["RPO codes on the glove box sticker: M30 = 4L60E, MT1 = 4L80E.", "A 4L60E has a wiring connector on the driver side and no kickdown/TV cable."], yt: "how to identify 4l60e vs 4l80e vs 700r4" },
-  miles: { mean: "Mileage and symptoms help decide hone vs bore, and which parts are just if-worn.", how: ["Write down knocks, smoke, oil pressure and coolant loss before teardown.", "Do a compression or leak-down test before pulling, if it still runs."], yt: "compression test small block chevy before rebuild" }
-};
-const PHASE_INFO = {
-  setup: "Set up the space and the tools before anything comes apart. Most first-timer delays come from missing tools mid-job.",
-  pull: "Getting the engine and trans out is mostly patience and labeling. Photo everything.",
-  split: "Separate them on the ground and get the block on a stand.",
-  tear: "Teardown is where you learn what the engine needs. Keep parts in order.",
-  inspect: "Measure (or let the shop measure) before buying pistons, rings or bearings.",
-  machine: "The machine shop sets bore and crank sizes. Get a written quote.",
-  build: "Clean, lubed, measured, torqued. Slow is fine.",
-  trans: "The cooler flush and converter seating protect the trans pump.",
-  install: "Line up, don't force. Converter seating is the big one.",
-  fire: "Prime the oil, watch pressure, set timing, then follow the break-in."
-};
-const PRINT_TEMPS = "Typical starting temps (check your spool): PLA ~200–215 °C / bed 60; PETG ~230–245 °C / bed 70–80; ASA ~240–260 °C / bed 90–100 in an enclosure; nylon needs dry filament and ~250 °C+.";
-
-function truckDesc() {
-  const e = (state.truck && state.truck.engine) || "";
-  const eng = /4\.3|V6/i.test(e) ? "4.3" : /5\.0|L03/i.test(e) ? "5.0" : /5\.7|L05/i.test(e) ? "5.7" : "";
-  const model = state.truck.drive === "4WD" ? "K1500" : "C1500";
-  return { eng, model, text: `1994 Chevy ${model}${eng ? " " + eng : ""}`, ra57: eng === "5.7" && model === "C1500" };
-}
-function shortName(n) { return String(n).split(" — ")[0].replace(/\([^)]*\)/g, "").replace(/[×x]\s*\d+\b/g, "").replace(/\s+/g, " ").trim(); }
-function lk(label, href, cls) { return `<a class="nlink${cls ? " " + cls : ""}" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(label)} <span aria-hidden="true">↗</span></a>`; }
-function isec(title, body, cls) { return `<div class="isec${cls ? " " + cls : ""}"><div class="ihead">${esc(title)}</div>${body}</div>`; }
-function ilist(arr) { return `<ul class="ilist">${arr.map(x => `<li>${esc(x)}</li>`).join("")}</ul>`; }
-function ip(t) { return `<p class="ip">${esc(t)}</p>`; }
-function ijump(id, title, step, label) {
-  return `<button class="nlink ijump" data-id="${esc(id)}" data-title="${esc(title)}"${step ? ` data-step="${esc(step)}"` : ""} onclick="jumpInfo(this)">${esc(label || title)} ›</button>`;
-}
-let infoBack = null;   // ref to return to after jumping from one item's info to another
-function jumpInfo(btn) {
-  const cur = noteSheetRef;
-  const ref = { id: btn.dataset.id, title: btn.dataset.title, ...(btn.dataset.step ? { step: btn.dataset.step } : {}) };
-  openNoteSheet(ref, "info");
-  infoBack = cur;
-  renderInfoPane();
-}
-function infoGoBack() { const r = infoBack; infoBack = null; if (r) openNoteSheet(r, "info"); }
-function raNumber(q) { return String(q).split(/\s+/).find(w => /\d/.test(w) && /^[A-Z0-9-]{4,}$/i.test(w) && !/^(19|20)\d\d$/.test(w)); }
-function specRow(key) { return specsFor().find(([k]) => slug(k) === key); }
-function specInfoFor(label) { const m = SPEC_INFO.find(([re]) => re.test(label)); return m ? m[1] : null; }
-const STEP_SPECS = { profile: [/firing/i, /stock cam/i], topend: [/head bolts/i, /stock cam/i], measure: [/oil clearance/i, /ring gap/i], shortblock: [/oil clearance/i, /ring gap/i],
-  longblock: [/head bolts/i, /sealant/i, /rocker/i], intake: [/intake bolts/i, /firing/i], transprep: [/atf/i], hookup: [/coolant/i, /atf/i], start: [/break-in/i, /timing/i], miles: [/break-in/i] };
-function ytQuery(extra) {
-  const tr = truckDesc();
-  const q = String(extra || "").replace(/1994 chevy c1500( 5\.7)?|small block chevy( 350)?|chevy c1500( 350)?/gi, " ").replace(/\s+/g, " ").trim();
-  return `${tr.text} ${q}`.trim();
-}
-
-function infoItem(t) {
-  const id = t.itemId, it = ITEMS[id], c = INFO_ITEM[id] || {}, tr = truckDesc(), H = [];
-  const short = shortName(it.name);
-  const price = state.adjust.price[id];
-  H.push(isec("At a glance", `<div class="ikv"><span class="sub">Type</span><span>${esc(it.cat === "tool" ? "Tool" : it.cat === "part" ? "Part" : "Machine shop service")} · ${esc(TAGS[it.tag] || it.tag)}</span>
-    <span class="sub">App range</span><span>${it.lo == null ? "Price not checked" : esc(rng(it.lo, it.hi))}${hasPaid(id) ? ` · you paid ${esc(cash(price))}` : ""}</span>
-    ${t.stepId ? `<span class="sub">Used in</span><span>${esc((USED_IN[id] || [t.stepId]).map(s => (findStep(s) || { step: { title: s } }).step.title).join(" · "))}</span>` : ""}</div>
-    ${it.note ? ip(it.note) : ""}`));
-  if (it.cat === "service") return H.concat(infoService(id, it)).join("");
-  const q = c.q || `${tr.text} ${short}`;
-  // where to get it
-  const seen = PRICE_SEEN[id] || [];
-  if (it.cat === "part") {
-    const pn = c.pn && raNumber(c.q || "");
-    const raSeen = seen.find(s => /rockauto\.com/i.test(s.url));
-    const ra = pn ? SHOP.rockauto(pn) : tr.ra57 ? (raSeen ? raSeen.url : RA_CATALOG) : "https://www.rockauto.com/en/catalog/chevrolet,1994";
-    const raLabel = pn ? `RockAuto · ${pn}` : tr.ra57 ? "RockAuto · 94 C1500 5.7" : "RockAuto · pick your 1994 truck";
-    const usedQ = c.uq || `chevy ${tr.eng === "4.3" ? "4.3" : "350"} ${short}`.toLowerCase();
-    const cons = c.used === U_CONS;
-    H.push(isec("Where to get it", `<div class="sub">Search links. They open in a new tab, built from ${c.pn ? "the part number" : "the part name"}: <b>${esc(q)}</b></div>
-      <div class="ilinks" data-kind="new">${lk(raLabel, ra)}${lk("AutoZone", SHOP.autozone(q))}${lk("O'Reilly", SHOP.oreilly(q))}${lk("Advance", SHOP.advance(q))}${lk("Summit Racing", SHOP.summit(q))}${lk("Amazon", SHOP.amazon(q))}${lk("eBay", SHOP.ebay(q))}</div>
-      ${cons ? "" : `<div class="sub" style="margin-top:8px">Used (Phoenix)${c.used === U_NEW ? ", new-in-box only" : ""}: <b>${esc(usedQ)}</b></div><div class="ilinks" data-kind="used">${lk("FB Marketplace", SHOP.fb(usedQ), "used")}${lk("Craigslist Phoenix", SHOP.clParts(usedQ), "used")}</div>`}
-      ${!tr.ra57 && !pn ? `<div class="sub" style="margin-top:6px">Your Bay setup isn't a 2WD 5.7, so RockAuto opens the 1994 Chevy list. Pick your exact truck there.</div>` : ""}`));
-    if (c.pn || seen.length) H.push(isec("Part numbers and prices seen", `${c.pn ? `<div class="ichips">${c.pn.map(p => `<span class="pill">${esc(p)}</span>`).join("")}</div>` : ""}
-      ${seen.length ? `<ul class="ilist">${seen.map(s => `<li>${esc(s.seen)} · ${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.where)}</a>` : esc(s.where)}</li>`).join("")}</ul>` : ""}
-      <div class="sub" style="margin-top:6px">Prices checked ${PRICE_CHECKED}. They move, so the links above show today's.</div>`));
-    if (c.fit && c.fit.length) H.push(isec("Fitment checks before you pay", ilist(c.fit), "warnish"));
-    else H.push(isec("Fitment checks before you pay", ilist([`Enter your truck (${tr.text}) in the store's vehicle selector and compare with the old part.`, "Match connectors, bolt pattern and size side by side before installing."]), "warnish"));
-    if (/^(p_gasketset|p_rings|p_mainbrg|p_rodbrg|p_cambrg|p_timing|p_pistons)$/.test(id) && tr.eng && tr.eng !== "5.7")
-      H.push(isec("Your engine", ip(tr.eng === "4.3" ? "The prices here are for the 5.7 L05. The 4.3 V6 needs its own gasket set, bearings, rings and timing set." : "The prices here are for the 5.7 L05. The 5.0 L03 shares most parts, but rings and pistons differ (smaller bore). Verify."), "warnish"));
-    H.push(isec("Cheap vs spend more", ip(c.budget || B_MID)));
-    H.push(isec("Buying used", ip(c.used || "Buy new unless you can inspect it in person: no cracks, stripped threads, heat damage or heavy wear.")));
-  } else {
-    const rentish = it.tag === "rent" || id === "t_hoist" || id === "t_transjack";
-    H.push(isec("Buy, rent or borrow", ip(c.buy || (it.tag === "own" ? "You probably own this already. Borrowing beats buying for a one-time job." : "Buy it if it's cheap and you'll reuse it. Borrow it for a one-time job.")) +
-      (id === "t_hoist" ? `<div class="sub" style="margin-top:6px">AutoZone and O'Reilly don't loan hoists, so rent from an equipment rental place or borrow one.</div>` :
-        `<div class="sub" style="margin-top:6px">Loaner programs: AutoZone Loan-A-Tool (deposit = tool price, refunded on return within 90 days) and O'Reilly's loaner tools. Check their lists for this tool.</div>`) +
-      `<div class="ilinks" style="margin-top:6px">${id === "t_hoist" ? "" : lk("AutoZone Loan-A-Tool", LOANER.az) + lk("O'Reilly loaner tools", LOANER.orly)}${rentish ? lk("Rental near Phoenix", SHOP.maps(short.replace(/,.*$/, "") + " rental Phoenix AZ")) : ""}${(c.links || []).map(([l, u]) => lk(l, u)).join("")}</div>`));
-    H.push(isec("Where to get it", `<div class="sub">Search: <b>${esc(q)}</b></div>
-      <div class="ilinks" data-kind="new">${lk("Harbor Freight", SHOP.hf(q))}${lk("AutoZone", SHOP.autozone(q))}${lk("O'Reilly", SHOP.oreilly(q))}${lk("Amazon", SHOP.amazon(q))}${lk("eBay", SHOP.ebay(q))}</div>
-      <div class="sub" style="margin-top:8px">Used (Phoenix)</div><div class="ilinks" data-kind="used">${lk("FB Marketplace", SHOP.fb(q), "used")}${lk("Craigslist Phoenix", SHOP.clTools(q), "used")}</div>`));
-    if (seen.length) H.push(isec("Prices seen", `<ul class="ilist">${seen.map(s => `<li>${esc(s.seen)} · ${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.where)}</a>` : esc(s.where)}</li>`).join("")}</ul><div class="sub">Checked ${PRICE_CHECKED}.</div>`));
-    H.push(isec("Harbor Freight or better?", ip(c.hf || "Harbor Freight is usually fine for a tool you'll use a few times. Spend more on anything you measure or torque with, or anything that holds weight over you.")));
-    H.push(isec("Buying used", ip(c.used || "Used is fine if it works in front of you. Check for cracks, bent parts, missing pieces, and leaks on anything hydraulic.")));
-  }
-  return H.join("");
-}
-function infoService(id, it) {
-  return [isec("Getting it done", ilist(["Call two or three shops with the same list and ask for a written quote.", "Ask what's included (cleaning, measuring, parts supply) and how long they need.", "Bring the bearings, pistons and rings you bought so they can check fit, or let them supply them."]) +
-    `<div class="ilinks" style="margin-top:6px">${lk("Machine shops near Phoenix", SHOP.maps("engine machine shop Phoenix AZ"))}${lk("YouTube: what this is", SHOP.yt(ytQuery(shortName(it.name).replace(/^Machine shop:\s*/i, "") + " machine shop engine")))}</div>`),
-    isec("Prices", ip(`App range ${it.lo == null ? "not checked" : rng(it.lo, it.hi)}. It comes from four published shop price lists (AR, WI, CO, TN) checked ${PRICE_CHECKED}. Phoenix prices can differ.`))];
-}
-function infoStep(t, subIdx) {
-  const h = findStep(t.stepId), s = h.step, si = STEP_INFO[s.id] || {}, H = [];
-  if (subIdx != null) {
-    const line = lineText(s.do[subIdx]);
-    H.push(isec("This line", ip(line) + `<div class="sub" style="margin-top:4px">Part of step: ${esc(s.title)}</div>`));
-  }
-  H.push(isec("Why it matters", ip(stripTags(s.why))));
-  H.push(isec("Rough time for a first-timer", ip(si.time || "Plan a few hours.") + `<div class="sub">A rough guess, not a promise. Rust, missing tools and parts runs add time.</div>`));
-  if (s.warn) H.push(isec("Safety", ip(stripTags(s.warn)), "danger"));
-  if (si.mistakes && si.mistakes.length) H.push(isec("Common mistakes", ilist(si.mistakes), "warnish"));
-  const specs = specsFor().filter(([k]) => (STEP_SPECS[s.id] || []).some(re => re.test(k)));
-  if (specs.length) H.push(isec("Related specs", `<div class="ikv">${specs.map(([k, v]) => `<span class="sub">${esc(k)}</span><span>${esc(stripTags(v))}</span>`).join("")}</div>`));
-  const kit = (STEP_KIT[s.id] || {}).items || [];
-  if (kit.length) H.push(isec("Parts and tools for this step", `<div class="ilinks">${kit.filter(i => ITEMS[i]).map(i => ijump("item:" + i, ITEMS[i].name, s.id, shortName(ITEMS[i].name))).join("")}</div>`));
-  const pr = STEP_PRINTS[s.id] || [];
-  if (pr.length) H.push(isec("Printable helpers", `<div class="ilinks">${pr.filter(([k]) => PRINTS[k]).map(([k, n]) => ijump("print:" + k, PRINTS[k].name, "", n)).join("")}</div>`));
-  if (s.tip) H.push(isec("Tip", ip(stripTags(s.tip))));
-  const yq = ytQuery(subIdx != null ? lineText(s.do[subIdx]).split(/\s+/).slice(0, 9).join(" ") : si.yt || s.title);
-  H.push(isec("Watch it done", `<div class="sub">YouTube search: <b>${esc(yq)}</b></div><div class="ilinks">${lk("YouTube", SHOP.yt(yq))}${subIdx != null && si.yt ? lk("Whole step", SHOP.yt(ytQuery(si.yt))) : ""}</div>`));
-  return H.join("");
-}
-function infoPhase(t) {
-  const p = PHASES.find(x => x.id === t.phaseId), title = p.title.replace(/^Phase \d+ — /, "");
-  return [isec("About this phase", ip(PHASE_INFO[p.id] || stripTags(p.title))),
-    isec("Steps and rough first-timer time", `<div class="ikv">${p.steps.map(s => `<span>${ijump("step:" + s.id, s.title, "", s.title)}</span><span class="sub">${esc((STEP_INFO[s.id] || {}).time || "")}</span>`).join("")}</div><div class="sub" style="margin-top:6px">Times are rough guesses.</div>`),
-    isec("Watch it done", `<div class="ilinks">${lk("YouTube: " + title, SHOP.yt(ytQuery(title)))}</div>`)].join("");
-}
-function infoSpec(t) {
-  const row = specRow(t.key), H = [];
-  if (!row) return isec("Spec", ip("This spec isn't shown for your current Bay setup.")) + isec("Watch it done", `<div class="ilinks">${lk("YouTube", SHOP.yt(ytQuery(t.key.replace(/-/g, " "))))}</div>`);
-  const [label, val] = row, si = specInfoFor(label);
-  H.push(isec("The value", `<div class="ikv"><span class="sub">${esc(label)}</span><span>${esc(stripTags(lineText(val)))}</span></div>`));
-  H.push(isec("What it means", ip(si ? si.mean : "A reference value for this rebuild. Verify it against the part maker's instructions.")));
-  H.push(isec("How to check it", ip(si ? si.how : "Measure with the right tool, then compare with the value here and the part maker's sheet.")));
-  const tools = (si && si.tools || []).filter(i => ITEMS[i]);
-  if (tools.length) H.push(isec("Tool needed", `<div class="ilinks">${tools.map(i => ijump("item:" + i, ITEMS[i].name, "", shortName(ITEMS[i].name))).join("")}</div>`));
-  H.push(isec("Watch it done", `<div class="ilinks">${lk("YouTube: how to check", SHOP.yt(ytQuery(label.replace(/\(.*?\)|—.*$/g, "") + " how to")))}</div>`));
-  return H.join("");
-}
-function infoBay(t) {
-  const b = BAY_INFO[t.key];
-  const cur = { engine: state.truck.engine, drive: state.truck.drive, trans: state.truck.trans, miles: state.truck.miles || "not entered" }[t.key];
-  if (!b) return isec("Truck setup", ip("Part of your truck profile."));
-  return [isec("Current setting", ip(cur || "—")), isec("Why it matters", ip(b.mean)), isec("How to confirm", ilist(b.how)),
-    isec("Watch it done", `<div class="ilinks">${lk("YouTube", SHOP.yt(b.yt))}</div>`)].join("");
-}
-function infoPrint(t) {
-  const T = PRINTS[t.key];
-  if (!T) return isec("Print", ip("A printable helper.")) + isec("Filament", ip(PRINT_TEMPS));
-  const where = Object.entries(STEP_PRINTS).flatMap(([sid, arr]) => arr.filter(([k]) => k === t.key).map(([, n]) => [sid, n]));
-  const firstMat = (T.mat.match(/\b(ASA|PETG|PLA|nylon|TPU)\b/i) || ["PETG"])[0];
-  return [isec("Filament and settings", ip(T.mat) + `<div class="sub" style="margin-top:4px">${esc(USE[T.use] || "")}</div>`),
-    isec("Where it goes", where.length ? `<ul class="ilist">${where.map(([sid, n]) => `<li>${esc(n)}: ${esc((findStep(sid) || { step: { title: sid } }).step.title)}</li>`).join("")}</ul>` : ip("Anywhere you need it in the garage or cab.")),
-    T.hint ? isec("Tip", ip(T.hint)) : "",
-    isec("Print temps", ip(PRINT_TEMPS)),
-    isec("Don't print", ip("Never print anything that carries engine or transmission weight, holds fuel or brake fluid, or sits near exhaust heat."), "danger"),
-    isec("Filament", `<div class="ilinks">${lk("Amazon: " + firstMat + " filament", SHOP.amazon(firstMat + " filament 1.75mm"))}</div>`)].join("");
-}
-function infoBody(ref) {
-  const t = parseTarget(ref); if (!t) return "";
-  if (t.kind === "item") return infoItem(t);
-  if (t.kind === "step") return infoStep(t);
-  if (t.kind === "sub") return infoStep(t, t.subIndex);
-  if (t.kind === "phase") return infoPhase(t);
-  if (t.kind === "spec") return infoSpec(t);
-  if (t.kind === "bay") return infoBay(t);
-  if (t.kind === "print") return infoPrint(t);
-  return "";
-}
-function fmtAnswer(text) {
-  const out = []; let list = false;
-  const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
-  String(text).split(/\n/).forEach(raw => {
-    const l = raw.trim();
-    const li = l.match(/^([-*•]|\d+[.)])\s+(.*)$/);
-    if (li) { if (!list) { out.push("<ul>"); list = true; } out.push(`<li>${inline(li[2])}</li>`); return; }
-    if (list) { out.push("</ul>"); list = false; }
-    if (!l) return;
-    const hd = l.match(/^#{1,4}\s*(.*)$/);
-    if (hd) out.push(`<p class="ians-h">${inline(hd[1].replace(/\*\*/g, ""))}</p>`);
-    else if (/^\*\*[^*]+\*\*:?$/.test(l) || (/:$/.test(l) && l.length < 60)) out.push(`<p class="ians-h">${inline(l.replace(/\*\*/g, ""))}</p>`);
-    else out.push(`<p>${inline(l)}</p>`);
-  });
-  if (list) out.push("</ul>");
-  return out.join("");
-}
-let infoBusy = {};   // id -> {state:"busy"} | {state:"error", message}
-function infoGrokHtml(ref) {
-  const id = ref.id, cached = state.infoCache[id], busy = infoBusy[id], hasKey = !!state.grokKey;
-  return `<div class="isec igrok" id="niBox"><div class="ihead">Dig deeper with Grok</div>
-    <div class="sub">Sends this item, your truck setup, your note and the step to Grok. It asks where to get it cheap, what the gotchas are, what to check, and alternatives.</div>
-    ${cached ? `<div class="ians" id="niAnswer">${fmtAnswer(cached.text)}</div><div class="sub" id="niMeta">Saved ${esc(fmtTime(cached.t))} · available offline · included in backups</div>` : ""}
-    ${busy && busy.state === "busy" ? `<div class="nbusy" id="niBusy" style="margin-top:8px"><span class="spin"></span>Grok is digging into this…</div>` : busy && busy.state === "error" ? `<div class="nerr" id="niErr" style="margin-top:8px">${esc(busy.message)}</div>` : ""}
-    ${hasKey ? "" : `<div class="sub" id="niNoKey" style="margin-top:8px">Grok adjustments need an xAI API key (add it in the Grok tab). The built-in info above works without one.</div>`}
-    <button class="btn ghost" id="niGrok" style="width:100%;margin-top:8px" onclick="runInfoGrok()" ${hasKey && !(busy && busy.state === "busy") ? "" : "disabled"}>${cached ? "Ask Grok again" : "Dig deeper with Grok"}</button>
-  </div>`;
-}
-function infoHtml(ref) {
-  return `${infoBack ? `<button class="btn ghost sm" id="niBack" style="margin-top:10px" onclick="infoGoBack()">‹ Back to ${esc(String(infoBack.title).slice(0, 40))}</button>` : ""}
-    ${infoBody(ref)}${infoGrokHtml(ref)}
-    <div class="sub" style="margin-top:10px">Built in and works offline. Links open store and video searches, not specific listings.</div>`;
-}
-function renderInfoPane() {
-  const box = document.getElementById("nsInfoPane");
-  if (box && noteSheetRef) box.innerHTML = infoHtml(noteSheetRef);
-}
-function setSheetTab(tab) {
-  const note = document.getElementById("nsNotePane"), info = document.getElementById("nsInfoPane");
-  if (!note || !info) return;
-  note.classList.toggle("hidden", tab !== "note");
-  info.classList.toggle("hidden", tab !== "info");
-  document.getElementById("nsTabNote").setAttribute("aria-selected", String(tab === "note"));
-  document.getElementById("nsTabInfo").setAttribute("aria-selected", String(tab === "info"));
-  if (tab === "info" && !info.innerHTML.trim()) renderInfoPane();
-  const sub = document.getElementById("nsSub");
-  if (sub) sub.textContent = tab === "info" ? "More info" : sub.dataset.note;
-}
-const INFO_SYSTEM = [
-  "You are a practical, budget-minded mechanic helping someone rebuild the engine and transmission of a 1994 Chevy C1500 at home in Phoenix, Arizona.",
-  "Give practical insight on the ONE item described, in plain text with short headings and dash bullets, under 250 words:",
-  "Where to get it cheap (store types, used vs new, loaner or rental programs), Gotchas, What to check (fitment, condition, measurements), Alternatives.",
-  "Do not invent part numbers, prices or store policies. If you are unsure, say what to verify and with whom.",
-  "Torque and clearance numbers are typical only; tell the user to verify against the part maker.",
-  "Never recommend printing anything that carries engine or transmission weight, holds fuel or brake fluid, or is exposed to exhaust heat."
-].join("\n");
-function infoContext(ref) {
-  const n = state.itemNotes[ref.id];
-  const base = noteContext(ref, n ? n.text : "(no note yet)").replace(/\n\nThe note: /, "\n\nThe user's note on this item: ");
-  const built = stripTags(infoBody(ref).replace(/<a [^>]*>.*?<\/a>/g, "").replace(/<\/(div|li|p|span)>/g, "$& ")).replace(/\s+/g, " ").trim().slice(0, 1800);
-  return (base + "\n\nWhat the app already tells them: " + built + "\n\nGive practical insight: where to source it cheaply, gotchas, what to check, and alternatives.").slice(0, 8000);
-}
-async function callXaiText(messages) {
-  const res = await fetch("https://api.x.ai/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + state.grokKey },
-    body: JSON.stringify({ model: state.grokModel || "grok-4-fast", messages, temperature: 0.3, max_tokens: 900 })
-  });
-  let data;
-  try { data = await res.json(); } catch { throw new Error("HTTP " + res.status + " with a non-JSON response"); }
-  if (data.choices && data.choices[0] && data.choices[0].message) return data.choices[0].message.content;
-  throw new Error((data.error && (data.error.message || data.error)) || "HTTP " + res.status);
-}
-async function runInfoGrok() {
-  const ref = noteSheetRef;
-  if (!ref || !parseTarget(ref)) return;
-  const id = ref.id;
-  if (!state.grokKey) return renderInfoPane();
-  if (infoBusy[id] && infoBusy[id].state === "busy") return;
-  infoBusy[id] = { state: "busy" };
-  if (noteSheetRef && noteSheetRef.id === id) renderInfoPane();
-  try {
-    const text = String(await callXaiText([{ role: "system", content: INFO_SYSTEM }, { role: "user", content: infoContext(ref) }]) || "").trim();
-    if (!text) throw new Error("empty reply");
-    state.infoCache[id] = { text: text.slice(0, 6000), t: new Date().toISOString(), title: String(ref.title).slice(0, 120) };
-    delete infoBusy[id];
-    if (save()) toast("Grok's answer saved for offline");
-  } catch (err) {
-    infoBusy[id] = { state: "error", message: "Grok could not answer: " + err.message + (err instanceof TypeError ? " (no signal or the request was blocked)." : "") };
-  }
-  if (noteSheetRef && noteSheetRef.id === id) renderInfoPane();
-}
-
-function openNoteSheet(ref, tab) {
+function openNoteSheet(ref) {
   if (!parseTarget(ref)) return;
-  tab = tab === "info" ? "info" : "note";
   noteSheetRef = ref;
-  infoBack = null;
   const existing = state.itemNotes[ref.id], busy = noteBusy[ref.id], hasKey = !!state.grokKey;
   const el = document.getElementById("noteSheet");
   el.innerHTML = `<div class="nsheet" role="dialog" aria-modal="true" aria-labelledby="nsTitle" onclick="event.stopPropagation()">
     <div class="grab"></div>
     <div class="row" style="justify-content:space-between;align-items:flex-start;flex-wrap:nowrap">
-      <div style="min-width:0"><div class="sub" id="nsSub" data-note="${existing ? "Edit note" : "Add a note"}" style="color:var(--accent)">${tab === "info" ? "More info" : existing ? "Edit note" : "Add a note"}</div><h3 id="nsTitle">${esc(ref.title)}</h3></div>
+      <div><div class="sub" style="color:var(--accent)">${existing ? "Edit note" : "Add a note"}</div><h3 id="nsTitle">${esc(ref.title)}</h3></div>
       <button class="btn ghost sm" aria-label="Close" onclick="closeNoteSheet()">✕</button>
     </div>
-    <div class="nseg" role="tablist" aria-label="Note or more info">
-      <button role="tab" id="nsTabNote" aria-selected="${tab === "note"}" aria-controls="nsNotePane" onclick="setSheetTab('note')">Note</button>
-      <button role="tab" id="nsTabInfo" aria-selected="${tab === "info"}" aria-controls="nsInfoPane" onclick="setSheetTab('info')">More info</button>
-    </div>
-    <div id="nsNotePane" role="tabpanel"${tab === "note" ? "" : ' class="hidden"'}>
     <label class="sub hidden" for="nsText">Note</label>
     <textarea id="nsText" maxlength="2000" placeholder="got it, paid $38 · skip · done · it's a 4wd · or anything else">${esc(existing ? existing.text : "")}</textarea>
     <details><summary>Words that change things instantly</summary><ul class="clean">${NOTE_PHRASES.map(([a, b]) => `<li><strong>${a}</strong> — ${b}</li>`).join("")}<li>Anything else can go to Grok, which may add a tip, sub-step, warning, or part.</li></ul></details>
@@ -3073,16 +2624,13 @@ function openNoteSheet(ref, tab) {
       ${existing ? `<button class="btn danger sm" id="nsDelete" onclick="deleteNoteSheet(this)">Delete note</button>` : ""}
       <button class="btn ghost sm" id="nsCancel" onclick="closeNoteSheet()" ${existing ? "" : `style="grid-column:1 / -1"`}>Cancel</button>
     </div>
-    </div>
-    <div id="nsInfoPane" role="tabpanel"${tab === "info" ? "" : ' class="hidden"'}>${tab === "info" ? infoHtml(ref) : ""}</div>
   </div>`;
   el.classList.remove("hidden");
   el.onclick = closeNoteSheet;
-  if (tab === "note") setTimeout(() => { const ta = document.getElementById("nsText"); if (ta && noteSheetRef === ref && !ta.closest(".hidden")) ta.focus({ preventScroll: true }); }, 60);
+  setTimeout(() => { const ta = document.getElementById("nsText"); if (ta) ta.focus({ preventScroll: true }); }, 60);
 }
 function closeNoteSheet() {
   noteSheetRef = null;
-  infoBack = null;
   const el = document.getElementById("noteSheet");
   el.classList.add("hidden");
   el.innerHTML = "";
@@ -3269,8 +2817,7 @@ function gotoNote(id) {
   document.addEventListener("click", e => {
     if (Date.now() >= swallowUntil) return;
     const near = !swallowAt || Math.hypot(e.clientX - swallowAt.x, e.clientY - swallowAt.y) <= 24;
-    // (the Note | More info switch counts as "the same spot": lifting the finger must not flip the tab)
-    if (!near || (e.target.closest && e.target.closest(".nsheet") && !e.target.closest(".nseg"))) return;
+    if (!near || (e.target.closest && e.target.closest(".nsheet"))) return;
     swallowUntil = 0; e.preventDefault(); e.stopPropagation();
   }, true);
   document.addEventListener("contextmenu", e => {
