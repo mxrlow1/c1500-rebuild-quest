@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "C1500 Rebuild Quest",
-  "short_name": "C1500 Quest",
+  "name": "C1500 Rebuild",
+  "short_name": "C1500 Rebuild",
   "description": "Garage walkthrough for rebuilding the engine and transmission in a 1994 Chevy C1500.",
   "start_url": "./",
   "scope": "./",

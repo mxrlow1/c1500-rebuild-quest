@@ -6,12 +6,12 @@
 <meta name="theme-color" content="#071018" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-title" content="C1500 Quest" />
+<meta name="apple-mobile-web-app-title" content="C1500 Rebuild" />
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48" />
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
-<title>C1500 Rebuild Quest</title>
+<title>C1500 Rebuild</title>
 <style>
   :root {
     --bg: #071018;
@@ -207,6 +207,118 @@
   .bayfield { margin-bottom: 10px; }
   .bayfield > label.sub { display: block; padding: 6px 0 4px; }
   .ptpl { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; margin-top: 10px; }
+
+  /* ================= UX pass (v6): bigger text + targets, bottom nav, calmer screens ================= */
+  body { font-size: 16px; line-height: 1.45; padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .app { padding: 12px 12px 20px; }
+  .sub { font-size: 14px; }
+  header.top { position: static; padding: 10px 14px; gap: 10px; margin-bottom: 12px; }
+  header.top h1 { font-size: 17px; }
+  .logo { width: 36px; height: 36px; border-radius: 10px; font-size: 14px; }
+  .logo { font-size: 21px; }
+  .proglabel { font-size: 14px; color: var(--muted); }
+  .progwrap { flex: 0 0 96px; text-align: right; }
+  .progpct { font-size: 17px; font-weight: 800; color: var(--accent); line-height: 1.2; margin-bottom: 4px; }
+  .progbar { height: 8px; background: #1b2b3c; border-radius: 99px; overflow: hidden; }
+  .progfill { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), #8cffd3); transition: width .3s; }
+  .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0;
+    background: #0b1520; border-top: 1px solid var(--line); padding: 4px 6px env(safe-area-inset-bottom); }
+  .nav button { background: transparent; border: 0; border-radius: 12px; min-height: 60px; padding: 6px 2px; font-size: 13px; font-weight: 700; color: var(--muted);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+  .nav button .ni { font-size: 21px; line-height: 1; }
+  .nav button.active { background: #13301f; color: var(--accent); }
+  .toast { bottom: calc(84px + env(safe-area-inset-bottom)); }
+  .swtoast { bottom: calc(148px + env(safe-area-inset-bottom)); }
+  .subhead { display: flex; align-items: center; gap: 10px; margin: 12px 0; }
+  .subhead strong { font-size: 18px; }
+  .card { padding: 16px 14px; }
+  .card h2 { font-size: 22px; margin: 8px 0; }
+  .card p, ul.clean { font-size: 16px; }
+  ul.clean li { margin: 8px 0; line-height: 1.45; }
+  .btn { min-height: 48px; font-size: 16px; }
+  .btn.sm { min-height: 48px; font-size: 15px; padding: 10px 14px; }
+  .banner { font-size: 15px; line-height: 1.45; }
+  .warnbox, .tip, .safety { font-size: 15px; line-height: 1.45; }
+  .phase { padding: 12px; min-height: 64px; }
+  .phase h3 { font-size: 17px; }
+  .phase p { font-size: 14px; }
+  .badge { font-size: 13px; padding: 4px 9px; white-space: nowrap; }
+  .tag { font-size: 13px; padding: 2px 8px; }
+  .pill { font-size: 14px; }
+  .check { width: 48px; height: 48px; min-width: 48px; border-radius: 12px; }
+  select, input[type=text], input[type=password], input[type=number], textarea { font-size: 16px; min-height: 48px; }
+  /* step cards */
+  .nextlabel { display: inline-block; font-size: 13px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: #062017; background: var(--accent); border-radius: 99px; padding: 3px 10px; margin-bottom: 8px; }
+  .card.spotlight { border-color: #2d6a4f; box-shadow: 0 0 0 1px #2d6a4f, var(--shadow); }
+  .stephead h3 { font-size: 20px; line-height: 1.25; }
+  .stepbtns { display: flex; gap: 6px; align-items: center; flex: 0 0 auto; }
+  .why { color: #d5e4f1; margin: 10px 0 4px; }
+  .todo-h { font-size: 13px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: var(--muted); margin-top: 12px; }
+  details.stepmore { margin-top: 12px; border-top: 1px solid var(--line); }
+  details.stepmore > summary { list-style: none; cursor: pointer; min-height: 52px; display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--accent); padding: 4px 0; }
+  details.stepmore > summary::-webkit-details-marker { display: none; }
+  details.stepmore > summary::after { content: "Show ▾"; margin-left: auto; font-size: 14px; color: var(--muted); font-weight: 600; }
+  details.stepmore[open] > summary::after { content: "Hide ▴"; }
+  .stepdone { font-size: 17px; min-height: 54px; }
+  .card[id^="step-"] { scroll-margin-top: 12px; }
+  /* notes & info button */
+  .nbtn { flex: 0 0 auto; width: 48px; height: 48px; border-radius: 12px; border: 1px solid var(--line); background: #1b2d40; color: var(--text); font-size: 22px; font-weight: 800; line-height: 1; cursor: pointer; display: grid; place-items: center; padding: 0; }
+  .nbtn:active { background: #24405a; }
+  /* parts rows */
+  .prow-wrap { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 6px; align-items: center; border-top: 1px solid var(--line); }
+  .prow-wrap > .nextras, .prow-wrap > .nundo { grid-column: 1 / -1; }
+  .prow-wrap > .nundo { justify-self: start; margin-bottom: 8px; }
+  .prow { grid-template-columns: 34px minmax(0, 1fr) auto; border-top: 0; padding: 8px 0; min-height: 56px; align-items: center; font-size: 16px; }
+  .prow input { width: 26px; height: 26px; margin: 0; }
+  .prow small { font-size: 13px; }
+  .pprice { font-size: 15px; }
+  .pn { font-weight: 600; }
+  details.kit > summary { min-height: 52px; font-size: 16px; }
+  .kitbody .sub { font-size: 14px; }
+  /* shopping list */
+  .totals strong { font-size: 19px; white-space: nowrap; }
+  .ftoggle { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 4px 2px; border-top: 1px solid var(--line); font-size: 16px; cursor: pointer; }
+  .ftoggle input { width: 26px; height: 26px; accent-color: var(--accent); flex: 0 0 auto; }
+  details.plain { margin-top: 10px; }
+  details.plain > summary { cursor: pointer; min-height: 48px; display: flex; align-items: center; font-weight: 700; color: var(--accent); list-style: none; }
+  details.plain > summary::-webkit-details-marker { display: none; }
+  details.plain > summary::after { content: "▾"; margin-left: 8px; }
+  details.plain[open] > summary::after { content: "▴"; }
+  /* specs */
+  .specgrid { font-size: 16px; }
+  .specrow { grid-template-columns: minmax(0, 1fr) auto; padding: 10px 0; align-items: center; }
+  .specrow > span:first-child { grid-column: 1; font-size: 14px; }
+  .specrow > span:nth-child(2) { grid-column: 1; }
+  .specrow > .nbtn { grid-column: 2; grid-row: 1 / span 2; }
+  .fieldhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .bayfield > .fieldhead label.sub { padding: 6px 0 4px; }
+  .ptpl { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .fgrid label { font-size: 14px; } .fgrid small { font-size: 13px; }
+  /* More menu */
+  .mrow { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 68px; padding: 10px 12px; margin-bottom: 8px; background: var(--panel2); border: 1px solid var(--line); border-radius: 14px; color: var(--text); text-align: left; cursor: pointer; }
+  .mrow .mi { font-size: 24px; width: 32px; text-align: center; flex: 0 0 auto; }
+  .mrow b { display: block; font-size: 17px; }
+  .mrow span.sub { display: block; }
+  .mrow::after { content: "›"; margin-left: auto; font-size: 24px; color: var(--muted); }
+  /* note sheet */
+  .nsheet h3 { font-size: 20px; }
+  .nseg button { min-height: 48px; font-size: 15px; }
+  .nquick { margin-top: 8px; line-height: 1.45; }
+  .nsheet details { font-size: 14px; }
+  .nlink { min-height: 48px; font-size: 15px; }
+  .isec { font-size: 15px; }
+  .ihead { font-size: 12px; }
+  .nundo { min-height: 44px; font-size: 14px; }
+  .nchip, .nadd { font-size: 15px; }
+  .ntext { font-size: 14px; }
+  .noterow h4 { font-size: 16px; }
+  /* tour */
+  .tour-wrap { position: fixed; inset: 0; z-index: 70; background: rgba(7,16,24,.86); display: flex; align-items: flex-end; justify-content: center; }
+  .tour { width: 100%; max-width: 560px; background: var(--panel); border: 1px solid var(--line); border-radius: 22px 22px 0 0; padding: 18px 18px max(18px, env(safe-area-inset-bottom)); }
+  .tour .ticon { font-size: 40px; }
+  .tour h3 { font-size: 21px; margin: 6px 0; }
+  .tour p { font-size: 16px; color: #d5e4f1; margin: 6px 0 14px; }
+  .tdots { display: flex; gap: 6px; margin-bottom: 12px; } .tdots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); } .tdots i.on { background: var(--accent); }
   @media (prefers-reduced-motion: reduce) { .npressing { transform: none; } .nflash, .nsheet, .spin { animation: none; } }
 </style>
 </head>
@@ -214,28 +326,19 @@
 <div class="app">
   <header class="top">
     <div class="brand">
-      <div class="logo">94</div>
+      <div class="logo" aria-hidden="true">🛻</div>
       <div>
-        <h1>C1500 Rebuild Quest</h1>
-        <div class="sub">1994 Chevy engine + trans walkthrough</div>
+        <h1>C1500 Rebuild</h1>
+        <div class="proglabel" id="progLabel">0 of 20 steps done</div>
       </div>
     </div>
-    <div class="xpwrap">
-      <div class="rank" id="rankLabel">Grease Rookie</div>
-      <div class="xpbar"><div class="xpfill" id="xpFill"></div></div>
-      <div class="xplabel" id="xpLabel">0 XP</div>
+    <div class="progwrap">
+      <div class="progpct" id="progPct">0%</div>
+      <div class="progbar" id="progBar" role="progressbar" aria-label="Steps done" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progfill" id="progFill"></div></div>
     </div>
   </header>
 
-  <nav class="nav">
-    <button class="active" data-tab="home">Quest</button>
-    <button data-tab="bay">Bay</button>
-    <button data-tab="parts">Parts</button>
-    <button data-tab="grok">Grok</button>
-    <button data-tab="print">Print</button>
-    <button data-tab="specs">Specs</button>
-    <button data-tab="log">Log</button>
-  </nav>
+  <div id="subHead" class="subhead hidden"><button class="btn ghost sm" id="backMore" onclick="setTab('more')">‹ More</button><strong id="subTitle"></strong></div>
 
   <section id="tab-home"></section>
   <section id="tab-bay" class="hidden"></section>
@@ -244,7 +347,15 @@
   <section id="tab-print" class="hidden"></section>
   <section id="tab-specs" class="hidden"></section>
   <section id="tab-log" class="hidden"></section>
+  <section id="tab-more" class="hidden"></section>
 </div>
+<nav class="nav" aria-label="Main">
+  <button class="active" data-tab="home"><span class="ni" aria-hidden="true">🔧</span>Steps</button>
+  <button data-tab="parts"><span class="ni" aria-hidden="true">🛒</span>Parts</button>
+  <button data-tab="grok"><span class="ni" aria-hidden="true">💬</span>Ask Grok</button>
+  <button data-tab="more"><span class="ni" aria-hidden="true">☰</span>More</button>
+</nav>
+<div id="tour" class="tour-wrap hidden"></div>
 <div id="toast" class="toast hidden"></div>
 <button id="swToast" class="swtoast hidden" type="button">Updated, tap to reload</button>
 <div id="noteSheet" class="nsheet-wrap hidden"></div>
@@ -485,7 +596,7 @@ const PHASES = [
           "Balance only if you changed rotating mass a lot. Stock refresh usually does not need a full balance."
         ],
         warn: "Do not let a shop “deck it a bunch” on a TBI 350 unless you understand quench and intake alignment.",
-        tip: "Get a written list of operations and finished sizes. Photo the invoice into the Bay.",
+        tip: "Get a written list of operations and finished sizes. Snap a photo of the invoice on this step.",
         photo: true
       }
     ]
@@ -673,7 +784,7 @@ function firingText() {
   const k = engineKind();
   if (k === "v6") return "Firing order for the 4.3 V6 is " + FIRING.v6.order + ". Cylinders: driver bank 1-3-5, passenger 2-4-6, front to back.";
   if (k === "v8") return "Firing order for the 5.0/5.7 V8 is " + FIRING.v8.order + ". Cylinders: driver bank 1-3-5-7, passenger 2-4-6-8, front to back.";
-  return "Engine not confirmed — set it in the Bay tab. 5.0/5.7 V8: " + FIRING.v8.order + " (driver 1-3-5-7, passenger 2-4-6-8). 4.3 V6: " + FIRING.v6.order + " (driver 1-3-5, passenger 2-4-6). Confirm your engine before wiring the cap.";
+  return "Engine not confirmed — set it in More → Your truck. 5.0/5.7 V8: " + FIRING.v8.order + " (driver 1-3-5-7, passenger 2-4-6-8). 4.3 V6: " + FIRING.v6.order + " (driver 1-3-5, passenger 2-4-6). Confirm your engine before wiring the cap.";
 }
 function specsFor() {
   const k = engineKind();
@@ -747,7 +858,7 @@ function save() {
     return true;
   } catch (err) {
     console.warn("save failed", err);
-    toast("⚠ Could not save progress/notes — browser storage is full or blocked. Export the log (Bay tab) and free up space.", 6000, true);
+    toast("⚠ Could not save progress/notes — browser storage is full or blocked. Save a backup (More → Backups) and free up space.", 6000, true);
     return false;
   }
 }
@@ -1035,7 +1146,7 @@ async function saveBackupFile() {
   try { file = new File([json], name, { type: "application/json" }); } catch {}
   if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: "C1500 Rebuild Quest backup" });
+      await navigator.share({ files: [file], title: "C1500 Rebuild backup" });
       markExported(); render(); toast("Backup saved");
       return "shared";
     } catch (err) {
@@ -1088,27 +1199,58 @@ function rankName(xp) {
   return name;
 }
 
+// Four tabs in the bottom bar; the rest live under More (same screens, same ids).
+const TABS = ["home", "bay", "parts", "grok", "print", "specs", "log", "more"];
+const MORE_TABS = { bay: "Truck & backups", specs: "Specs & torque", print: "3D prints", log: "Notes & history" };
+let currentTab = "home";
 function setTab(id) {
-  document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("active", b.dataset.tab === id));
-  ["home","bay","parts","grok","print","specs","log"].forEach(t => {
-    document.getElementById("tab-" + t).classList.toggle("hidden", t !== id);
-  });
+  if (!TABS.includes(id)) id = "home";
+  const changed = id !== currentTab;
+  currentTab = id;
+  const navId = MORE_TABS[id] ? "more" : id;
+  document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("active", b.dataset.tab === navId));
+  TABS.forEach(t => document.getElementById("tab-" + t).classList.toggle("hidden", t !== id));
+  const sh = document.getElementById("subHead");
+  sh.classList.toggle("hidden", !MORE_TABS[id]);
+  document.getElementById("subTitle").textContent = MORE_TABS[id] || "";
   render();
+  if (changed) window.scrollTo(0, 0);
+}
+function goMore(id, anchor) {
+  if (id === "grok") grokSettingsOpen = true;
+  setTab(id);
+  if (anchor) requestAnimationFrame(() => { const el = document.getElementById(anchor); if (el) el.scrollIntoView({ block: "start" }); });
+}
+function renderMore() {
+  const rows = [
+    ["bay", "🚚", "Your truck", "Engine, drive, transmission, mileage"],
+    ["bay", "💾", "Backups", "Save a backup file, snapshots, move to a new phone", "backupsCard"],
+    ["log", "📝", "Notes & history", "Every note you've left, and what you've done"],
+    ["specs", "📐", "Specs & torque", "Firing order, torque, clearances"],
+    ["print", "🖨", "3D prints", "Trays, clips, caps you can print"],
+    ["grok", "🔑", "Grok settings", "Add your xAI key so Grok can help"]
+  ];
+  document.getElementById("tab-more").innerHTML = `<div class="card">
+    <h2 style="margin-top:0">More</h2>
+    ${rows.map(([t, i, name, d, a]) => `<button class="mrow" data-go="${t}"${a ? ` data-anchor="${a}"` : ""} onclick="goMore(this.dataset.go, this.dataset.anchor)"><span class="mi" aria-hidden="true">${i}</span><span><b>${name}</b><span class="sub">${d}</span></span></button>`).join("")}
+    <button class="mrow" id="tourAgain" onclick="openTour()"><span class="mi" aria-hidden="true">👋</span><span><b>Quick tour</b><span class="sub">How this app works, in 4 taps</span></span></button>
+  </div>`;
 }
 
 document.querySelector(".nav").addEventListener("click", e => {
   const b = e.target.closest("button");
   if (!b) return;
-  if (b.dataset.tab === "home") openPhaseId = null; // Quest button always returns to the campaign map
+  if (b.dataset.tab === "home") openPhaseId = null; // Steps button always returns to the home screen
   setTab(b.dataset.tab);
 });
 
 function renderHeader() {
-  const xp = computeXP();
-  state.xp = xp;
-  document.getElementById("xpFill").style.width = Math.min(100, (xp / maxXP()) * 100) + "%";
-  document.getElementById("xpLabel").textContent = xp + " XP · " + doneCount() + "/" + totalSteps() + " steps";
-  document.getElementById("rankLabel").textContent = rankName(xp);
+  state.xp = computeXP(); // still stored + exported for backup compatibility, just not shown
+  const d = doneCount(), t = totalSteps(), pct = t ? Math.round((d / t) * 100) : 0;
+  document.getElementById("progFill").style.width = pct + "%";
+  document.getElementById("progBar").setAttribute("aria-valuenow", pct);
+  document.getElementById("progPct").textContent = pct + "%";
+  document.getElementById("progLabel").textContent = d === t ? "All " + t + " steps done" : d + " of " + t + " steps done";
 }
 
 let openPhaseId = null;
@@ -1119,35 +1261,28 @@ function renderHome() {
   root.innerHTML = `
     ${backupNagHtml()}
     ${state.storageNoteDismissed ? "" : `<div class="banner" id="storageBanner">
-      <strong>Keep your progress safe:</strong> everything is saved only in this browser on this phone. On iPhone, add this page to your Home Screen (Share → Add to Home Screen), and export a backup weekly (Bay → Export) — Safari can clear site data, including photos, after about 7 days of not opening it.
-      <div class="row"><button class="btn ghost" onclick="dismissStorageNote()">Got it</button><button class="btn ghost" onclick="setTab('bay')">Go to Bay</button></div>
+      <strong>👋 Welcome!</strong> Your progress saves on this phone only, so keep the app on your Home Screen and save a backup now and then (More → Backups).
+      <div class="row"><button class="btn" id="tourStart" onclick="openTour()">Quick tour</button><button class="btn ghost" onclick="dismissStorageNote()">Got it</button></div>
     </div>`}
+    ${state.storageNoteDismissed ? noteHintHtml() : ""}
+    ${next ? renderStep(next.phase, next.step, true) : `<div class="card spotlight"><h2>All steps done 🎉</h2><p>You finished the whole C1500 rebuild. Keep your notes for the first 500 miles.</p></div>`}
     <div class="card">
-      <div class="row" style="justify-content:space-between;align-items:center">
-        <div>
-          <div class="sub">Active truck</div>
-          <strong>${esc(state.truck.engine)}</strong>
-          <div class="sub">${esc(state.truck.drive)} · ${esc(state.truck.trans)}</div>
-        </div>
-        <button class="btn ghost" onclick="setTab('bay')">Edit build</button>
-      </div>
-    </div>
-    ${noteHintHtml()}
-    ${next ? renderStep(next.phase, next.step, true) : `<div class="card"><h2>Quest complete</h2><p>You walked the full C1500 path. Keep the log and first-500-mile notes.</p></div>`}
-    <div class="card">
-      <h3 style="margin-top:0">Campaign map</h3>
+      <h3 style="margin-top:0">All phases</h3>
       ${PHASES.map(p => {
-        const all = p.steps.every(s => state.done[s.id]);
-        const some = p.steps.some(s => state.done[s.id]);
+        const n = p.steps.filter(s => state.done[s.id]).length, all = n === p.steps.length;
         return `<div class="phase" onclick="openPhase('${p.id}')"${pa("phase:" + p.id, p.title)}>
-          <div>
+          <div style="min-width:0">
             <h3>${p.title}${noteBadge("phase:" + p.id)}</h3>
-            <p>${p.blurb}</p>
+            <p>${n} of ${p.steps.length} steps done</p>
             ${noteExtras("phase:" + p.id)}
           </div>
-          <span class="badge ${all ? "done" : ""}">${all ? "CLEARED" : some ? "IN PROGRESS" : p.xp + " XP"}</span>
+          <span class="badge ${all ? "done" : ""}">${all ? "✓ Done" : n ? "In progress" : "To do"}</span>
         </div>`;
       }).join("")}
+    </div>
+    <div class="card row" style="justify-content:space-between;align-items:center;flex-wrap:nowrap">
+      <div style="min-width:0"><div class="sub">Your truck</div><strong>${esc(state.truck.engine)}</strong><div class="sub">${esc(state.truck.drive)} · ${esc(state.truck.trans)}</div></div>
+      <button class="btn ghost sm" onclick="setTab('bay')">Change</button>
     </div>
   `;
 }
@@ -1181,7 +1316,7 @@ function renderPhase(id) {
   const root = document.getElementById("tab-home");
   root.innerHTML = `
     <div class="card"${pa("phase:" + phase.id, phase.title)}>
-      <button class="btn ghost" onclick="closePhase()">← Campaign map</button>
+      <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:nowrap"><button class="btn ghost sm" onclick="closePhase()">← All phases</button>${nbtn(phase.title)}</div>
       <h2>${phase.title}${noteBadge("phase:" + phase.id)}</h2>
       <p class="sub">${phase.blurb}</p>
       ${noteExtras("phase:" + phase.id)}
@@ -1190,35 +1325,55 @@ function renderPhase(id) {
   `;
 }
 
+// Step cards: title, why, and the big Done button up front; the rest folds away.
+// Home "Next up" shows the checklist and keeps extras folded; in a phase, the next step starts open.
+const stepOpenPref = {};   // stepId -> true/false once the user opens or closes it (this session)
+function stepToggle(id, open) { stepOpenPref[id] = open; }
+function stepIsOpen(step, spotlight) {
+  if (step.id in stepOpenPref) return stepOpenPref[step.id];
+  if (spotlight) return false;
+  const n = findNext();
+  return !!(n && n.step.id === step.id);
+}
+function stepChecklist(step) {
+  return `<ul class="clean">${step.do.map((x, i) => {
+    const sid = `sub:${step.id}:${i}`, skip = isSkipped(sid), ck = !!state.checks[`${step.id}:${i}`], t = lineText(x);
+    return `<li${pa(sid, t.length > 70 ? t.slice(0, 68) + "…" : t, step.id)}><span class="${skip || ck ? "lskip" : ""}">${x === "{{FIRING}}" ? esc(firingText()) : x}</span>${skip ? `<span class="ltag">· skipped</span>` : ck ? `<span class="ltag">✓ done</span>` : ""}${noteBadge(sid)}${noteExtras(sid, true)}</li>`;
+  }).join("")}</ul>`;
+}
 function renderStep(phase, step, spotlight) {
   const on = !!state.done[step.id];
   const photos = photoCache[step.id] || [];
-  return `<div class="card" id="step-${step.id}"${pa("step:" + step.id, step.title)}>
+  const idx = stepList().findIndex(o => o.step.id === step.id) + 1;
+  const open = stepIsOpen(step, spotlight);
+  const doneBtn = `<button class="btn stepdone ${on ? "ghost" : ""}" onclick="toggleStep('${phase.id}','${step.id}', true)">${on ? "Reopen step" : "Mark step done"}</button>`;
+  return `<div class="card${spotlight ? " spotlight" : ""}" id="step-${step.id}"${pa("step:" + step.id, step.title)}>
     <div class="stephead">
-      <div>
-        ${spotlight ? `<div class="sub">Current objective</div>` : ""}
+      <div style="min-width:0">
+        ${spotlight ? `<div class="nextlabel">Next up · step ${idx} of ${totalSteps()}</div>` : ""}
         <h3 style="margin:0 0 6px">${step.title}${noteBadge("step:" + step.id)}</h3>
-        <div class="sub">${phase.title} · ${stepXP(phase, step)} XP</div>
+        <div class="sub">${spotlight ? phase.title : "Step " + idx + " of " + totalSteps()}</div>
       </div>
-      <button class="check ${on ? "on" : ""}" aria-label="${on ? "Reopen step" : "Mark step done"}" onclick="toggleStep('${phase.id}','${step.id}')">${on ? "✓" : ""}</button>
+      <div class="stepbtns">${nbtn(step.title)}<button class="check ${on ? "on" : ""}" aria-label="${on ? "Reopen step" : "Mark step done"}" onclick="toggleStep('${phase.id}','${step.id}')">${on ? "✓" : ""}</button></div>
     </div>
-    <p>${step.why}</p>
-    <ul class="clean">${step.do.map((x, i) => {
-      const sid = `sub:${step.id}:${i}`, skip = isSkipped(sid), ck = !!state.checks[`${step.id}:${i}`], t = lineText(x);
-      return `<li${pa(sid, t.length > 70 ? t.slice(0, 68) + "…" : t, step.id)}><span class="${skip || ck ? "lskip" : ""}">${x === "{{FIRING}}" ? esc(firingText()) : x}</span>${skip ? `<span class="ltag">· skipped</span>` : ck ? `<span class="ltag">✓ done</span>` : ""}${noteBadge(sid)}${noteExtras(sid, true)}</li>`;
-    }).join("")}</ul>
+    <p class="why">${step.why}</p>
     ${noteExtras("step:" + step.id, true)}
-    <div class="warnbox"><strong>Fail state:</strong> ${step.warn}</div>
-    <div class="tip"><strong>Budget tip:</strong> ${step.tip}</div>
-    ${renderKit(phase, step)}
-    ${renderHelpers(step)}
-    <label class="sub">Field notes</label>
-    <textarea oninput="saveNote('${step.id}', this.value)" placeholder="Measurements, seized bolts, parts numbers...">${esc(state.notes[step.id] || "")}</textarea>
-    <div class="photos">
-      ${photoBackend === "loading" ? `<div class="phph">Loading…</div>` : photos.map((src, i) => `<img src="${src}" alt="step photo" onclick="if(confirm('Delete this photo?')) delPhoto('${step.id}',${i})" />`).join("")}
-      ${step.photo && photoBackend !== "loading" ? `<label class="phadd">+<input type="file" accept="image/*" capture="environment" hidden onchange="addPhoto('${step.id}', this)"></label>` : ""}
-    </div>
-    <button class="btn stepdone ${on ? "ghost" : ""}" onclick="toggleStep('${phase.id}','${step.id}', true)">${on ? "Reopen step" : "Mark step done"}</button>
+    ${spotlight ? `<div class="todo-h">What to do</div>${stepChecklist(step)}${doneBtn}` : ""}
+    <details class="stepmore" data-step="${step.id}" ${open ? "open" : ""} ontoggle="stepToggle('${step.id}', this.open)">
+      <summary>${spotlight ? "Warnings, parts, notes &amp; photos" : `How to do it (${step.do.length} steps)`}</summary>
+      ${spotlight ? "" : stepChecklist(step)}
+      <div class="warnbox"><strong>Watch out:</strong> ${step.warn}</div>
+      <div class="tip"><strong>Money tip:</strong> ${step.tip}</div>
+      ${renderKit(phase, step)}
+      ${renderHelpers(step)}
+      <label class="sub" style="display:block;margin-top:10px">Field notes</label>
+      <textarea oninput="saveNote('${step.id}', this.value)" placeholder="Measurements, seized bolts, part numbers...">${esc(state.notes[step.id] || "")}</textarea>
+      <div class="photos">
+        ${photoBackend === "loading" ? `<div class="phph">Loading…</div>` : photos.map((src, i) => `<img src="${src}" alt="step photo" onclick="if(confirm('Delete this photo?')) delPhoto('${step.id}',${i})" />`).join("")}
+        ${step.photo && photoBackend !== "loading" ? `<label class="phadd" aria-label="Add a photo">📷<input type="file" accept="image/*" capture="environment" hidden onchange="addPhoto('${step.id}', this)"></label>` : ""}
+      </div>
+      ${spotlight ? "" : doneBtn}
+    </details>
   </div>`;
 }
 
@@ -1227,15 +1382,14 @@ function toggleStep(phaseId, stepId, fromBottom) {
   const step = phase.steps.find(s => s.id === stepId);
   const turningOn = !state.done[stepId];
   if (turningOn) state.done[stepId] = true; else delete state.done[stepId];
-  const chunk = stepXP(phase, step);
   state.log.unshift({
     t: new Date().toISOString(),
-    text: (turningOn ? "Cleared: " : "Reopened: ") + phase.steps.find(s => s.id === stepId).title
+    text: (turningOn ? "Done: " : "Reopened: ") + phase.steps.find(s => s.id === stepId).title
   });
-  if (save()) toast(turningOn ? `+${chunk} XP` : `Step reopened (−${chunk} XP)`);
+  if (save()) toast(turningOn ? "Step done ✓" : "Step reopened");
   render();
   if (fromBottom && turningOn && !openPhaseId) {
-    // bottom button on the Quest spotlight: jump to the top of the next objective instead of leaving you mid-page
+    // bottom button on the Next up card: jump to the top of the next step instead of leaving you mid-page
     const next = findNext();
     const el = next && document.getElementById("step-" + next.step.id);
     if (el) el.scrollIntoView({ block: "start" });
@@ -1298,58 +1452,62 @@ function renderBay() {
   const t = state.truck;
   root.innerHTML = `
     <div class="card">
-      <h3 style="margin-top:0">Truck loadout</h3>
+      <h3 style="margin-top:0">Your truck</h3>
+      <p class="sub" style="margin-top:0">Not sure? Tap ⋯ next to a field for how to check.</p>
       <div class="bayfield"${pa("bay:engine", "Engine")}>
-      <label class="sub" for="bayEngine">Engine${noteBadge("bay:engine")}</label>
+      <div class="fieldhead"><label class="sub" for="bayEngine">Engine${noteBadge("bay:engine")}</label>${nbtn("Engine")}</div>
       <select id="bayEngine" onchange="updTruck('engine', this.value)">
         ${ENGINES.map(v => `<option ${t.engine===v?"selected":""}>${v}</option>`).join("")}${ENGINES.includes(t.engine) ? "" : `<option selected>${esc(t.engine)}</option>`}
       </select>
       ${noteExtras("bay:engine")}
       </div>
       <div class="bayfield"${pa("bay:drive", "Drive")}>
-      <label class="sub" for="bayDrive">Drive${noteBadge("bay:drive")}</label>
+      <div class="fieldhead"><label class="sub" for="bayDrive">Drive${noteBadge("bay:drive")}</label>${nbtn("Drive")}</div>
       <select id="bayDrive" onchange="updTruck('drive', this.value)">
         ${DRIVES.map(v => `<option ${t.drive===v?"selected":""}>${v}</option>`).join("")}
       </select>
       ${noteExtras("bay:drive")}
       </div>
       <div class="bayfield"${pa("bay:trans", "Transmission")}>
-      <label class="sub" for="bayTrans">Transmission${noteBadge("bay:trans")}</label>
+      <div class="fieldhead"><label class="sub" for="bayTrans">Transmission${noteBadge("bay:trans")}</label>${nbtn("Transmission")}</div>
       <select id="bayTrans" onchange="updTruck('trans', this.value)">
         ${TRANSMISSIONS.map(v => `<option ${t.trans===v?"selected":""}>${v}</option>`).join("")}
       </select>
       ${noteExtras("bay:trans")}
       </div>
       <div class="bayfield"${pa("bay:miles", "Mileage + symptoms")}>
-      <label class="sub" for="bayMiles">Mileage + symptoms${noteBadge("bay:miles")}</label>
+      <div class="fieldhead"><label class="sub" for="bayMiles">Mileage + symptoms${noteBadge("bay:miles")}</label>${nbtn("Mileage + symptoms")}</div>
       <textarea id="bayMiles" onchange="updTruck('miles', this.value)">${esc(t.miles)}</textarea>
       ${noteExtras("bay:miles")}
-      </div>
-    </div>
-    <div class="card">
-      <h3 style="margin-top:0">Bay rules</h3>
-      <ul class="clean">
-        <li>Progress, notes, and photos live only in this browser on this phone. <strong>On iPhone, add this page to your Home Screen and export weekly</strong> — Safari can clear site data after about 7 days of not opening it.</li>
-        <li>Import restores a file made with Export (progress, notes, log, and photos) and replaces what is on this phone.</li>
-        <li>Tap a photo to delete it.</li>
-        <li>Check a step only after you actually did it. The XP is a liar if you are.</li>
-        <li>4WD adds shafts, t-case support, and extra brackets in Phase 1.</li>
-      </ul>
-      <div class="row" style="margin-top:12px">
-        <button class="btn ghost" onclick="exportLog()">Export log</button>
-        <label class="btn ghost" style="display:inline-block">Import<input type="file" id="importFile" accept="application/json,.json" hidden onchange="importLog(this)"></label>
-        <button class="btn danger" onclick="resetAll()">Reset quest</button>
       </div>
     </div>
     <div class="card" id="backupsCard">
       <h3 style="margin-top:0">Backups</h3>
       <p class="sub" id="persistLine">${persistLine()}</p>
-      <p class="sub">Last backup file: <strong>${state.lastExportAt ? esc(fmtTime(new Date(state.lastExportAt).toISOString())) : "never"}</strong>. Snapshots below are saved on this phone every 10 minutes while the app is open and when you leave it (the last 12, plus one a day for a week). They live in the same browser storage as your progress, so they don't replace a backup file.</p>
+      <p class="sub">Last backup file: <strong>${state.lastExportAt ? esc(fmtTime(new Date(state.lastExportAt).toISOString())) : "never"}</strong>.</p>
+      <details class="plain"><summary>What are snapshots?</summary><p class="sub">Snapshots are saved on this phone every 10 minutes while the app is open and when you leave it (the last 12, plus one a day for a week). They live in the same storage as your progress, so they don't replace a backup file.</p></details>
       <div class="row" style="margin:10px 0">
         <button class="btn" onclick="saveBackupFile()">Save backup file</button>
         <button class="btn ghost" onclick="snapNow()">Snapshot now</button>
       </div>
       <div id="snapList"><p class="sub">Loading snapshots…</p></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Move to a new phone or start over</h3>
+      <p class="sub" style="margin-top:0">Export makes one file with your progress, notes and photos. Import on the other phone replaces what's there.</p>
+      <div class="row" style="margin-top:10px">
+        <button class="btn ghost" id="exportBtn" onclick="exportLog()">Export log</button>
+        <label class="btn ghost" style="display:inline-flex;align-items:center">Import<input type="file" id="importFile" accept="application/json,.json" hidden onchange="importLog(this)"></label>
+        <button class="btn danger" onclick="resetAll()">Reset progress</button>
+      </div>
+      <details class="plain"><summary>Good to know</summary>
+      <ul class="clean">
+        <li>Progress, notes and photos live only in this app on this phone. Save a backup file now and then.</li>
+        <li>Tap a photo to delete it.</li>
+        <li>Check a step only after you actually did it.</li>
+        <li>4WD adds shafts, t-case support, and extra brackets in Phase 1.</li>
+      </ul>
+      </details>
     </div>
   `;
   renderSnapList();
@@ -1364,28 +1522,27 @@ function updTruck(k, v) {
 function renderSpecs() {
   document.getElementById("tab-specs").innerHTML = `
     <div class="card">
-      <h3 style="margin-top:0">Quick specs — verify on your parts</h3>
-      <p class="sub">These are common 1994 C1500 small-block truck values. Your bolt type, machine work, cam card, and underhood label win if they disagree.</p>
-      <p class="sub">Showing: <strong>${esc(state.truck.engine)}</strong>${engineKind() === "unknown" ? " — both V8 and V6 values shown. Confirm your engine (8th VIN digit or RPO sticker) and set it in the Bay tab." : " (change in the Bay tab)"}</p>
+      <p class="sub" style="margin-top:0">Typical values for <strong>${esc(state.truck.engine)}</strong>${engineKind() === "unknown" ? ": both V8 and V6 shown. Confirm your engine (8th VIN digit or RPO sticker) and set it in Truck &amp; backups." : ""}. Your parts' instructions win if they disagree. Tap ⋯ for what a value means and how to check it.</p>
       <div class="specgrid" id="specgrid">
-        ${specsFor().map(([k,v]) => `<div class="specrow"${pa("spec:" + slug(k), k)}><span>${k}${noteBadge("spec:" + slug(k))}</span><span>${v}</span>${noteExtras("spec:" + slug(k))}</div>`).join("")}
+        ${specsFor().map(([k,v]) => `<div class="specrow"${pa("spec:" + slug(k), k)}><span>${k}${noteBadge("spec:" + slug(k))}</span><span>${v}</span>${nbtn(k)}${noteExtras("spec:" + slug(k))}</div>`).join("")}
       </div>
     </div>
     <div class="card">
-      <h3 style="margin-top:0">Budget parts ladder</h3>
+      <details class="plain"><summary>Where to spend, where to save</summary>
       <ul class="clean">
         <li>Must-buy quality: bearings, gaskets, timing set, oil pump, seals.</li>
         <li>Usually replace: water pump, thermostat, plugs/wires, damper if walked, trans filter/cooler path.</li>
         <li>Reuse if truly good: block, crank, rods, intake, TBI body, accessories.</li>
         <li>False economy: mystery bearings, rusty or damaged head bolts, dirty cooler, tired converter full of grit.</li>
       </ul>
+      </details>
     </div>
   `;
 }
 
 function renderLog() {
-  const items = state.log.slice(0, 80).map(x => `<div class="phase"><div><h3 style="font-size:14px">${esc(x.text)}</h3><p>${esc(fmtTime(x.t))}</p></div></div>`).join("") || "<p class='sub'>No events yet.</p>";
-  document.getElementById("tab-log").innerHTML = allNotesHtml() + `<div class="card"><h3 style="margin-top:0">Quest log</h3>${items}</div>`;
+  const items = state.log.slice(0, 80).map(x => `<div class="phase"><div><h3 style="font-size:16px">${esc(x.text)}</h3><p>${esc(fmtTime(x.t))}</p></div></div>`).join("") || "<p class='sub'>No events yet.</p>";
+  document.getElementById("tab-log").innerHTML = allNotesHtml() + `<div class="card"><h3 style="margin-top:0">History</h3>${items}</div>`;
 }
 
 function fmtTime(iso) {
@@ -1397,11 +1554,11 @@ function fmtTime(iso) {
 async function exportLog() {
   downloadJson(await exportPayload(), "c1500-rebuild-quest.json");
   markExported();
-  if (document.querySelector(".nav button.active").dataset.tab === "bay") renderBay();
+  if (currentTab === "bay") renderBay();
 }
 
 function validateImport(d) {
-  if (!d || typeof d !== "object" || Array.isArray(d)) return "not a C1500 Rebuild Quest export";
+  if (!d || typeof d !== "object" || Array.isArray(d)) return "not a C1500 Rebuild backup file";
   const isObj = v => v && typeof v === "object" && !Array.isArray(v);
   if (!isObj(d.done) || !isObj(d.notes) || !isObj(d.truck) || !Array.isArray(d.log)) return "missing progress, notes, truck, or log data";
   const known = new Set(PHASES.flatMap(p => p.steps.map(s => s.id)));
@@ -1510,7 +1667,7 @@ async function resetAll() {
   state = defaultState();
   noteBusy = {}; infoBusy = {};
   openPhaseId = null;
-  if (save()) toast("Quest reset");
+  if (save()) toast("Progress reset");
   render();
 }
 
@@ -1529,20 +1686,33 @@ function contextPack() {
     "Trans: " + state.truck.trans,
     "Miles/symptoms: " + (state.truck.miles || "n/a"),
     "Completed steps: " + (done.join(", ") || "none"),
-    "Current objective: " + (next ? next.step.title : "quest complete"),
+    "Current step: " + (next ? next.step.title : "all steps done"),
     "Field notes:\n" + (notes || "none")
   ].join("\n");
 }
 
+let grokSettingsOpen = false;
 function renderGrok() {
   const root = document.getElementById("tab-grok");
   const chat = (state.grokChat || []).slice(-12).map(m =>
     `<div class="phase"><div><h3 style="font-size:13px">${m.role === "user" ? "You" : "Grok"}</h3><p style="white-space:pre-wrap;color:#d5e4f1">${esc(m.text)}</p></div></div>`
-  ).join("") || "<p class='sub'>No copilot messages yet.</p>";
+  ).join("") || "<p class='sub'>Nothing asked yet.</p>";
+  const setOpen = grokSettingsOpen || !state.grokKey;
+  grokSettingsOpen = false;
   root.innerHTML = `
     <div class="card">
-      <h3 style="margin-top:0">Grok copilot</h3>
-      <p class="sub">The app cannot run the Grok app itself in the background. It can call the xAI API from this page, or you can paste a context pack into Grok. Your key stays in this browser only.</p>
+      <h2 style="margin-top:0">Ask Grok</h2>
+      <label class="sub" for="grokQ">Ask about the job you're on</label>
+      <textarea id="grokQ" placeholder="Example: seized 15mm Y-pipe nuts, 2WD 5.7 TBI. What do I try before heat?"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="askBtn" onclick="askGrok(document.getElementById('grokQ').value)">Ask Grok</button>
+        <button class="btn ghost" onclick="copyContext()">Copy for the Grok app</button>
+      </div>
+      ${state.grokKey ? "" : `<p class="sub">Grok needs an xAI key to answer here. No key? “Copy for the Grok app” copies your truck and step so you can paste it into the Grok app.</p>`}
+    </div>
+    <div class="card">
+      <details class="plain" id="grokSettings" ${setOpen ? "open" : ""}><summary>Grok settings${state.grokKey ? " (key saved)" : ""}</summary>
+      <p class="sub">The app calls the xAI API from this page, or you can paste into the Grok app. Your key stays on this phone only.</p>
       <label class="sub">xAI API key</label>
       <input type="password" id="grokKey" value="${esc(state.grokKey)}" placeholder="xai-..." onchange="state.grokKey=this.value; save();" />
       <div style="height:8px"></div>
@@ -1553,18 +1723,11 @@ function renderGrok() {
       <div class="row" style="margin-top:10px;align-items:center">
         <label class="pill"><input type="checkbox" ${state.autoGrok?"checked":""} onchange="state.autoGrok=this.checked; save();"> Auto-ask after each checked step</label>
       </div>
-      <p class="sub">Get a key at console.x.ai. API calls need an internet connection; with no signal, use “Copy context pack” and paste it into the Grok app later.</p>
+      <p class="sub">Get a key at console.x.ai. Asking needs an internet connection; with no signal, copy it for the Grok app and paste it later.</p>
+      </details>
     </div>
     <div class="card">
-      <label class="sub">Ask about the current job</label>
-      <textarea id="grokQ" placeholder="Example: seized 15mm Y-pipe nuts, 2WD 5.7 TBI. What do I try before heat?"></textarea>
-      <div class="row" style="margin-top:10px">
-        <button class="btn" onclick="askGrok(document.getElementById('grokQ').value)">Ask Grok</button>
-        <button class="btn ghost" onclick="copyContext()">Copy context pack</button>
-      </div>
-    </div>
-    <div class="card">
-      <h3 style="margin-top:0">Thread</h3>
+      <h3 style="margin-top:0">Your conversation</h3>
       ${chat}
     </div>
   `;
@@ -1682,26 +1845,26 @@ function renderKit(phase, step) {
   const est = kitEstimate(step.id);
   const rows = (kit ? kit.items : []).map(id => {
     const base = ITEMS[id], it = effItem(id), fu = FIRST_USE[id], first = fu.step === step.id, have = hasItem(id), skip = isSkipped(id);
-    const meta = (skip ? "<strong>Skipped</strong> · not in the totals · " : "") + (first ? `${tagHtml(it)}${it.note ? " " + esc(it.note) : ""}` : `listed in ${phaseShort(fu.phase)} (${esc(stepTitle(fu.step))})`);
-    return `<div class="prow-wrap"${pa("item:" + id, base.name, step.id)}><label class="prow${have || skip ? " have" : ""}"><input type="checkbox" data-item="${id}" ${have ? "checked" : ""} onchange="toggleHave('${id}', this.checked)" aria-label="Have it: ${esc(it.name)}"><span class="pname"><span class="pn">${esc(it.name)}</span>${noteBadge("item:" + id)}<small>${meta}</small></span><span class="pprice">${first ? priceCell(id, it, base) : "—"}</span></label>${noteExtras("item:" + id, true)}</div>`;
+    const meta = (skip ? "<strong>Skipped</strong> · not in the totals · " : "") + (first ? tagHtml(it) : `listed in ${phaseShort(fu.phase)}`);
+    return `<div class="prow-wrap"${pa("item:" + id, base.name, step.id)}><label class="prow${have || skip ? " have" : ""}"><input type="checkbox" data-item="${id}" ${have ? "checked" : ""} onchange="toggleHave('${id}', this.checked)" aria-label="Have it: ${esc(it.name)}"><span class="pname"><span class="pn">${esc(it.name)}</span>${noteBadge("item:" + id)}<small>${meta}</small></span><span class="pprice">${first ? priceCell(id, it, base) : "—"}</span></label>${nbtn(base.name)}${noteExtras("item:" + id, true)}</div>`;
   }).join("") + extras.map(x => {
     const have = hasItem(x.id);
-    return `<div class="prow-wrap nextra-part"><label class="prow${have ? " have" : ""}"><input type="checkbox" data-item="${x.id}" ${have ? "checked" : ""} onchange="toggleHave('${x.id}', this.checked)" aria-label="Have it: ${esc(x.item.name)}"><span class="pname"><span class="pn">${esc(x.item.name)}</span><small><span class="nlabel">Added from your note</span> ${tagHtml(x.item)}</small></span><span class="pprice">${itemPrice(x.item)}</span></label><button class="nundo" style="margin-left:38px" data-add="${x.id}" onclick="event.stopPropagation(); removeAdded(this.dataset.add)">↶ Undo added part</button></div>`;
+    return `<div class="prow-wrap nextra-part"><label class="prow${have ? " have" : ""}"><input type="checkbox" data-item="${x.id}" ${have ? "checked" : ""} onchange="toggleHave('${x.id}', this.checked)" aria-label="Have it: ${esc(x.item.name)}"><span class="pname"><span class="pn">${esc(x.item.name)}</span><small><span class="nlabel">Added from your note</span> ${tagHtml(x.item)}</small></span><span class="pprice">${itemPrice(x.item)}</span></label><button class="nundo" data-add="${x.id}" onclick="event.stopPropagation(); removeAdded(this.dataset.add)">↶ Undo added part</button></div>`;
   }).join("");
   return `<details class="kit" id="kit-${step.id}" ${openKits.has(step.id) ? "open" : ""} ontoggle="kitToggle('${step.id}', this.open)">
     <summary>🧰 Parts &amp; tools (est. ${rng(est.lo, est.hi)})</summary>
     <div class="kitbody">
-      <div class="sub" style="margin-bottom:6px">Check the box when you have it. Estimate = new items for this step, excluding optional, nice-to-have, and tools you probably own. ${PRICE_NOTE}</div>
+      <div class="sub" style="margin-bottom:6px">Check the box when you have it. Tap ⋯ for where to buy and tips.</div>
       ${kit && kit.note ? `<div class="tip"><strong>Note:</strong> ${esc(kit.note)}</div>` : ""}
       ${rows}
-      <div class="row" style="margin-top:10px"><button class="btn ghost sm" onclick="setTab('parts')">Full shopping list</button></div>
+      <div class="row" style="margin-top:10px"><button class="btn ghost sm" onclick="setTab('parts')">Full shopping list →</button></div>
     </div>
   </details>`;
 }
 function renderHelpers(step) {
   const list = STEP_PRINTS[step.id];
   if (!list) return "";
-  return `<div class="helpers"><div class="sub">🖨 Printable helpers for this step</div><div class="row" style="margin-top:6px">${list.map(([k, n]) =>
+  return `<div class="helpers"><div class="sub">🖨 Things you can 3D print for this step</div><div class="row" style="margin-top:6px">${list.map(([k, n]) =>
     `<button class="btn ghost sm" data-k="${k}" data-p="${esc(n)}"${pa("print:" + k, PRINTS[k] ? PRINTS[k].name : n)} onclick="openPrint(this.dataset.k, this.dataset.p)">${esc(n)}${noteBadge("print:" + k)}</button>`).join("")}</div></div>`;
 }
 function toggleHave(id, on) {
@@ -1719,7 +1882,7 @@ function setPartsFilter(k, v) {
 }
 function shopListText() {
   const f = partsFilter(), t = partsTotals();
-  const out = ["C1500 Rebuild Quest — shopping list" + (f.need ? " (still need)" : ""), "1994 C1500 2WD 5.7L TBI + 4L60E. " + PRICE_NOTE, ""];
+  const out = ["C1500 Rebuild — shopping list" + (f.need ? " (still need)" : ""), "1994 C1500 2WD 5.7L TBI + 4L60E. " + PRICE_NOTE, ""];
   for (const p of PHASES) {
     const ids = allPartIds().filter(id => partPhase(id) === p.id && !isSkipped(id) && partsIncluded(id) && !(f.need && hasItem(id)));
     if (!ids.length) continue;
@@ -1754,30 +1917,32 @@ function renderParts() {
     ids.forEach(id => { const it = effItem(id); if (it.lo != null && !hasItem(id) && !isSkipped(id)) { lo += it.lo; hi += it.hi; } });
     const notes = p.steps.map(s => STEP_KIT[s.id] && STEP_KIT[s.id].note).filter(Boolean);
     return `<div class="card pgroup" data-phase="${p.id}">
-      <div class="row" style="justify-content:space-between;align-items:baseline"${pa("phase:" + p.id, p.title)}><h3 style="margin:0">${p.title}${noteBadge("phase:" + p.id)}</h3><span class="sub">still need ${rng(lo, hi)}</span></div>
-      ${notes.map(n => `<div class="tip">${esc(n)}</div>`).join("")}
+      <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:nowrap"${pa("phase:" + p.id, p.title)}><div style="min-width:0"><h3 style="margin:0">${p.title}${noteBadge("phase:" + p.id)}</h3><span class="sub">still need ${rng(lo, hi)}</span></div>${nbtn(p.title)}</div>
+      ${notes.length ? `<details class="plain"><summary>Notes for your truck</summary>${notes.map(n => `<div class="tip">${esc(n)}</div>`).join("")}</details>` : ""}
       ${ids.map(id => {
         const base = ITEMS[id], it = effItem(id), have = hasItem(id), skip = isSkipped(id);
-        if (!base) return `<div class="prow-wrap nextra-part"><label class="prow${have ? " have" : ""}"><input type="checkbox" data-item="${id}" ${have ? "checked" : ""} onchange="toggleHave('${id}', this.checked)" aria-label="Have it: ${esc(it.name)}"><span class="pname"><span class="pn">${esc(it.name)}</span><small><span class="nlabel">Added from your note</span> ${tagHtml(it)}</small></span><span class="pprice">${itemPrice(it)}</span></label><button class="nundo" style="margin-left:38px" data-add="${id}" onclick="event.stopPropagation(); removeAdded(this.dataset.add)">↶ Undo added part</button></div>`;
-        return `<div class="prow-wrap"${pa("item:" + id, base.name)}><label class="prow${have || skip ? " have" : ""}"><input type="checkbox" data-item="${id}" ${have ? "checked" : ""} onchange="toggleHave('${id}', this.checked)" aria-label="Have it: ${esc(it.name)}"><span class="pname"><span class="pn">${esc(it.name)}</span>${noteBadge("item:" + id)}<small>${skip ? "<strong>Skipped</strong> · not in the totals · " : ""}${tagHtml(it)} used in: ${USED_IN[id].map(s => esc(stepTitle(s))).join(", ")}${it.note ? "<br>" + esc(it.note) : ""}</small></span><span class="pprice">${priceCell(id, it, base)}</span></label>${noteExtras("item:" + id, true)}</div>`;
+        if (!base) return `<div class="prow-wrap nextra-part"><label class="prow${have ? " have" : ""}"><input type="checkbox" data-item="${id}" ${have ? "checked" : ""} onchange="toggleHave('${id}', this.checked)" aria-label="Have it: ${esc(it.name)}"><span class="pname"><span class="pn">${esc(it.name)}</span><small><span class="nlabel">Added from your note</span> ${tagHtml(it)}</small></span><span class="pprice">${itemPrice(it)}</span></label><button class="nundo" data-add="${id}" onclick="event.stopPropagation(); removeAdded(this.dataset.add)">↶ Undo added part</button></div>`;
+        return `<div class="prow-wrap"${pa("item:" + id, base.name)}><label class="prow${have || skip ? " have" : ""}"><input type="checkbox" data-item="${id}" ${have ? "checked" : ""} onchange="toggleHave('${id}', this.checked)" aria-label="Have it: ${esc(it.name)}"><span class="pname"><span class="pn">${esc(it.name)}</span>${noteBadge("item:" + id)}<small>${skip ? "<strong>Skipped</strong> · not in the totals · " : ""}${tagHtml(it)}</small></span><span class="pprice">${priceCell(id, it, base)}</span></label>${nbtn(base.name)}${noteExtras("item:" + id, true)}</div>`;
       }).join("")}
     </div>`;
   }).join("");
   root.innerHTML = `
     <div class="card">
-      <h3 style="margin-top:0">Parts &amp; tools shopping list</h3>
-      <div class="warnbox" id="priceNote">${PRICE_NOTE} Sources are listed in price-sources.md.</div>
+      <h2 style="margin-top:0">Shopping list</h2>
       <div class="totals">
-        <div><div class="sub">Still need</div><strong id="needTotal">${rng(t.need.lo, t.need.hi)}</strong><div class="sub">${t.need.n} items</div></div>
+        <div><div class="sub">Still to buy</div><strong id="needTotal">${rng(t.need.lo, t.need.hi)}</strong><div class="sub">${t.need.n} items</div></div>
         <div><div class="sub">Total (listed)</div><strong id="allTotal">${rng(t.all.lo, t.all.hi)}</strong><div class="sub">${t.all.n} items</div></div>
       </div>
+      <div class="sub" id="priceNote">${PRICE_NOTE}</div>
+      <details class="plain"><summary>Cost breakdown</summary>
       <div class="sub" id="partsBreakdown">Still need, by type: parts ${rng(t.part.lo, t.part.hi)} · machine shop ${rng(t.service.lo, t.service.hi)} · tools to buy ${rng(t.buy.lo, t.buy.hi)} · rentals ${rng(t.rent.lo, t.rent.hi)}${f.own ? ` · tools you may own ${rng(t.own.lo, t.own.hi)}` : ""}.<br>
         Of that, "replace-if-worn" items are ${rng(t.worn.lo, t.worn.hi)} — skip them if yours measure good.${t.unpriced ? `<br>${t.unpriced} listed item(s) are marked "price not checked" and aren't in the totals.` : ""}<br>
-        Machine shop prices vary a lot by region (ranges come from four published price lists).</div>
-      <div class="row" style="margin-top:10px">
-        <label class="pill"><input type="checkbox" id="fNeed" ${f.need ? "checked" : ""} onchange="setPartsFilter('need', this.checked)"> Still need only</label>
-        <label class="pill"><input type="checkbox" id="fOpt" ${f.opt ? "checked" : ""} onchange="setPartsFilter('opt', this.checked)"> Include optional + nice-to-have</label>
-        <label class="pill"><input type="checkbox" id="fOwn" ${f.own ? "checked" : ""} onchange="setPartsFilter('own', this.checked)"> Include tools you probably own</label>
+        Machine shop prices vary a lot by region (ranges come from four published price lists). Sources are in price-sources.md.</div>
+      </details>
+      <div style="margin-top:6px">
+        <label class="ftoggle"><input type="checkbox" id="fNeed" ${f.need ? "checked" : ""} onchange="setPartsFilter('need', this.checked)"> Only show what I still need</label>
+        <label class="ftoggle"><input type="checkbox" id="fOpt" ${f.opt ? "checked" : ""} onchange="setPartsFilter('opt', this.checked)"> Show optional + nice-to-have</label>
+        <label class="ftoggle"><input type="checkbox" id="fOwn" ${f.own ? "checked" : ""} onchange="setPartsFilter('own', this.checked)"> Show tools I probably own</label>
       </div>
       <div class="row" style="margin-top:10px">
         <button class="btn" id="copyShop" onclick="copyShopList()">Copy shopping list</button>
@@ -2086,7 +2251,7 @@ function meshBBox(t) {
 }
 function stlBytes(M, name) {
   const t = M.t, n = t.length / 9, buf = new ArrayBuffer(84 + 50 * n), dv = new DataView(buf);
-  const head = ("C1500 Rebuild Quest STL: " + name).slice(0, 80);
+  const head = ("C1500 Rebuild STL: " + name).slice(0, 80);
   for (let i = 0; i < head.length; i++) dv.setUint8(i, head.charCodeAt(i) & 0x7f);
   dv.setUint32(80, n, true);
   for (let k = 0; k < n; k++) {
@@ -2206,13 +2371,13 @@ function renderPrint() {
   const kind = printUI.kind, T = PRINTS[kind], v = printVals(kind), gs = state.grokScad;
   document.getElementById("tab-print").innerHTML = `
     <div class="card">
-      <h3 style="margin-top:0">Print shop</h3>
+      <p class="sub" style="margin-top:0">Pick a template, set the sizes, download the file for your slicer.</p>
       <div class="safety" id="printSafety"><strong>Safety rule:</strong> never print anything load-bearing (engine/trans mounts, lifting points, brackets that hold weight), anything that touches fuel or fuel vapor, or anything near the exhaust manifolds, Y-pipe, or other high heat. Prints are helpers, organizers, clips, and covers — test-fit, and buy the real part when it matters.</div>
       <label class="sub">Template</label>
       <select id="printKind" onchange="setPrintKind(this.value)">${Object.entries(PRINTS).map(([k, x]) => `<option value="${k}" ${k === kind ? "selected" : ""}>${x.name}</option>`).join("")}</select>
       ${Object.keys(T.presets || {}).length ? `<div style="height:8px"></div><label class="sub">Preset</label>
       <select id="printPreset" onchange="applyPreset(this.value)"><option value="">Custom / defaults</option>${Object.keys(T.presets).map(n => `<option ${printUI.preset === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select>` : ""}
-      <div class="ptpl"${pa("print:" + kind, T.name)}><div class="sub">Template · press and hold for a note</div><strong>${esc(T.name)}</strong>${noteBadge("print:" + kind)}${noteExtras("print:" + kind)}</div>
+      <div class="ptpl"${pa("print:" + kind, T.name)}><div style="min-width:0"><div class="sub">Template</div><strong>${esc(T.name)}</strong>${noteBadge("print:" + kind)}${noteExtras("print:" + kind)}</div>${nbtn(T.name)}</div>
       <div class="tip" style="margin-top:10px"><strong>Material:</strong> ${esc(USE[T.use])}. ${esc(T.mat)}.<br><strong>Tip:</strong> ${esc(T.hint)}</div>
       <div class="fgrid" id="printFields">
         ${T.fields.map(f => `<div><label for="pf-${f.k}">${f.label}${f.sel || f.int ? "" : " (mm)"}</label>
@@ -2282,7 +2447,7 @@ async function designWithGrok() {
   const prompt = grokDesignPrompt(desc);
   if (!state.grokKey) {
     const ok = () => toast("No API key — design prompt copied. Paste it into Grok, then open the code in OpenSCAD.", 4000);
-    try { navigator.clipboard.writeText(prompt).then(ok, () => toast("No API key set (Grok tab). Copy failed — type the request into Grok.", 4000, true)); } catch { toast("No API key set (Grok tab).", 4000, true); }
+    try { navigator.clipboard.writeText(prompt).then(ok, () => toast("No API key set (More → Grok settings). Copy failed — type the request into Grok.", 4000, true)); } catch { toast("No API key set (More → Grok settings).", 4000, true); }
     return;
   }
   const btn = document.getElementById("grokDesignBtn");
@@ -2310,7 +2475,7 @@ function downloadGrokScad() {
 // Hold ~500 ms (or right-click) on anything with data-note-id to add a note. Instant rules run
 // offline on save; free-form notes can ask Grok for a whitelisted JSON plan. Every change records
 // the prior value of each field it touched, so Undo restores exactly.
-const NOTE_HINT = "Tip: press and hold anything to add a note";
+const NOTE_HINT = "Tip: tap ⋯ on a step or part for your notes, where to buy it, and tips. Pressing and holding works too.";
 const ENGINES = ["5.7L TBI L05 / VIN K", "5.0L TBI L03 / VIN H", "4.3L V6 TBI", "Other / not sure"];
 const DRIVES = ["2WD", "4WD"];
 const TRANSMISSIONS = ["4L60E", "4L80E", "700R4 / 4L60", "Manual", "Not sure"];
@@ -2531,7 +2696,7 @@ function applyActions(t, actions) {
     else if (a.type === "skip_item") { if (put("skip", a.item, true)) words.push(a.item.startsWith("sub:") ? "marked this line skipped" : on(a.item, "skipped it (out of the totals)")); }
     else if (a.type === "complete_step") {
       const h = findStep(a.step);
-      if (h && put("done", a.step, true)) words.push(`completed the step (+${stepXP(h.phase, h.step)} XP)`);
+      if (h && put("done", a.step, true)) words.push("completed the step");
     } else if (a.type === "check_sub") { if (put("checks", a.step + ":" + a.index, true)) words.push("checked off this line"); }
     else if (a.type === "set_config") { if (put("truck", a.field, a.value)) words.push(`set ${LABEL[a.field]} to ${a.value}`); }
     else if (["add_part", "add_tip", "add_substep", "add_warning"].includes(a.type)) {
@@ -2618,13 +2783,49 @@ function noteExtras(id, hideParts) {
 }
 function noteHintHtml() {
   if (state.noteHintSeen) return "";
-  return `<div class="banner nhint" id="noteHint"><span>📝 ${NOTE_HINT}</span><button class="btn ghost sm" onclick="state.noteHintSeen=true; save(); render()">Got it</button></div>`;
+  return `<div class="banner nhint" id="noteHint"><span>${NOTE_HINT}</span><button class="btn ghost sm" onclick="state.noteHintSeen=true; save(); render()">Got it</button></div>`;
+}
+// The visible way into notes + More info (long-press stays as a shortcut).
+function nbtn(label) {
+  return `<button class="nbtn" type="button" aria-label="Notes and info: ${esc(String(label).slice(0, 60))}" title="Notes and info" onclick="event.stopPropagation(); openFromBtn(this)">⋯</button>`;
+}
+function openFromBtn(btn) {
+  const el = btn.closest("[data-note-id]");
+  if (!el) return;
+  const ref = { id: el.dataset.noteId, title: el.dataset.noteTitle || el.dataset.noteId, ...(el.dataset.noteStep ? { step: el.dataset.noteStep } : {}) };
+  openNoteSheet(ref, state.itemNotes[ref.id] ? "note" : "info");
+}
+// ---- optional quick tour ----
+const TOUR = [
+  ["🔧", "Next up", "The Steps screen always shows the one step to do next. Read “What to do”, then tap <b>Mark step done</b>."],
+  ["🛒", "Parts", "Your shopping list with the total still to buy. Check the box when you have something."],
+  ["⋯", "Notes & info", "Tap <b>⋯</b> on a step, part, spec or print for your notes, where to buy it, and tips. Pressing and holding does the same."],
+  ["☰", "More", "Truck setup, backups, specs, 3D prints and Grok settings live under <b>More</b>. Save a backup now and then."]
+];
+let tourAt = 0;
+function openTour() { tourAt = 0; drawTour(); }
+function drawTour() {
+  const el = document.getElementById("tour"), [i, h, t] = TOUR[tourAt], last = tourAt === TOUR.length - 1;
+  el.innerHTML = `<div class="tour" role="dialog" aria-modal="true" aria-labelledby="tourH" onclick="event.stopPropagation()">
+    <div class="tdots">${TOUR.map((_, k) => `<i class="${k === tourAt ? "on" : ""}"></i>`).join("")}</div>
+    <div class="ticon" aria-hidden="true">${i}</div><h3 id="tourH">${h}</h3><p>${t}</p>
+    <div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button class="btn ghost" id="tourSkip" onclick="${tourAt ? "tourAt--; drawTour()" : "closeTour()"}">${tourAt ? "Back" : "Skip"}</button>
+      <button class="btn" id="tourNext" onclick="${last ? "closeTour()" : "tourAt++; drawTour()"}">${last ? "Done" : "Next"}</button>
+    </div></div>`;
+  el.classList.remove("hidden");
+  el.onclick = closeTour;
+}
+function closeTour() {
+  const el = document.getElementById("tour");
+  el.classList.add("hidden"); el.innerHTML = "";
+  if (!state.storageNoteDismissed) { state.storageNoteDismissed = true; save(); render(); }
 }
 function allNotesHtml() {
   const list = Object.entries(state.itemNotes).sort((a, b) => String(b[1].t).localeCompare(String(a[1].t)));
   const KIND = { step: "Step", sub: "Checklist line", item: "Part / tool", spec: "Spec", bay: "Bay", print: "Print", phase: "Phase" };
   const rows = list.map(([id, n]) => `<div class="noterow" data-noterow="${esc(id)}"><div class="top"><div><div class="sub">${KIND[id.split(":")[0]] || "Note"}</div><h4>${esc(n.title)}</h4></div><button class="btn ghost sm" data-goto="${esc(id)}" onclick="gotoNote(this.dataset.goto)">Go to</button></div><div class="ntext" style="margin-top:4px">${esc(n.text)}</div><div class="sub" style="margin-top:4px">${esc(fmtTime(n.t))}</div></div>`).join("");
-  return `<div class="card" id="allNotes"><h3 style="margin-top:0">All notes</h3>${rows || `<p class="sub">${NOTE_HINT}. Steps, checklist lines, parts, specs, Bay fields, print templates, and phases all take notes.</p>`}</div>`;
+  return `<div class="card" id="allNotes"><h3 style="margin-top:0">All notes</h3>${rows || `<p class="sub">No notes yet. Tap ⋯ on a step, part, spec or print (or press and hold anything) to add one.</p>`}</div>`;
 }
 
 // ---- the sheet ----
@@ -2653,7 +2854,7 @@ const LOANER = {
   orly: "https://www.oreillyauto.com/loaner-tools",
   hfRecalls: "https://www.harborfreight.com/customer-support/product-support/recalls"
 };
-const B_QUALITY = "Spend here. The Specs tab's budget ladder puts bearings, gaskets, the timing set, the oil pump and seals on the buy-quality list. Stick to the brands named above from a real store. Mystery parts are the false economy.";
+const B_QUALITY = "Spend here. The budget ladder in More → Specs & torque puts bearings, gaskets, the timing set, the oil pump and seals on the buy-quality list. Stick to the brands named above from a real store. Mystery parts are the false economy.";
 const B_MID = "A known brand at the low end of the range is fine. A stock rebuild doesn't need racing or heavy-duty versions.";
 const B_CHEAP = "The cheapest name brand is fine. Store brands work too if the label meets the same spec.";
 const U_NEW = "Buy new. It's a wear part, and a used one can cost you the rebuild to save a few dollars.";
@@ -2667,7 +2868,7 @@ const INFO_ITEM = {
   p_threadlock: { q: "Loctite 242 blue threadlocker", pn: ["Loctite 242 (blue, removable)"], budget: B_CHEAP, used: U_CONS },
   p_asmlube: { q: "Permatex Ultra Slick assembly lube", pn: ["Permatex Ultra Slick 4 oz"], budget: B_CHEAP, used: U_CONS, fit: ["Coat bearings, cam lobes, lifter rollers and pushrod ends. Rings and bores get oil, not thick lube."] },
   p_plastigage: { q: "Plastigage green", pn: ["Plastigage green (reads roughly 0.001–0.003 in)"], budget: B_CHEAP, used: U_CONS, fit: ["Green is the range for main and rod clearance. Don't turn the crank while it's in place."] },
-  p_headsealant: { q: "Permatex 59214 thread sealant", pn: ["Permatex 59214"], budget: B_CHEAP, used: U_CONS, fit: ["Goes on the head bolts that enter the water jacket (Specs tab)."] },
+  p_headsealant: { q: "Permatex 59214 thread sealant", pn: ["Permatex 59214"], budget: B_CHEAP, used: U_CONS, fit: ["Goes on the head bolts that enter the water jacket (More → Specs & torque)."] },
   p_exhgasket: { q: "1994 C1500 5.7 exhaust manifold to pipe gasket", budget: B_MID, used: U_NEW, fit: ["It depends on your Y-pipe style. Look at the old donut/flange before ordering.", "Plan for snapped studs: have new studs/nuts on hand, or a tap and extractor."] },
   p_gasketset: { q: "Fel-Pro 260-1269", pn: ["Fel-Pro 260-1269", "Budget alt: Enginetech C350LM"], budget: B_QUALITY, used: U_NEW, fit: ["It's listed for 1987–95 small-block Chevy with TBI. Check the contents list (head, intake, pan, timing cover, rear main).", "1986-up blocks use a one-piece rear main seal. Make sure the set's seal matches."] },
   p_rings: { q: "Sealed Power E251X", pn: ["Sealed Power E251X", "Sealed Power E-251K", "Sealed Power E377K (moly)"], budget: B_QUALITY, used: U_NEW, fit: ["Order after the machine shop gives the finished bore size (standard 350 bore is 4.000 in; oversize sets are labeled .030 etc.).", "Match the oil-ring groove depth on your pistons: deep .200 vs shallow .165.", "File-fit or at least check every gap in its own bore. Don't trust the box."] },
@@ -2678,7 +2879,7 @@ const INFO_ITEM = {
   p_pickup: { q: "Melling 12564", pn: ["Enginetech S55S2", "Melling 12564"], budget: B_MID, used: U_NEW, fit: ["Match it to your pan depth, and set it 3/8–1/2 in off the pan floor.", "It's press-fit. Seat it squarely so it can't wiggle, because a loose pickup sucks air."] },
   p_timing: { q: "Cloyes C3064K", pn: ["Cloyes C3059K", "Cloyes C3064K"], budget: B_QUALITY, used: U_NEW, fit: ["Get the factory-roller-cam version. Roller blocks use a cam thrust setup that flat-tappet sets don't fit."] },
   p_freeze: { q: "Dorman 02650", pn: ["Dorman 02650 (steel)", "Dorman 02660 (brass)"], budget: B_MID, used: U_NEW, fit: ["Brass resists rust and is worth the small difference.", "Count the plugs and sizes on your bare block before ordering."] },
-  p_headbolts: { q: "Fel-Pro ES72856", pn: ["Fel-Pro ES72856 (stock style)", "ARP 1343601 (about $84 up)"], budget: "Only buy them if the old bolts are rusty, necked or damaged. Stock Gen I bolts aren't torque-to-yield (Specs tab). If you do buy, don't mix them with leftover bolts of unknown origin.", used: U_NEW, fit: ["ES72856 covers one head in the listing seen. Check whether you need two sets for both heads.", "Water-jacket bolts get Permatex 59214 sealant."] },
+  p_headbolts: { q: "Fel-Pro ES72856", pn: ["Fel-Pro ES72856 (stock style)", "ARP 1343601 (about $84 up)"], budget: "Only buy them if the old bolts are rusty, necked or damaged. Stock Gen I bolts aren't torque-to-yield (More → Specs & torque). If you do buy, don't mix them with leftover bolts of unknown origin.", used: U_NEW, fit: ["ES72856 covers one head in the listing seen. Check whether you need two sets for both heads.", "Water-jacket bolts get Permatex 59214 sealant."] },
   p_cam: { q: "Melling MC1320", pn: ["Melling MC1320"], budget: "Only buy it if the lobes or journals are worn. If you do, get a stock-replacement hydraulic roller. Don't downgrade to a flat tappet.", used: "A used cam is only OK with its own matching lifters. Never run used lifters on a different cam.", fit: ["It's sold as a Vortec 350 cam, and it's commonly used in 87–95 roller blocks. Confirm fitment with the seller for a 1994 L05 before you pay."] },
   p_lifters: { q: "Sealed Power HT2148-16", pn: ["Qualcast 362148 (each)", "Sealed Power HT2148-16"], budget: B_MID, used: "Reuse your own only if the rollers spin smoothly with no flat spots, and put each back on its own lobe. Don't buy used.", fit: ["These are the factory-style tall hydraulic roller lifters used with dog bones and a spider."] },
   p_pushrods: { q: "7.200 pushrod 5/16 small block Chevy roller", pn: ["Factory roller length 7.200 in (per the parts list)"], budget: B_MID, used: "Reusing your own is fine if they roll straight on glass and the tips aren't worn. Keep them in order.", fit: ["Verify the length before ordering. Roll each one on glass to check straightness."] },
@@ -2694,7 +2895,7 @@ const INFO_ITEM = {
   p_flexplate: { q: "1994 C1500 5.7 4L60E flexplate", budget: B_MID, used: "Used is OK if it has no cracks around the bolt holes, the ring gear teeth aren't chewed, and it sits flat.", fit: ["Match the tooth count and converter bolt pattern to your old one before you buy."] },
   p_oil: { q: "5W-30 motor oil 5 quart", budget: B_CHEAP, used: U_CONS, fit: ["You need one jug to fill and one for the 500-mile change."] },
   p_oilfilter: { q: "WIX 51060", pn: ["WIX 51060", "ACDelco PF1218", "Mahle OC114"], budget: B_CHEAP, used: U_CONS },
-  p_coolant: { q: "antifreeze concentrate 1 gallon", budget: B_CHEAP, used: U_CONS, fit: ["Mix it 50/50, and don't mix inhibitor types (Specs tab)."] },
+  p_coolant: { q: "antifreeze concentrate 1 gallon", budget: B_CHEAP, used: U_CONS, fit: ["Mix it 50/50, and don't mix inhibitor types (More → Specs & torque)."] },
   p_hoses: { q: "Gates 22013", pn: ["Gates 22013 + 21710 (example pair seen)"], budget: B_MID, used: U_NEW, fit: ["It depends on the radiator width (26/34/41 in). Measure yours first."] },
   p_belt: { q: "1994 C1500 5.7 serpentine belt", budget: B_MID, used: U_NEW, fit: ["The length depends on A/C, air pump and alternator (97.55–99.15 in). Check the routing sticker, or measure the old belt."] },
   p_transfilter: { q: "WIX 58904", pn: ["WIX 58904"], budget: B_MID, used: U_NEW, fit: ["It fits the 1993–97 shallow pan. Check your pan depth first (some trucks have a deep pan)."] },
@@ -2973,7 +3174,7 @@ function infoGrokHtml(ref) {
     <div class="sub">Sends this item, your truck setup, your note and the step to Grok. It asks where to get it cheap, what the gotchas are, what to check, and alternatives.</div>
     ${cached ? `<div class="ians" id="niAnswer">${fmtAnswer(cached.text)}</div><div class="sub" id="niMeta">Saved ${esc(fmtTime(cached.t))} · available offline · included in backups</div>` : ""}
     ${busy && busy.state === "busy" ? `<div class="nbusy" id="niBusy" style="margin-top:8px"><span class="spin"></span>Grok is digging into this…</div>` : busy && busy.state === "error" ? `<div class="nerr" id="niErr" style="margin-top:8px">${esc(busy.message)}</div>` : ""}
-    ${hasKey ? "" : `<div class="sub" id="niNoKey" style="margin-top:8px">Grok adjustments need an xAI API key (add it in the Grok tab). The built-in info above works without one.</div>`}
+    ${hasKey ? "" : `<div class="sub" id="niNoKey" style="margin-top:8px">Grok adjustments need an xAI API key (add it in More → Grok settings). The built-in info above works without one.</div>`}
     <button class="btn ghost" id="niGrok" style="width:100%;margin-top:8px" onclick="runInfoGrok()" ${hasKey && !(busy && busy.state === "busy") ? "" : "disabled"}>${cached ? "Ask Grok again" : "Dig deeper with Grok"}</button>
   </div>`;
 }
@@ -3061,13 +3262,14 @@ function openNoteSheet(ref, tab) {
     </div>
     <div id="nsNotePane" role="tabpanel"${tab === "note" ? "" : ' class="hidden"'}>
     <label class="sub hidden" for="nsText">Note</label>
-    <textarea id="nsText" maxlength="2000" placeholder="got it, paid $38 · skip · done · it's a 4wd · or anything else">${esc(existing ? existing.text : "")}</textarea>
-    <details><summary>Words that change things instantly</summary><ul class="clean">${NOTE_PHRASES.map(([a, b]) => `<li><strong>${a}</strong> — ${b}</li>`).join("")}<li>Anything else can go to Grok, which may add a tip, sub-step, warning, or part.</li></ul></details>
-    ${hasKey ? "" : `<div class="sub" id="nsNoKey" style="margin-top:8px">Grok adjustments need an xAI API key (add it in the Grok tab). The instant words above work without one.</div>`}
+    <textarea id="nsText" maxlength="2000" placeholder="Write anything, e.g. “got it, paid $38”">${esc(existing ? existing.text : "")}</textarea>
+    <div class="sub nquick" id="nsQuick">Quick words do things for you: <b>got it</b> checks it off, <b>paid $38</b> sets the price, <b>skip</b> takes it off the list, <b>done</b> finishes a step. Anything else is just saved.</div>
+    <details><summary>All quick words</summary><ul class="clean">${NOTE_PHRASES.map(([a, b]) => `<li><strong>${a}</strong> — ${b}</li>`).join("")}<li>Anything else can go to Grok, which may add a tip, sub-step, warning, or part.</li></ul></details>
+    ${hasKey ? "" : `<div class="sub" id="nsNoKey" style="margin-top:8px">Grok adjustments need an xAI API key (add it in More → Grok settings). The quick words work without one.</div>`}
     ${busy && busy.state === "busy" ? `<div class="nbusy" style="margin-top:8px"><span class="spin"></span>Grok is adjusting from this note…</div>` : busy && busy.state === "error" ? `<div class="nerr" style="margin-top:8px">${esc(busy.message)}</div>` : ""}
     <div class="grid2">
       <button class="btn" id="nsSave" onclick="saveNoteSheet(false)">Save note</button>
-      <button class="btn ghost" id="nsGrok" onclick="saveNoteSheet(true)" ${hasKey ? "" : "disabled"}>Ask Grok to adjust</button>
+      <button class="btn ghost" id="nsGrok" onclick="saveNoteSheet(true)" ${hasKey ? "" : "disabled"}>Save + ask Grok</button>
     </div>
     <div class="grid2">
       ${existing ? `<button class="btn danger sm" id="nsDelete" onclick="deleteNoteSheet(this)">Delete note</button>` : ""}
@@ -3078,7 +3280,6 @@ function openNoteSheet(ref, tab) {
   </div>`;
   el.classList.remove("hidden");
   el.onclick = closeNoteSheet;
-  if (tab === "note") setTimeout(() => { const ta = document.getElementById("nsText"); if (ta && noteSheetRef === ref && !ta.closest(".hidden")) ta.focus({ preventScroll: true }); }, 60);
 }
 function closeNoteSheet() {
   noteSheetRef = null;
@@ -3116,7 +3317,7 @@ function saveItemNote(ref, text) {
   const r = applyActions({ ...t, id: ref.id }, acts);
   const summary = r.ops.length ? sentence(r.words) : "";
   if (r.ops.length) recordChange(ref.id, "local", summary, r.ops);
-  state.log.unshift({ t: new Date().toISOString(), text: "Note on " + String(ref.title).slice(0, 60) + (r.ops.some(o => o.path === "done" && o.next) ? " — step cleared" : "") });
+  state.log.unshift({ t: new Date().toISOString(), text: "Note on " + String(ref.title).slice(0, 60) + (r.ops.some(o => o.path === "done" && o.next) ? " — step done" : "") });
   if (save()) toast(summary || "Note saved");
   render();
   return { matched: acts.length > 0, summary };
@@ -3182,7 +3383,7 @@ async function callXaiJson(messages) {
 async function runNoteGrok(ref, text) {
   const t = parseTarget(ref);
   if (!t || !text) return;
-  if (!state.grokKey) { noteBusy[ref.id] = { state: "error", message: "Grok adjustments need an xAI API key (Grok tab)." }; render(); return; }
+  if (!state.grokKey) { noteBusy[ref.id] = { state: "error", message: "Grok adjustments need an xAI API key (More → Grok settings)." }; render(); return; }
   if (noteBusy[ref.id] && noteBusy[ref.id].state === "busy") return;
   noteBusy[ref.id] = { state: "busy" };
   render();
@@ -3265,12 +3466,13 @@ function gotoNote(id) {
   document.addEventListener("pointerup", e => { if (fired) { swallowUntil = Date.now() + 450; swallowAt = { x: e.clientX, y: e.clientY }; } fired = false; clear(); }, true);
   document.addEventListener("pointercancel", () => { fired = false; clear(); }, true);
   window.addEventListener("scroll", () => { fired = false; clear(); }, { capture: true, passive: true });
-  // swallow only the click that ends the hold: same spot, not a control inside the open sheet
+  // swallow only the click that ends the hold (same spot, once)
   document.addEventListener("click", e => {
     if (Date.now() >= swallowUntil) return;
     const near = !swallowAt || Math.hypot(e.clientX - swallowAt.x, e.clientY - swallowAt.y) <= 24;
     // (the Note | More info switch counts as "the same spot": lifting the finger must not flip the tab)
-    if (!near || (e.target.closest && e.target.closest(".nsheet") && !e.target.closest(".nseg"))) return;
+    // (one-shot, even when a sheet button now sits under the finger: lifting must never press it)
+    if (!near) return;
     swallowUntil = 0; e.preventDefault(); e.stopPropagation();
   }, true);
   document.addEventListener("contextmenu", e => {
@@ -3288,7 +3490,8 @@ function gotoNote(id) {
 
 function render() {
   renderHeader();
-  const active = document.querySelector(".nav button.active").dataset.tab;
+  const active = currentTab;
+  if (active === "more") renderMore();
   if (active === "home") renderHome();
   if (active === "bay") renderBay();
   if (active === "parts") renderParts();
