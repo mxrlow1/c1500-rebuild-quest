@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0b1220" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<title>C1500 Rebuild Quest</title>
+<style>
+  :root {
+    --bg: #071018;
+    --panel: #101a27;
+    --panel2: #162334;
+    --line: #26384d;
+    --text: #e8f0f7;
+    --muted: #8aa0b8;
+    --accent: #3ee0a4;
+    --accent2: #5aa8ff;
+    --warn: #ffb020;
+    --danger: #ff6b6b;
+    --gold: #f4c95d;
+    --shadow: 0 12px 40px rgba(0,0,0,.35);
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  body { padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  .app { max-width: 760px; margin: 0 auto; padding: 16px; }
+  header.top {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: linear-gradient(180deg, #142335, #0d1723); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); position: sticky; top: 8px; z-index: 20;
+  }
+  .brand { display: flex; gap: 10px; align-items: center; }
+  .logo { width: 42px; height: 42px; border-radius: 12px; background: radial-gradient(circle at 30% 30%, #62ffc5, #168a62); display:grid; place-items:center; font-weight:800; color:#052016; }
+  h1 { font-size: 16px; margin: 0; letter-spacing: .2px; }
+  .sub { color: var(--muted); font-size: 12px; }
+  .xpwrap { min-width: 140px; }
+  .xpbar { height: 8px; background: #1b2b3c; border-radius: 99px; overflow: hidden; }
+  .xpfill { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), #8cffd3); }
+  .xplabel { font-size: 11px; color: var(--muted); margin-top: 4px; text-align: right; }
+  .nav {
+    display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; margin: 14px 0;
+  }
+  .nav button {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 2px;
+    color: var(--muted); cursor: pointer; font-size: 13px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .nav button.active { color: #062017; background: var(--accent); border-color: transparent; font-weight: 700; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill { background: #1b2d40; border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; font-size: 12px; color: var(--muted); }
+  .btn {
+    background: var(--accent); color: #052016; border: 0; border-radius: 12px; padding: 12px 14px; font-weight: 800; cursor: pointer;
+  }
+  .btn.ghost { background: #1b2d40; color: var(--text); border: 1px solid var(--line); font-weight: 600; }
+  .btn.warn { background: var(--warn); color: #2a1b00; }
+  .btn.danger { background: #3a1c22; color: #ffb4b4; border: 1px solid #5a2a32; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  select, input[type=text], textarea {
+    width: 100%; background: #0c1622; border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px;
+  }
+  textarea { min-height: 90px; resize: vertical; }
+  .phase { display:flex; justify-content:space-between; gap:10px; align-items:center; padding: 12px; border-radius: 14px; background: var(--panel2); border: 1px solid var(--line); margin-bottom: 8px; cursor: pointer; }
+  .phase h3 { margin: 0; font-size: 15px; }
+  .phase p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: 999px; background: #1d3348; color: var(--accent); }
+  .badge.done { background: #143528; color: #7dffc4; }
+  .stephead { display:flex; justify-content:space-between; align-items:flex-start; gap: 10px; }
+  .check {
+    width: 44px; height: 44px; min-width: 44px; border-radius: 10px; font-size: 20px; border: 2px solid var(--accent); background: transparent; cursor: pointer;
+    display:grid; place-items:center; flex: 0 0 auto;
+  }
+  .check.on { background: var(--accent); color: #052016; font-weight: 900; }
+  .warnbox { background: #2a2210; border: 1px solid #5a4618; color: #ffd98a; padding: 10px 12px; border-radius: 12px; font-size: 13px; margin: 10px 0; }
+  .tip { background: #102433; border: 1px solid #21435d; color: #b9ddff; padding: 10px 12px; border-radius: 12px; font-size: 13px; margin: 10px 0; }
+  .photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .photos img, .phadd, .phph {
+    width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; border: 1px solid var(--line); background: #0c1622;
+  }
+  .phadd { display:grid; place-items:center; color: var(--muted); cursor: pointer; font-size: 28px; }
+  .phph { display:grid; place-items:center; color: var(--muted); font-size: 12px; }
+  .toast.err { background: #3a1c22; color: #ffd0d0; border-color: #7a3440; border-radius: 14px; max-width: 92vw; text-align: center; }
+  .hidden { display: none !important; }
+  .rank { font-weight: 800; color: var(--gold); }
+  .toast {
+    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+    background: #123325; color: #c8ffdf; border: 1px solid #2d6a4f; padding: 10px 14px; border-radius: 999px; z-index: 50;
+  }
+  ul.clean { margin: 8px 0 0 18px; padding: 0; color: #d5e4f1; }
+  ul.clean li { margin: 6px 0; }
+  .specgrid { display:grid; grid-template-columns: 1fr auto; gap: 8px 12px; font-size: 14px; }
+  .specgrid span:nth-child(odd) { color: var(--muted); }
+  .logo { flex: 0 0 auto; }
+  .stepdone { width: 100%; margin-top: 12px; min-height: 48px; }
+  .card[id^="step-"] { scroll-margin-top: 170px; }
+  .banner { background: #102433; border: 1px solid #21435d; color: #b9ddff; border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px; font-size: 13px; }
+  .banner .row { margin-top: 8px; }
+  @media (max-width: 400px) { .xpwrap { min-width: 118px; } }
+  .nav { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  .nav button { font-size: 12px; padding: 12px 0; }
+  input[type=number] { width: 100%; background: #0c1622; border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+  details.kit { background: var(--panel2); border: 1px solid var(--line); border-radius: 14px; margin: 10px 0; }
+  details.kit > summary { cursor: pointer; padding: 12px; font-weight: 700; list-style: none; min-height: 44px; display: flex; align-items: center; }
+  details.kit > summary::-webkit-details-marker { display: none; }
+  details.kit > summary::after { content: "▸"; margin-left: auto; color: var(--muted); }
+  details.kit[open] > summary::after { content: "▾"; }
+  .kitbody { padding: 0 12px 12px; }
+  .prow { display: grid; grid-template-columns: 30px 1fr auto; gap: 8px; align-items: start; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; cursor: pointer; }
+  .prow input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--accent); }
+  .prow small { color: var(--muted); display: block; font-size: 12px; margin-top: 3px; line-height: 1.45; }
+  .prow.have .pname { opacity: .6; }
+  .prow.have .pn { text-decoration: line-through; }
+  .pprice { font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 13px; color: #d5e4f1; }
+  .tag { font-size: 10px; padding: 2px 6px; border-radius: 99px; background: #1d3348; color: #9fc7ff; margin-right: 4px; white-space: nowrap; }
+  .tag.must { background: #3a1c22; color: #ffb4b4; } .tag.worn { background: #2a2210; color: #ffd98a; }
+  .tag.optional, .tag.nice { background: #1b2d40; color: var(--muted); } .tag.buy { background: #143528; color: #7dffc4; }
+  .tag.rent { background: #1d2a48; color: #a9c4ff; } .tag.own { background: #20262e; color: #b8c4d0; }
+  .totals { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+  .totals > div { background: var(--panel2); border: 1px solid var(--line); border-radius: 14px; padding: 10px; }
+  .totals strong { font-size: 19px; }
+  .btn.sm { padding: 9px 11px; font-size: 13px; min-height: 40px; }
+  .helpers { margin: 10px 0; }
+  .fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .fgrid label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 3px; }
+  .fgrid small { color: #7f95ad; font-size: 11px; display: block; margin-top: 3px; line-height: 1.35; }
+  #printCanvas { width: 100%; height: 260px; background: #0c1622; border: 1px solid var(--line); border-radius: 14px; touch-action: none; display: block; cursor: grab; }
+  pre.code { white-space: pre-wrap; word-break: break-word; background: #0c1622; border: 1px solid var(--line); border-radius: 12px; padding: 10px; font-size: 12px; max-height: 320px; overflow: auto; }
+  .safety { background: #3a1c22; border: 1px solid #7a3440; color: #ffd0d0; padding: 12px; border-radius: 12px; font-size: 13px; margin: 10px 0; }
+  .mat { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">94</div>
+      <div>
+        <h1>C1500 Rebuild Quest</h1>
+        <div class="sub">1994 Chevy engine + trans walkthrough</div>
+      </div>
+    </div>
+    <div class="xpwrap">
+      <div class="rank" id="rankLabel">Grease Rookie</div>
+      <div class="xpbar"><div class="xpfill" id="xpFill"></div></div>
+      <div class="xplabel" id="xpLabel">0 XP</div>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <button class="active" data-tab="home">Quest</button>
+    <button data-tab="bay">Bay</button>
+    <button data-tab="parts">Parts</button>
+    <button data-tab="grok">Grok</button>
+    <button data-tab="print">Print</button>
+    <button data-tab="specs">Specs</button>
+    <button data-tab="log">Log</button>
+  </nav>
+
+  <section id="tab-home"></section>
+  <section id="tab-bay" class="hidden"></section>
+  <section id="tab-parts" class="hidden"></section>
+  <section id="tab-grok" class="hidden"></section>
+  <section id="tab-print" class="hidden"></section>
+  <section id="tab-specs" class="hidden"></section>
+  <section id="tab-log" class="hidden"></section>
+</div>
+<div id="toast" class="toast hidden"></div>
+
+<script>
+const PHASES = [
+  {
+    id: "setup",
+    title: "Phase 0 — Garage Setup",
+    blurb: "Build your loadout before a single bolt moves.",
+    xp: 80,
+    steps: [
+      {
+        id: "profile",
+        title: "Lock in the truck build",
+        why: "C1500 steps change with 2WD/4WD, auto vs manual, and which engine is in it.",
+        do: [
+          "Confirm year is 1994 C1500 (GMT400).",
+          "Identify engine: most common is 5.7L TBI VIN K (L05). Also possible: 5.0L TBI VIN H or 4.3L V6.",
+          "Note transmission: 4L60E is the usual auto. Some trucks have 4L80E or a manual.",
+          "Note 2WD (C) vs 4WD (K). 4WD adds transfer case, front shaft, and extra brackets.",
+          "Write mileage and symptoms: knock, smoke, low oil pressure, no reverse, overheating."
+        ],
+        warn: "Do not guess the engine. Check the 8th VIN digit or the RPO sticker in the glove box.",
+        tip: "Photo the VIN plate, RPO sticker, engine pad, and transmission tag now. Future-you will thank you.",
+        photo: true
+      },
+      {
+        id: "safety",
+        title: "Safety and workspace",
+        why: "A falling GMT400 engine/trans combo can crush you. Setup is the cheapest insurance.",
+        do: [
+          "Level concrete or packed ground. No ramps-only work for this job.",
+          "Rated jack stands under the frame, never under the oil pan or sheet metal.",
+          "Engine hoist rated 2-ton minimum. These combos are heavy.",
+          "Engine stand ready before the motor comes out.",
+          "Fire extinguisher, safety glasses, gloves, drain pans, and a parts-label system.",
+          "Disconnect the negative battery cable first on every work day."
+        ],
+        warn: "Never support the engine with a floor jack under the oil pan. You will crush the pan and pickup.",
+        tip: "Rent the hoist and stand if buying both blows the budget. Harbor Freight coupons exist for a reason.",
+        photo: true
+      },
+      {
+        id: "tools",
+        title: "Tool and consumable kit",
+        why: "Most freeze-ups on this truck are rusted fasteners and missing 13/15/18mm coverage.",
+        do: [
+          "Sockets/wrenches: 10, 13, 14, 15, 18, 19, 21 mm plus SAE 1/2, 9/16, 5/8, 11/16, 3/4.",
+          "Breaker bar, penetrating oil, torque wrench (in-lb and ft-lb), pry bar, pickle fork or ball-joint tool if 4WD.",
+          "Fuel line disconnect tools for TBI quick-connects.",
+          "Marker, zipper bags, painter tape, phone for photos before every connector comes off.",
+          "Drain pans for coolant, oil, and ATF. They will all come out.",
+          "Thread locker, RTV (sensor-safe where specified), assembly lube, Plastigage."
+        ],
+        warn: "Do not twist the TBI fuel lines like ordinary fittings until you know they are the correct disconnect style.",
+        tip: "Take a panoramic photo of the engine bay before you touch anything. That picture is your wiring map.",
+        photo: true
+      }
+    ]
+  },
+  {
+    id: "pull",
+    title: "Phase 1 — Pull Engine + Trans",
+    blurb: "Clear the bay, support the mass, then lift. Slow is fast.",
+    xp: 160,
+    steps: [
+      {
+        id: "bayclear",
+        title: "Topside disconnects",
+        why: "Most “stuck engine” moments are one forgotten hose, ground, or A/C line.",
+        do: [
+          "Battery negative off. Relieve fuel pressure at the TBI schrader if equipped, then cap lines.",
+          "Drain coolant. Remove upper/lower radiator hoses, fan shroud, and clutch fan if it blocks the lift.",
+          "Remove air cleaner, ducts, and TBI connections: throttle cable, cruise, vacuum, and electrical plugs.",
+          "Disconnect heater hoses, power steering lines at the pump if needed, and A/C compressor (leave system closed if you can unbolt the compressor and tie it aside without opening the lines).",
+          "Unplug every sensor you can reach: CTS, knock, IAC, TPS, injectors, distributor, grounds.",
+          "Remove the distributor cap or mark rotor-to-housing and housing-to-block if the cap stays on. Photo it."
+        ],
+        warn: "If you open A/C you need recovery equipment. Tie the charged compressor aside instead if possible.",
+        tip: "Bag every fastener with a tape label: “fan shroud upper”, “TBI 13mm”, etc.",
+        photo: true
+      },
+      {
+        id: "under",
+        title: "Underside disconnects",
+        why: "The usual, easier C1500 approach: pull the engine alone out the top and drop the transmission from below. The engine by itself is shorter, clears the core support and cowl more easily, and needs less hoist reach. Pulling both as a unit also works but needs a steep tilt and more room.",
+        do: [
+          "Raise and stand the truck on the frame. Chock the rear wheels.",
+          "Drain engine oil. If the trans is coming out, drain its fluid too (drop the pan, or use the drain plug if yours has one).",
+          "Remove the trans dipstick tube now, while you can reach its upper bolt at the back of the engine. It is much harder to get to once things are half apart.",
+          "Disconnect exhaust at the manifolds or Y-pipe. Penetrant first. Expect seized nuts.",
+          "Remove starter, torque converter cover, and the converter-to-flexplate bolts. Rotate the engine to reach all of them. Mark converter to flexplate.",
+          "Engine-only pull (usual): support the transmission with a jack and leave it on its crossmember for now. Loosen the bellhousing bolts; the last ones come out right before the lift.",
+          "Trans out from below (after the engine is out, or now): mark and remove the driveshaft at the pinion flange, disconnect shift cable, NSBU/neutral switch plug, vehicle speed sensor, and cooler lines (cap them), then lower it on a transmission jack with the converter strapped in. On 4WD also remove the front shaft and support/remove the transfer case.",
+          "As-a-unit alternative: leave the bellhousing bolted, do all the trans disconnects above, support the trans with a jack, and unbolt the crossmember and rear mount last."
+        ],
+        warn: "Do not let the converter slide off the input as the trans comes back. It can dump and smash a finger.",
+        tip: "A rented transmission jack makes dropping the trans from below a one-person job instead of a balancing act on a floor jack.",
+        photo: true
+      },
+      {
+        id: "lift",
+        title: "Unbolt mounts and lift",
+        why: "The hoist should take the weight before the last mount bolt comes out.",
+        do: [
+          "Attach a rated chain or balancer to solid points (heads or proper lift brackets). No intake-only lift on a rusty TBI manifold if it looks cracked.",
+          "Take slight hoist tension. Remove engine mount through-bolts.",
+          "Engine-only (usual): with the trans supported on its jack, remove the remaining bellhousing bolts. Pull the engine forward until it clears the dowels and the converter snout before lifting. Keep the converter pushed back into the trans.",
+          "As a unit (alternative): leave the bellhousing bolted, remove the crossmember, and expect a steep tilt with the trans tail down.",
+          "Lift slowly. Watch the distributor, TBI, and firewall. Tilt as needed.",
+          "Roll the truck back or the hoist forward once it clears the core support.",
+          "Set the combo down on wood blocks. Never leave it hanging on the hoist overnight."
+        ],
+        warn: "If the engine binds, stop. Something is still connected. Do not pry against the oil pan.",
+        tip: "A cheap load leveler saves an hour of fighting the firewall and cowl.",
+        photo: true
+      }
+    ]
+  },
+  {
+    id: "split",
+    title: "Phase 2 — Split and Stand",
+    blurb: "Separate cleanly, then get the block on a stand.",
+    xp: 90,
+    steps: [
+      {
+        id: "separate",
+        title: "Engine off the transmission",
+        why: "Converter and alignment dowels are easy to wreck if you yank sideways.",
+        do: [
+          "Engine-only pull: the split already happened in the truck. Lower the trans out from below on a jack with the converter strapped in, then continue with the flexplate and stand items below.",
+          "As-a-unit pull: support both pieces, remove the bellhousing bolts, and slide the transmission straight back off the dowels.",
+          "Secure the torque converter so it cannot fall out. Strap or converter holding tool.",
+          "Inspect the flexplate for cracks at the crank bolts and starter ring wear.",
+          "Mount the engine to the stand using the correct bellhousing bolt pattern. Snug all stand bolts."
+        ],
+        warn: "A converter that walks forward during install later will grenade the pump. Keep it seated on reassembly.",
+        tip: "Photo the flexplate orientation and any balance weights before it comes off the crank.",
+        photo: true
+      }
+    ]
+  },
+  {
+    id: "tear",
+    title: "Phase 3 — Tear Down",
+    blurb: "One system at a time. Label everything that can be reused.",
+    xp: 150,
+    steps: [
+      {
+        id: "topend",
+        title: "Top end off",
+        why: "TBI, intake, and heads tell you if this is a refresh or a full rebuild.",
+        do: [
+          "Remove TBI and intake. Keep old gaskets as patterns until new ones are on the bench.",
+          "Remove valve covers, rockers, and pushrods. Keep pushrods in order if you might reuse them. Note whether the rocker studs are shouldered (non-adjustable) or plain adjustable studs — it changes reassembly.",
+          "With the intake off, look at the lifter valley: the 1994 5.7 L05 and 5.0 L03 have a factory hydraulic roller cam, held by a sheet-metal spider and dog-bone lifter guides. Confirm yours.",
+          "Unbolt heads in reverse of the tighten sequence. Do not pry on gasket surfaces.",
+          "Bag rockers and head bolts by bank and position. Note which head bolt holes are open to the water jacket (wet threads/coolant residue)."
+        ],
+        warn: "Stock Gen I small-block head bolts are not torque-to-yield and can be reused if clean, straight, and thread-undamaged. Toss any that are rusty, necked, or stretched. Do not mix in leftover bolts of unknown origin.",
+        tip: "Look at the pistons through the bores. Heavy scoring means machine shop, not a parts-store ring job.",
+        photo: true
+      },
+      {
+        id: "bottom",
+        title: "Bottom end and timing",
+        why: "Cam, oil pump, and bearings decide whether the crank can stay.",
+        do: [
+          "Remove water pump, damper (proper puller), and timing cover.",
+          "Mark the cam and crank sprocket timing marks before the chain comes off.",
+          "Roller cam removal: unbolt the lifter spider (retainer), lift out the dog-bone lifter guides, then pull the roller lifters and keep them in order. Remove the cam thrust plate and slide the cam out without dragging lobes across the bearings.",
+          "Inspect roller lifters: rollers should spin smoothly with no flat spots, pits, or loose needles. Replace bad ones as a set.",
+          "Remove oil pan, pump, and pickup. Check the pickup screen for bearing glitter.",
+          "Number the rod caps. Remove rods/pistons. Number main caps and remove the crank.",
+          "Keep bearings in order on a cardboard map so you can read wear later."
+        ],
+        warn: "Do not beat the damper off with a gear puller on the outer ring. You will wreck the elastomer.",
+        tip: "Gold or copper glitter in the pan = bearings are done. Silver flakes can be cam/lifter material.",
+        photo: true
+      }
+    ]
+  },
+  {
+    id: "inspect",
+    title: "Phase 4 — Inspect + Budget Parts",
+    blurb: "Measure twice. Spend only where the engine will die if you cheap out.",
+    xp: 140,
+    steps: [
+      {
+        id: "measure",
+        title: "What must be measured",
+        why: "Guessing bore wear is how people build an engine that burns oil in 8,000 miles.",
+        do: [
+          "Bore taper and out-of-round. Ridge at the top of the cylinder.",
+          "Crank main and rod journals for score, taper, and out-of-round.",
+          "Block deck and head warpage with a straightedge and feeler gauges.",
+          "Cam lobe wear and distributor gear condition.",
+          "Oil pump backlash/rotor clearance if reusing. Default: replace the pump. It is cheap insurance."
+        ],
+        warn: "If the block needs more than a hone, stop DIY guessing and talk to a machine shop before ordering pistons.",
+        tip: "A local shop hone + pressure test is often cheaper than a second teardown.",
+        photo: true
+      },
+      {
+        id: "parts",
+        title: "Affordable parts that last",
+        why: "Buy quality wear parts. Save money on cosmetics and unnecessary “stage 2” kits.",
+        do: [
+          "Replace: rings, rod/main bearings, timing chain set, oil pump, freeze plugs, head gaskets, intake gaskets, pan gasket, rear main seal, damper if walked, water pump, thermostat, filters.",
+          "Strong budget brands: Sealed Power / Federal-Mogul, Fel-Pro, Melling, Cloyes, Clevite/King, Dura-Bond.",
+          "Cam: stay with a hydraulic roller. Reuse the stock cam if lobes and journals are good; if worn, buy a stock-style roller replacement. Good roller lifters can usually be reused on a new roller cam — check with the cam maker.",
+          "Avoid swapping to a flat-tappet cam to save money: it needs all-new flat-tappet lifters (never reuse), break-in oil or ZDDP, and a strict break-in run, and you lose the roller's durability.",
+          "TBI: new injector pod seals/O-rings, fuel filter, cap/rotor/wires/plugs if tired.",
+          "Trans while you are here: filter, pan gasket, cooler flush or new cooler, bushing/seal at tailshaft, fresh converter if the old one dumped debris.",
+          "Head bolts: stock Gen I bolts are not torque-to-yield. Reuse if clean and undamaged, or buy a stock-style set if any are rusty or thread-damaged. Aftermarket or TTY-style bolts/studs follow their maker's instructions."
+        ],
+        warn: "No-name eBay gasket sets and mystery bearings are how a $900 rebuild becomes a $3,000 do-over.",
+        tip: "If money is tight: machine the block/heads correctly and use a good overhaul kit. Skip chrome dress-up.",
+        photo: true
+      }
+    ]
+  },
+  {
+    id: "machine",
+    title: "Phase 5 — Machine Shop Calls",
+    blurb: "Only send out what you cannot measure or cut correctly at home.",
+    xp: 70,
+    steps: [
+      {
+        id: "shop",
+        title: "What to send vs keep",
+        why: "A good hone and valve job is cheaper than a spun bearing later.",
+        do: [
+          "Send: hot tank, magnaflux if it was knocking, hone or bore/hone, deck check, crank polish or grind, connecting rod resize if big ends are out, valve job if seats are tired.",
+          "Keep at home if truly good: clean intake, TBI, accessories, oil pan, covers.",
+          "Ask the shop for finished bore size before you order pistons/rings.",
+          "Balance only if you changed rotating mass a lot. Stock refresh usually does not need a full balance."
+        ],
+        warn: "Do not let a shop “deck it a bunch” on a TBI 350 unless you understand quench and intake alignment.",
+        tip: "Get a written list of operations and finished sizes. Photo the invoice into the Bay.",
+        photo: true
+      }
+    ]
+  },
+  {
+    id: "build",
+    title: "Phase 6 — Reassemble the Engine",
+    blurb: "Clean, lube, torque, check. This is the part that makes it last.",
+    xp: 200,
+    steps: [
+      {
+        id: "shortblock",
+        title: "Short block",
+        why: "Bearing oil clearance and ring gap are the two numbers that decide longevity.",
+        do: [
+          "Wash the block until lint and grit are gone. Chase threads. Install freeze plugs correctly.",
+          "Install main bearings dry-fit, then lube. Plastigage mains. Typical small-block ballpark is about 0.001–0.0025 in — confirm with your bearing/crank combo.",
+          "Torque mains in sequence. Check crank spin. Install rods with notches/tang orientation correct. Plastigage rods.",
+          "Check ring gap in the actual bore. File if needed. Stagger gaps. Do not spiral-install rings.",
+          "Oil pump + primed pickup. Screen pointed and clearance-checked against the pan.",
+          "Cam with assembly lube on lobes and journals. Thrust plate on. Timing marks aligned. New chain and gears.",
+          "Stock roller: lifters back in their bores (lubed, oil holes/rollers oriented per the originals), dog bones on the flats, spider bolted down to spec."
+        ],
+        warn: "A tight ring gap on a 5.7 that sees heat will scuff the cylinders. Measure, do not assume the box is right.",
+        tip: "Prime the oil pump with a drill on the distributor drive before first fire.",
+        photo: true
+      },
+      {
+        id: "longblock",
+        title: "Heads, valvetrain, front cover",
+        why: "Head gasket sealing and valvetrain geometry are where TBI 350s get ruined.",
+        do: [
+          "New head gaskets, correct orientation. Chase and clean bolt holes.",
+          "Thread sealant is required (not optional) on Gen I head bolts that enter the water jacket — use a thread sealant made for head bolts. Without it they weep coolant. Check which holes are open to coolant on your block.",
+          "Torque heads in the factory spiral from the center out. Typical Gen I stock-bolt spec is about 65 ft-lb in stages — verify for your gasket and bolts; aftermarket bolts/studs follow their maker.",
+          "Rockers — check which studs your heads have. Non-adjustable (shouldered, net-lash studs, common on 1987–95 truck heads): with each lifter on its cam base circle, torque the rocker nut to spec (about 20 ft-lb — verify); no lash adjustment.",
+          "Adjustable (plain studs with lock nuts or poly-locks): with the lifter on the base circle, snug to zero lash (no pushrod up-down play), then add 1/2 to 3/4 turn, or follow your lifter/cam maker's preload spec.",
+          "Front cover with new seal. Damper with the correct installer, not a hammer.",
+          "Water pump, timing cover, and balancer alignment matter for belt life."
+        ],
+        warn: "Water-jacket head bolts installed without sealant will weep coolant. Damaged or stretched bolts can let a gasket go in a week — replace any that look bad.",
+        tip: "Coat head bolt threads as specified. Dry bolts in wet holes give fake torque readings.",
+        photo: true
+      },
+      {
+        id: "intake",
+        title: "Intake, TBI, and ignition",
+        why: "Vacuum leaks and a lazy distributor make a fresh engine feel “still broken.”",
+        do: [
+          "Intake gaskets plus the correct end-seal method. Do not glob RTV into ports.",
+          "Drop the distributor with #1 at TDC compression, rotor at #1, oil pump drive engaged.",
+          "TBI base gasket, clean mating surface, no debris in injectors.",
+          "New plugs gapped, wires routed clear of manifolds, cap and rotor indexed.",
+          "{{FIRING}}"
+        ],
+        warn: "If the oil pump hex is not seated, the engine will start with zero oil pressure.",
+        tip: "Leave accessory brackets loose-ish until the engine is in the truck if they fight the mounts.",
+        photo: true
+      }
+    ]
+  },
+  {
+    id: "trans",
+    title: "Phase 7 — Transmission Ready",
+    blurb: "A fresh motor behind a dirty cooler is a short story.",
+    xp: 90,
+    steps: [
+      {
+        id: "transprep",
+        title: "Do not skip the cooler and converter",
+        why: "4L60E failures after an engine job are usually dirty cooler + half-seated converter.",
+        do: [
+          "Flush or replace the cooler and lines. A clogged cooler starves the new pump.",
+          "Inspect bushings, tail seal, and extension housing.",
+          "If the old converter dumped clutch material, replace it. Do not “hope.”",
+          "Seat the converter on the pump by turning it while pushing in. It should drop onto the splines in stages.",
+          "New filter and gasket if the pan is off. Correct ATF — Dexron-compatible fluid that the unit actually wants."
+        ],
+        warn: "A converter that is not fully seated will smash the pump the instant you bolt the bellhousing up.",
+        tip: "Measure converter stick-out against a known good reference or shop spec before you mate it.",
+        photo: true
+      }
+    ]
+  },
+  {
+    id: "install",
+    title: "Phase 8 — Back in the Truck",
+    blurb: "Mate it, mount it, connect it, then hunt leaks before you celebrate.",
+    xp: 160,
+    steps: [
+      {
+        id: "mate",
+        title: "Mate and mount",
+        why: "Dowels, converter bolts, and mount geometry have to be honest.",
+        do: [
+          "Engine-only method (usual): with the trans already in the truck on a jack (converter fully seated), lower the engine and slide it back onto the dowels. Or install the engine first and raise the trans up to it.",
+          "Guide pins or extra-long bolts help the bellhousing find the dowels.",
+          "Bellhousing bolts in, then converter bolts to spec. Do not use impact guns as a personality.",
+          "Install crossmember and mount with the weight supported, not hanging on one ear.",
+          "Engine mount through-bolts last after the combo is roughly located.",
+          "Reconnect starter, cover, shafts (alignment marks), exhaust, cooler lines, shift cable."
+        ],
+        warn: "If the converter bolts are hard to start, the converter is not seated. Back off. Do not force.",
+        tip: "Start a couple of accessible bellhousing bolts by hand before you drop the jack.",
+        photo: true
+      },
+      {
+        id: "hookup",
+        title: "Topside hookup",
+        why: "One unplugged ground on a TBI truck equals a no-start that feels like a cursed rebuild.",
+        do: [
+          "All sensors, grounds, TBI plugs, distributor, heater hoses, radiator hoses, fan and shroud.",
+          "Throttle and cruise cables with the correct idle stop. No wide-open sticky cable.",
+          "Power steering lines, belt routing, and filled pump.",
+          "Fresh coolant mix. Fresh oil and filter. Trans fluid after start, not just before.",
+          "Fuel lines clicked fully. New filter. Check for leaks with key-on pump prime before crank."
+        ],
+        warn: "Confirm there are no tools, rags, or extra bolts sitting on the intake.",
+        tip: "Use your Phase 0 bay photo as a wiring checklist.",
+        photo: true
+      }
+    ]
+  },
+  {
+    id: "fire",
+    title: "Phase 9 — First Fire + Break-in",
+    blurb: "Oil pressure first, then heat and leaks. Flat-tappet break-in only if you installed one.",
+    xp: 120,
+    steps: [
+      {
+        id: "start",
+        title: "First start ritual",
+        why: "A dry start is the fastest way to hurt fresh bearings. Oil pressure, temperature, and leaks are the whole game. The stock 1994 hydraulic roller cam does not need the flat-tappet break-in ritual.",
+        do: [
+          "Prime oil with a drill on the oil pump drive (distributor out) until the gauge shows pressure and oil reaches the rockers. Then reinstall the distributor to your marks.",
+          "Stock-style hydraulic roller cam: fire it, let it settle, and vary rpm moderately (roughly 1,000–2,000) as it warms. No mandatory 20-minute high-rpm run.",
+          "Only if you installed a flat-tappet cam: follow the cam card break-in right after start-up — typically about 2,000–2,500 rpm, varied, for 20–30 minutes, with break-in oil or a ZDDP additive. Do not let it idle.",
+          "Watch oil pressure, coolant temp, and leaks the whole time. Shut down for any knock, zero pressure, overheating, or gushing leak.",
+          "Set base timing: warm engine at idle, disconnect the set-timing connector (on most TBI trucks a single tan/black wire connector near the distributor — verify on yours), set timing to the spec on the underhood emissions label, then reconnect it. Clear any code it set.",
+          "Check trans fluid hot, in park/neutral per the dipstick procedure, after a short running fill."
+        ],
+        warn: "No oil pressure within a few seconds of starting = shut it off. If you installed a flat-tappet cam, letting it sit at a 650 rpm idle in the first minutes is a common way to wipe lobes.",
+        tip: "Know which cam you have: stock 1994 L05/L03 is a hydraulic roller (spider + dog bones in the valley). Flat-tappet cams need break-in oil or a ZDDP strategy; rollers just need fresh quality oil.",
+        photo: true
+      },
+      {
+        id: "miles",
+        title: "First 500 miles",
+        why: "Rings seal if you give them load and heat cycles, not only parking-lot idle.",
+        do: [
+          "Avoid long idle and full-throttle drag racing.",
+          "Mix city and gentle highway. Let it fully heat, then cool, several times.",
+          "Change oil and filter after the first 500 miles. Inspect the old oil for glitter.",
+          "Retorque what the gasket makers allow (many modern gaskets say do not retorque — follow the set you bought).",
+          "Recheck coolant, ATF, belts, mounts, and exhaust leaks."
+        ],
+        warn: "If you smell ATF or see a wet converter cover, stop driving. Cooler line or pump seal issues get expensive fast.",
+        tip: "Keep a log of oil pressure hot idle and 2000 rpm. That is your baseline for the next year.",
+        photo: true
+      }
+    ]
+  }
+];
+
+const RANKS = [
+  [0, "Grease Rookie"],
+  [120, "Bay Hand"],
+  [300, "Bolt Hunter"],
+  [520, "Short-Block Scout"],
+  [760, "Torque Captain"],
+  [1000, "GMT400 Foreman"]
+];
+
+const FIRING = {
+  v8: { order: "1-8-4-3-6-5-7-2", banks: "Driver 1-3-5-7, passenger 2-4-6-8, front to back" },
+  v6: { order: "1-6-5-4-3-2", banks: "Driver 1-3-5, passenger 2-4-6, front to back" }
+};
+function engineKind() {
+  const e = (state.truck && state.truck.engine) || "";
+  if (/4\.3|V6/i.test(e)) return "v6";
+  if (/5\.7|5\.0|L05|L03/i.test(e)) return "v8";
+  return "unknown";
+}
+function firingText() {
+  const k = engineKind();
+  if (k === "v6") return "Firing order for the 4.3 V6 is " + FIRING.v6.order + ". Cylinders: driver bank 1-3-5, passenger 2-4-6, front to back.";
+  if (k === "v8") return "Firing order for the 5.0/5.7 V8 is " + FIRING.v8.order + ". Cylinders: driver bank 1-3-5-7, passenger 2-4-6-8, front to back.";
+  return "Engine not confirmed — set it in the Bay tab. 5.0/5.7 V8: " + FIRING.v8.order + " (driver 1-3-5-7, passenger 2-4-6-8). 4.3 V6: " + FIRING.v6.order + " (driver 1-3-5, passenger 2-4-6). Confirm your engine before wiring the cap.";
+}
+function specsFor() {
+  const k = engineKind();
+  const fo = k === "v6" ? [["Firing order (4.3 V6)", FIRING.v6.order], ["Cylinder banks", FIRING.v6.banks]]
+    : k === "v8" ? [["Firing order (5.0 / 5.7 V8)", FIRING.v8.order], ["Cylinder banks", FIRING.v8.banks]]
+    : [["Firing order — 5.0 / 5.7 V8", FIRING.v8.order], ["Cylinder banks — V8", FIRING.v8.banks],
+       ["Firing order — 4.3 V6", FIRING.v6.order], ["Cylinder banks — V6", FIRING.v6.banks]];
+  return [
+    ...fo,
+    ["Stock cam (1994 L05 / L03)", "Factory hydraulic roller (spider + dog bones) — confirm yours"],
+    ["Head bolts (stock Gen I)", "Not TTY; often 65 ft-lb in stages, center out — verify"],
+    ["Head bolt sealant", "Required on bolts that enter the water jacket"],
+    ["Intake bolts (typical TBI)", "Often ~25–35 ft-lb — confirm"],
+    ["Rocker nuts — non-adjustable studs", "Torque to seat, about 20 ft-lb, lifter on base circle — verify"],
+    ["Rocker nuts — adjustable studs", "Zero lash + 1/2–3/4 turn, or lifter maker's spec"],
+    ["Main / rod oil clearance", "Measure with Plastigage; commonly ~0.001–0.0025 in"],
+    ["Ring gap", "Measure in finished bore; follow ring maker (do not guess)"],
+    ["Cam break-in", "Stock roller: normal warm-up, vary rpm. Flat tappet only: cam card, typically ~2,000–2,500 rpm varied 20–30 min"],
+    ["Base timing (TBI)", "Set-timing connector unplugged; use the underhood emissions label spec, then reconnect"],
+    ["Coolant", "Fill slow, burp heater core, no cheap mix-and-match inhibitors"],
+    ["ATF fill", "Add some before start, finish on the dipstick hot"]
+  ];
+}
+
+const defaultState = () => ({
+  truck: { engine: "5.7L TBI L05 / VIN K", drive: "2WD", trans: "4L60E", miles: "", notes: "" },
+  done: {},
+  notes: {},
+  log: [],
+  xp: 0,
+  grokKey: "",
+  grokModel: "grok-4-fast",
+  grokChat: [],
+  autoGrok: false,
+  have: {},
+  partsFilter: { need: false, opt: false, own: false }
+});
+
+const STORE_KEY = "c1500-quest-v1";
+let state = load();
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return defaultState();
+    return { ...defaultState(), ...JSON.parse(raw) };
+  } catch {
+    return defaultState();
+  }
+}
+// Everything except photos lives in localStorage. Photos live in IndexedDB (see below).
+function save() {
+  state.xp = computeXP();
+  const out = { ...state };
+  if (photoBackend === "idb") delete out.photos;
+  else if (photoBackend === "local") out.photos = photoCache; // fallback only when IndexedDB is unavailable
+  // while "loading", any legacy state.photos is left untouched until migration finishes
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(out));
+    return true;
+  } catch (err) {
+    console.warn("save failed", err);
+    toast("⚠ Could not save progress/notes — browser storage is full or blocked. Export the log (Bay tab) and free up space.", 6000, true);
+    return false;
+  }
+}
+
+let toastTimer = null;
+function toast(msg, ms = 1800, isErr = false) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.toggle("err", !!isErr);
+  el.classList.remove("hidden");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.add("hidden"), ms);
+}
+
+// ---- Photo storage: IndexedDB key-value (key = step id, value = array of JPEG data URLs) ----
+const IDB_NAME = "c1500-quest", IDB_STORE = "photos";
+let photoCache = {};          // in-memory copy, filled before first render
+let photoBackend = "loading"; // "loading" | "idb" | "local" (fallback if IndexedDB is unavailable)
+let _dbp = null;
+function idbOpen() {
+  if (_dbp) return _dbp;
+  _dbp = new Promise((resolve, reject) => {
+    if (!window.indexedDB) return reject(new Error("IndexedDB unavailable"));
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+    req.onblocked = () => reject(new Error("IndexedDB blocked"));
+  });
+  _dbp.catch(() => { _dbp = null; });
+  return _dbp;
+}
+function idbTx(mode, fn) {
+  return idbOpen().then(db => new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, mode);
+    const store = tx.objectStore(IDB_STORE);
+    let result;
+    const r = fn(store);
+    if (r) r.onsuccess = () => { result = r.result; };
+    tx.oncomplete = () => resolve(result);
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error || new Error("IndexedDB transaction aborted"));
+  }));
+}
+const idb = {
+  get: key => idbTx("readonly", s => s.get(key)),
+  set: (key, val) => idbTx("readwrite", s => s.put(val, key)),
+  del: key => idbTx("readwrite", s => s.delete(key)),
+  clear: () => idbTx("readwrite", s => s.clear()),
+  // clear + write in ONE transaction: if any write fails, the whole thing rolls back
+  replaceAll: obj => idbTx("readwrite", s => { s.clear(); for (const [k, v] of Object.entries(obj)) s.put(v, k); }),
+  all: () => idbOpen().then(db => new Promise((resolve, reject) => {
+    const out = {};
+    const tx = db.transaction(IDB_STORE, "readonly");
+    const req = tx.objectStore(IDB_STORE).openCursor();
+    req.onsuccess = () => { const c = req.result; if (c) { out[c.key] = c.value; c.continue(); } };
+    tx.oncomplete = () => resolve(out);
+    tx.onerror = () => reject(tx.error);
+  }))
+};
+
+async function initPhotos() {
+  const legacy = state.photos && typeof state.photos === "object" ? state.photos : null;
+  try {
+    const stored = await idb.all();
+    // Migrate photos that older versions kept inside the localStorage blob.
+    if (legacy && Object.keys(legacy).length) {
+      for (const [id, arr] of Object.entries(legacy)) {
+        if (!Array.isArray(arr) || !arr.length) continue;
+        const merged = [...(stored[id] || []), ...arr.filter(x => !(stored[id] || []).includes(x))].slice(-6);
+        await idb.set(id, merged);
+        stored[id] = merged;
+      }
+    }
+    photoCache = stored;
+    photoBackend = "idb";
+    if (legacy) { delete state.photos; save(); } // drop photos from localStorage only after IDB writes succeeded
+  } catch (err) {
+    console.warn("IndexedDB unavailable, photos fall back to localStorage", err);
+    photoBackend = "local";
+    photoCache = legacy || {};
+    delete state.photos;
+  }
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch {}
+}
+async function putPhotos(id, arr) {
+  if (photoBackend === "idb") {
+    if (arr.length) await idb.set(id, arr); else await idb.del(id);
+    photoCache[id] = arr;
+  } else {
+    const prev = photoCache[id];
+    photoCache[id] = arr;
+    if (!save()) { photoCache[id] = prev; throw new Error("storage full"); }
+  }
+}
+
+function totalSteps() {
+  return PHASES.reduce((n, p) => n + p.steps.length, 0);
+}
+function doneCount() {
+  return PHASES.reduce((n, p) => n + p.steps.filter(s => state.done[s.id]).length, 0);
+}
+// Split a phase's XP across its steps as whole numbers that sum exactly to phase.xp
+// (e.g. 80 over 3 steps = 27, 27, 26). Used for display, awards, and the bar max.
+function stepXP(phase, step) {
+  const n = phase.steps.length, i = phase.steps.indexOf(step);
+  const base = Math.floor(phase.xp / n);
+  return base + (i < phase.xp % n ? 1 : 0);
+}
+function computeXP() {
+  return PHASES.reduce((sum, p) => sum + p.steps.reduce((a, s) => a + (state.done[s.id] ? stepXP(p, s) : 0), 0), 0);
+}
+function maxXP() {
+  return PHASES.reduce((sum, p) => sum + p.steps.reduce((a, s) => a + stepXP(p, s), 0), 0);
+}
+function rankName(xp) {
+  let name = RANKS[0][1];
+  RANKS.forEach(([n, label]) => { if (xp >= n) name = label; });
+  return name;
+}
+
+function setTab(id) {
+  document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("active", b.dataset.tab === id));
+  ["home","bay","parts","grok","print","specs","log"].forEach(t => {
+    document.getElementById("tab-" + t).classList.toggle("hidden", t !== id);
+  });
+  render();
+}
+
+document.querySelector(".nav").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.tab === "home") openPhaseId = null; // Quest button always returns to the campaign map
+  setTab(b.dataset.tab);
+});
+
+function renderHeader() {
+  const xp = computeXP();
+  state.xp = xp;
+  document.getElementById("xpFill").style.width = Math.min(100, (xp / maxXP()) * 100) + "%";
+  document.getElementById("xpLabel").textContent = xp + " XP · " + doneCount() + "/" + totalSteps() + " steps";
+  document.getElementById("rankLabel").textContent = rankName(xp);
+}
+
+let openPhaseId = null;
+function renderHome() {
+  if (openPhaseId) return renderPhase(openPhaseId);
+  const root = document.getElementById("tab-home");
+  const next = findNext();
+  root.innerHTML = `
+    ${state.storageNoteDismissed ? "" : `<div class="banner" id="storageBanner">
+      <strong>Keep your progress safe:</strong> everything is saved only in this browser on this phone. On iPhone, add this page to your Home Screen (Share → Add to Home Screen), and export a backup weekly (Bay → Export) — Safari can clear site data, including photos, after about 7 days of not opening it.
+      <div class="row"><button class="btn ghost" onclick="dismissStorageNote()">Got it</button><button class="btn ghost" onclick="setTab('bay')">Go to Bay</button></div>
+    </div>`}
+    <div class="card">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div>
+          <div class="sub">Active truck</div>
+          <strong>${esc(state.truck.engine)}</strong>
+          <div class="sub">${esc(state.truck.drive)} · ${esc(state.truck.trans)}</div>
+        </div>
+        <button class="btn ghost" onclick="setTab('bay')">Edit build</button>
+      </div>
+    </div>
+    ${next ? renderStep(next.phase, next.step, true) : `<div class="card"><h2>Quest complete</h2><p>You walked the full C1500 path. Keep the log and first-500-mile notes.</p></div>`}
+    <div class="card">
+      <h3 style="margin-top:0">Campaign map</h3>
+      ${PHASES.map(p => {
+        const all = p.steps.every(s => state.done[s.id]);
+        const some = p.steps.some(s => state.done[s.id]);
+        return `<div class="phase" onclick="openPhase('${p.id}')">
+          <div>
+            <h3>${p.title}</h3>
+            <p>${p.blurb}</p>
+          </div>
+          <span class="badge ${all ? "done" : ""}">${all ? "CLEARED" : some ? "IN PROGRESS" : p.xp + " XP"}</span>
+        </div>`;
+      }).join("")}
+    </div>
+  `;
+}
+
+function dismissStorageNote() {
+  state.storageNoteDismissed = true;
+  save();
+  render();
+}
+
+function findNext() {
+  for (const phase of PHASES) {
+    for (const step of phase.steps) {
+      if (!state.done[step.id]) return { phase, step };
+    }
+  }
+  return null;
+}
+
+function openPhase(id) {
+  openPhaseId = id;
+  renderPhase(id);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+function closePhase() {
+  openPhaseId = null;
+  render();
+}
+function renderPhase(id) {
+  const phase = PHASES.find(p => p.id === id);
+  const root = document.getElementById("tab-home");
+  root.innerHTML = `
+    <div class="card">
+      <button class="btn ghost" onclick="closePhase()">← Campaign map</button>
+      <h2>${phase.title}</h2>
+      <p class="sub">${phase.blurb}</p>
+    </div>
+    ${phase.steps.map(s => renderStep(phase, s, false)).join("")}
+  `;
+}
+
+function renderStep(phase, step, spotlight) {
+  const on = !!state.done[step.id];
+  const photos = photoCache[step.id] || [];
+  return `<div class="card" id="step-${step.id}">
+    <div class="stephead">
+      <div>
+        ${spotlight ? `<div class="sub">Current objective</div>` : ""}
+        <h3 style="margin:0 0 6px">${step.title}</h3>
+        <div class="sub">${phase.title} · ${stepXP(phase, step)} XP</div>
+      </div>
+      <button class="check ${on ? "on" : ""}" aria-label="${on ? "Reopen step" : "Mark step done"}" onclick="toggleStep('${phase.id}','${step.id}')">${on ? "✓" : ""}</button>
+    </div>
+    <p>${step.why}</p>
+    <ul class="clean">${step.do.map(x => `<li>${x === "{{FIRING}}" ? esc(firingText()) : x}</li>`).join("")}</ul>
+    <div class="warnbox"><strong>Fail state:</strong> ${step.warn}</div>
+    <div class="tip"><strong>Budget tip:</strong> ${step.tip}</div>
+    ${renderKit(phase, step)}
+    ${renderHelpers(step)}
+    <label class="sub">Field notes</label>
+    <textarea oninput="saveNote('${step.id}', this.value)" placeholder="Measurements, seized bolts, parts numbers...">${esc(state.notes[step.id] || "")}</textarea>
+    <div class="photos">
+      ${photoBackend === "loading" ? `<div class="phph">Loading…</div>` : photos.map((src, i) => `<img src="${src}" alt="step photo" onclick="if(confirm('Delete this photo?')) delPhoto('${step.id}',${i})" />`).join("")}
+      ${step.photo && photoBackend !== "loading" ? `<label class="phadd">+<input type="file" accept="image/*" capture="environment" hidden onchange="addPhoto('${step.id}', this)"></label>` : ""}
+    </div>
+    <button class="btn stepdone ${on ? "ghost" : ""}" onclick="toggleStep('${phase.id}','${step.id}', true)">${on ? "Reopen step" : "Mark step done"}</button>
+  </div>`;
+}
+
+function toggleStep(phaseId, stepId, fromBottom) {
+  const phase = PHASES.find(p => p.id === phaseId);
+  const step = phase.steps.find(s => s.id === stepId);
+  const turningOn = !state.done[stepId];
+  if (turningOn) state.done[stepId] = true; else delete state.done[stepId];
+  const chunk = stepXP(phase, step);
+  state.log.unshift({
+    t: new Date().toISOString(),
+    text: (turningOn ? "Cleared: " : "Reopened: ") + phase.steps.find(s => s.id === stepId).title
+  });
+  if (save()) toast(turningOn ? `+${chunk} XP` : `Step reopened (−${chunk} XP)`);
+  render();
+  if (fromBottom && turningOn && !openPhaseId) {
+    // bottom button on the Quest spotlight: jump to the top of the next objective instead of leaving you mid-page
+    const next = findNext();
+    const el = next && document.getElementById("step-" + next.step.id);
+    if (el) el.scrollIntoView({ block: "start" });
+  }
+  if (turningOn && state.autoGrok && state.grokKey) {
+    askGrok("I just finished this step: " + phase.steps.find(s => s.id === stepId).title + ". Give the next 3 actions, one likely snag on a 1994 C1500, and any plastic clips I should inspect.", true);
+  }
+}
+
+function saveNote(id, val) {
+  state.notes[id] = val;
+  save();
+}
+
+function addPhoto(id, input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (photoBackend === "loading") return toast("Photos still loading — try again");
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const max = 900;
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      const data = canvas.toDataURL("image/jpeg", 0.7);
+      const next = [...(photoCache[id] || [])];
+      if (next.length >= 6) next.shift(); // 6 per step cap: oldest drops off
+      next.push(data);
+      putPhotos(id, next).then(() => {
+        state.log.unshift({ t: new Date().toISOString(), text: "Photo added to " + id });
+        const ok = save();
+        render();
+        if (ok) toast("Photo saved on device");
+      }).catch(err => {
+        console.warn("photo save failed", err);
+        toast("⚠ Photo NOT saved — device storage is full or blocked.", 6000, true);
+      });
+    };
+    img.onerror = () => toast("Could not read that image", 3000, true);
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function delPhoto(id, i) {
+  const next = [...(photoCache[id] || [])];
+  next.splice(i, 1);
+  putPhotos(id, next).then(render).catch(err => {
+    console.warn("photo delete failed", err);
+    toast("⚠ Could not delete photo — storage error.", 4000, true);
+  });
+}
+
+function renderBay() {
+  const root = document.getElementById("tab-bay");
+  const t = state.truck;
+  root.innerHTML = `
+    <div class="card">
+      <h3 style="margin-top:0">Truck loadout</h3>
+      <label class="sub">Engine</label>
+      <select onchange="updTruck('engine', this.value)">
+        ${["5.7L TBI L05 / VIN K","5.0L TBI L03 / VIN H","4.3L V6 TBI","Other / not sure"].map(v => `<option ${t.engine===v?"selected":""}>${v}</option>`).join("")}
+      </select>
+      <div style="height:10px"></div>
+      <label class="sub">Drive</label>
+      <select onchange="updTruck('drive', this.value)">
+        ${["2WD","4WD"].map(v => `<option ${t.drive===v?"selected":""}>${v}</option>`).join("")}
+      </select>
+      <div style="height:10px"></div>
+      <label class="sub">Transmission</label>
+      <select onchange="updTruck('trans', this.value)">
+        ${["4L60E","4L80E","700R4 / 4L60","Manual","Not sure"].map(v => `<option ${t.trans===v?"selected":""}>${v}</option>`).join("")}
+      </select>
+      <div style="height:10px"></div>
+      <label class="sub">Mileage + symptoms</label>
+      <textarea onchange="updTruck('miles', this.value)">${esc(t.miles)}</textarea>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Bay rules</h3>
+      <ul class="clean">
+        <li>Progress, notes, and photos live only in this browser on this phone. <strong>On iPhone, add this page to your Home Screen and export weekly</strong> — Safari can clear site data after about 7 days of not opening it.</li>
+        <li>Import restores a file made with Export (progress, notes, log, and photos) and replaces what is on this phone.</li>
+        <li>Tap a photo to delete it.</li>
+        <li>Check a step only after you actually did it. The XP is a liar if you are.</li>
+        <li>4WD adds shafts, t-case support, and extra brackets in Phase 1.</li>
+      </ul>
+      <div class="row" style="margin-top:12px">
+        <button class="btn ghost" onclick="exportLog()">Export log</button>
+        <label class="btn ghost" style="display:inline-block">Import<input type="file" id="importFile" accept="application/json,.json" hidden onchange="importLog(this)"></label>
+        <button class="btn danger" onclick="resetAll()">Reset quest</button>
+      </div>
+    </div>
+  `;
+}
+
+function updTruck(k, v) {
+  state.truck[k] = v;
+  save();
+  toast("Loadout saved");
+}
+
+function renderSpecs() {
+  document.getElementById("tab-specs").innerHTML = `
+    <div class="card">
+      <h3 style="margin-top:0">Quick specs — verify on your parts</h3>
+      <p class="sub">These are common 1994 C1500 small-block truck values. Your bolt type, machine work, cam card, and underhood label win if they disagree.</p>
+      <p class="sub">Showing: <strong>${esc(state.truck.engine)}</strong>${engineKind() === "unknown" ? " — both V8 and V6 values shown. Confirm your engine (8th VIN digit or RPO sticker) and set it in the Bay tab." : " (change in the Bay tab)"}</p>
+      <div class="specgrid" id="specgrid">
+        ${specsFor().map(([k,v]) => `<span>${k}</span><span>${v}</span>`).join("")}
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Budget parts ladder</h3>
+      <ul class="clean">
+        <li>Must-buy quality: bearings, gaskets, timing set, oil pump, seals.</li>
+        <li>Usually replace: water pump, thermostat, plugs/wires, damper if walked, trans filter/cooler path.</li>
+        <li>Reuse if truly good: block, crank, rods, intake, TBI body, accessories.</li>
+        <li>False economy: mystery bearings, rusty or damaged head bolts, dirty cooler, tired converter full of grit.</li>
+      </ul>
+    </div>
+  `;
+}
+
+function renderLog() {
+  const items = state.log.slice(0, 80).map(x => `<div class="phase"><div><h3 style="font-size:14px">${esc(x.text)}</h3><p>${esc(fmtTime(x.t))}</p></div></div>`).join("") || "<p class='sub'>No events yet.</p>";
+  document.getElementById("tab-log").innerHTML = `<div class="card"><h3 style="margin-top:0">Quest log</h3>${items}</div>`;
+}
+
+function fmtTime(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return String(iso || "");
+  return d.toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+async function exportLog() {
+  let photos = photoCache;
+  try { if (photoBackend === "idb") photos = await idb.all(); } catch (err) { console.warn(err); toast("Could not read photos — exporting without latest photos", 3000, true); }
+  const out = { ...state, xp: computeXP(), photos };
+  delete out.grokKey; // never put the API key in an export file
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "c1500-rebuild-quest.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
+
+function validateImport(d) {
+  if (!d || typeof d !== "object" || Array.isArray(d)) return "not a C1500 Rebuild Quest export";
+  const isObj = v => v && typeof v === "object" && !Array.isArray(v);
+  if (!isObj(d.done) || !isObj(d.notes) || !isObj(d.truck) || !Array.isArray(d.log)) return "missing progress, notes, truck, or log data";
+  const known = new Set(PHASES.flatMap(p => p.steps.map(s => s.id)));
+  const out = { done: {}, notes: {}, truck: { ...defaultState().truck }, log: [], grokChat: [], photos: {} };
+  for (const [k, v] of Object.entries(d.done)) if (known.has(k) && v === true) out.done[k] = true;
+  for (const [k, v] of Object.entries(d.notes)) if (known.has(k) && typeof v === "string") out.notes[k] = v.slice(0, 20000);
+  for (const k of Object.keys(out.truck)) if (typeof d.truck[k] === "string") out.truck[k] = d.truck[k].slice(0, 2000);
+  out.log = d.log.filter(x => x && typeof x.text === "string" && typeof x.t === "string").slice(0, 500).map(x => ({ t: x.t, text: x.text.slice(0, 300) }));
+  if (Array.isArray(d.grokChat)) out.grokChat = d.grokChat.filter(m => m && (m.role === "user" || m.role === "assistant") && typeof m.text === "string").slice(-50).map(m => ({ role: m.role, text: m.text }));
+  if (d.photos !== undefined && !isObj(d.photos)) return "photos section is malformed";
+  for (const [k, arr] of Object.entries(d.photos || {})) {
+    if (!known.has(k) || !Array.isArray(arr)) continue;
+    const ok = arr.filter(x => typeof x === "string" && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(x)).slice(-6);
+    if (ok.length) out.photos[k] = ok;
+  }
+  if (typeof d.grokModel === "string") out.grokModel = d.grokModel;
+  if (typeof d.autoGrok === "boolean") out.autoGrok = d.autoGrok;
+  out.have = {};
+  if (isObj(d.have)) for (const [k, v] of Object.entries(d.have)) if (ITEMS[k] && v === true) out.have[k] = true;
+  if (isObj(d.partsFilter)) out.partsFilter = { need: d.partsFilter.need === true, opt: d.partsFilter.opt === true, own: d.partsFilter.own === true };
+  return out;
+}
+
+function importLog(input) {
+  const file = input.files[0];
+  input.value = "";
+  if (!file) return;
+  if (file.size > 200 * 1024 * 1024) return toast("That file is too large to be an export", 4000, true);
+  const reader = new FileReader();
+  reader.onerror = () => toast("Could not read that file", 4000, true);
+  reader.onload = async () => {
+    let parsed;
+    try { parsed = JSON.parse(reader.result); } catch { return toast("Import failed: not a valid JSON file", 5000, true); }
+    const v = validateImport(parsed);
+    if (typeof v === "string") return toast("Import failed: " + v, 5000, true);
+    const nPhotos = Object.values(v.photos).reduce((n, a) => n + a.length, 0);
+    const nDone = Object.keys(v.done).length;
+    if (!confirm(`Replace everything on this phone with this backup?\n\n${nDone} steps done, ${Object.keys(v.notes).length} notes, ${nPhotos} photos.\n\nCurrent progress, notes, and photos will be overwritten.`)) return;
+    try {
+      if (photoBackend === "idb") {
+        await idb.replaceAll(v.photos);
+      }
+    } catch (err) {
+      console.warn("import photos failed", err);
+      toast("⚠ Import stopped: could not write photos (storage full or blocked). Nothing on this phone was changed.", 6000, true);
+      try { photoCache = await idb.all(); } catch {}
+      render();
+      return;
+    }
+    photoCache = v.photos;
+    const keep = { grokKey: state.grokKey, storageNoteDismissed: state.storageNoteDismissed };
+    const { photos, ...rest } = v;
+    state = { ...defaultState(), ...rest, ...keep };
+    state.log.unshift({ t: new Date().toISOString(), text: "Imported backup (" + nDone + " steps, " + nPhotos + " photos)" });
+    openPhaseId = null;
+    if (save()) toast("Backup imported");
+    render();
+  };
+  reader.readAsText(file);
+}
+
+async function resetAll() {
+  if (!confirm("Reset all progress, notes, and photos on this device?")) return;
+  try { if (photoBackend === "idb") await idb.clear(); }
+  catch (err) { console.warn(err); toast("⚠ Could not clear photos from storage", 4000, true); }
+  photoCache = {};
+  state = defaultState();
+  openPhaseId = null;
+  if (save()) toast("Quest reset");
+  render();
+}
+
+function esc(s) {
+  return String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+}
+
+function contextPack() {
+  const done = Object.keys(state.done).filter(k => state.done[k]);
+  const notes = Object.entries(state.notes).filter(([,v]) => v && v.trim()).map(([k,v]) => k + ": " + v).join("\n");
+  const next = findNext();
+  return [
+    "Truck: 1994 Chevy C1500",
+    "Engine: " + state.truck.engine,
+    "Drive: " + state.truck.drive,
+    "Trans: " + state.truck.trans,
+    "Miles/symptoms: " + (state.truck.miles || "n/a"),
+    "Completed steps: " + (done.join(", ") || "none"),
+    "Current objective: " + (next ? next.step.title : "quest complete"),
+    "Field notes:\n" + (notes || "none")
+  ].join("\n");
+}
+
+function renderGrok() {
+  const root = document.getElementById("tab-grok");
+  const chat = (state.grokChat || []).slice(-12).map(m =>
+    `<div class="phase"><div><h3 style="font-size:13px">${m.role === "user" ? "You" : "Grok"}</h3><p style="white-space:pre-wrap;color:#d5e4f1">${esc(m.text)}</p></div></div>`
+  ).join("") || "<p class='sub'>No copilot messages yet.</p>";
+  root.innerHTML = `
+    <div class="card">
+      <h3 style="margin-top:0">Grok copilot</h3>
+      <p class="sub">The app cannot run the Grok app itself in the background. It can call the xAI API from this page, or you can paste a context pack into Grok. Your key stays in this browser only.</p>
+      <label class="sub">xAI API key</label>
+      <input type="password" id="grokKey" value="${esc(state.grokKey)}" placeholder="xai-..." onchange="state.grokKey=this.value; save();" />
+      <div style="height:8px"></div>
+      <label class="sub">Model</label>
+      <select onchange="state.grokModel=this.value; save();">
+        ${["grok-4-fast","grok-4","grok-4.5"].map(m => `<option ${state.grokModel===m?"selected":""}>${m}</option>`).join("")}
+      </select>
+      <div class="row" style="margin-top:10px;align-items:center">
+        <label class="pill"><input type="checkbox" ${state.autoGrok?"checked":""} onchange="state.autoGrok=this.checked; save();"> Auto-ask after each checked step</label>
+      </div>
+      <p class="sub">Get a key at console.x.ai. API calls need an internet connection; with no signal, use “Copy context pack” and paste it into the Grok app later.</p>
+    </div>
+    <div class="card">
+      <label class="sub">Ask about the current job</label>
+      <textarea id="grokQ" placeholder="Example: seized 15mm Y-pipe nuts, 2WD 5.7 TBI. What do I try before heat?"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" onclick="askGrok(document.getElementById('grokQ').value)">Ask Grok</button>
+        <button class="btn ghost" onclick="copyContext()">Copy context pack</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Thread</h3>
+      ${chat}
+    </div>
+  `;
+}
+
+async function askGrok(q, silent) {
+  q = (q || "").trim();
+  if (!q) return toast("Type a question first");
+  if (!state.grokKey) {
+    copyContext();
+    toast("No API key — context pack copied. Paste it into Grok.");
+    return;
+  }
+  state.grokChat.push({ role: "user", text: q });
+  save();
+  if (!silent) renderGrok();
+  toast("Grok is thinking...");
+  const body = {
+    model: state.grokModel || "grok-4-fast",
+    messages: [
+      { role: "system", content: "You are a budget-minded 1988-1998 GMT400 truck engine builder. Use the job context. Give short, ordered steps. Flag safety. Suggest cheap durable parts. If asked for 3D parts, give PETG print settings and dimensions." },
+      { role: "user", content: contextPack() + "\n\nQuestion:\n" + q }
+    ]
+  };
+  try {
+    const res = await fetch("https://api.x.ai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + state.grokKey },
+      body: JSON.stringify(body)
+    });
+    let data;
+    try { data = await res.json(); } catch { data = { error: { message: "HTTP " + res.status + " with a non-JSON response" } }; }
+    if (!res.ok && data && data.error && typeof data.error === "string") data = { error: { message: "HTTP " + res.status + ": " + data.error } };
+    const text = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : (data.error && data.error.message) || JSON.stringify(data).slice(0,400);
+    state.grokChat.push({ role: "assistant", text });
+    state.log.unshift({ t: new Date().toISOString(), text: "Grok: " + q.slice(0,80) });
+    save();
+    renderGrok();
+  } catch (err) {
+    state.grokChat.push({ role: "assistant", text: "Could not reach the xAI API (" + err.message + "). This usually means no signal in the garage, a network/content blocker, or opening the app as a local file instead of over https. The xAI API does allow browser calls, so try again with signal, or tap “Copy context pack” and ask in the Grok app instead." });
+    save();
+    renderGrok();
+  }
+}
+
+function copyContext() {
+  const pack = contextPack() + "\n\nUse this as live job context. Update advice as notes and completed steps change.";
+  navigator.clipboard.writeText(pack).then(() => toast("Context copied")).catch(() => toast("Copy failed — export log instead"));
+}
+
+// ================= PARTS & TOOLS (data generated by build_parts.py) =================
+/*BEGIN_PARTS_DATA*/
+const ITEMS = {"t_organize":{"name":"Zip bags, painter's tape, marker, phone camera","cat":"tool","tag":"own","lo":null,"hi":null,"note":"For labeling every connector and bolt. Price not checked (you likely have these).","src":""},"t_jackstands":{"name":"3-ton jack stands (1–2 pairs)","cat":"tool","tag":"buy","lo":50,"hi":100,"note":"Frame support. One pair for the front; a second pair if you lift both ends.","src":"Harbor Freight"},"t_floorjack":{"name":"3-ton floor jack","cat":"tool","tag":"own","lo":100,"hi":206,"note":"Also used under the trans if you don't rent a transmission jack.","src":"Harbor Freight; Harbor Freight coupons"},"t_hoist":{"name":"Engine hoist, 2-ton (rent twice: out + in)","cat":"tool","tag":"rent","lo":50,"hi":180,"note":"Two short rentals (~$25–$45/day) or a week ($104–$180). AutoZone/O'Reilly do NOT loan hoists. Buying: HF 2-ton $290–$370.","src":"Talisman Rentals (Marietta, GA); Pasco Rentals; Rentals and More (Round Lake Park, IL); M&K Rentals; enginehoist.net gui"},"t_leveler":{"name":"Engine load leveler","cat":"tool","tag":"buy","lo":40,"hi":116,"nice":1,"note":"Makes tilting past the firewall much easier.","src":"Harbor Freight; Harbor Freight"},"t_stand":{"name":"Engine stand, 1000 lb","cat":"tool","tag":"buy","lo":90,"hi":110,"note":"The block lives on it for weeks, so buying usually beats renting ($11/day seen).","src":"Harbor Freight; Rentals and More (Round Lake Park, IL)"},"t_transjack":{"name":"Transmission jack (rent twice: out + in)","cat":"tool","tag":"rent","lo":50,"hi":170,"note":"Rental $25–$85/day. Buying: HF 450 lb low-lift $179.95.","src":"Rental survey (A-1, Crown, AAA Rentals etc.); Harbor Freight (buy)"},"t_extinguisher":{"name":"ABC fire extinguisher, 5 lb class","cat":"tool","tag":"buy","lo":50,"hi":89,"src":"Home Depot"},"t_ppe":{"name":"Nitrile gloves (100) + safety goggles","cat":"tool","tag":"buy","lo":20,"hi":20,"src":"Harbor Freight; Harbor Freight"},"t_sockets":{"name":"Socket + wrench set, metric and SAE","cat":"tool","tag":"own","lo":100,"hi":350,"note":"10–21 mm and 1/2–3/4 in coverage.","src":"Harbor Freight"},"t_breaker":{"name":"1/2 in breaker bar","cat":"tool","tag":"own","lo":15,"hi":18,"src":"Harbor Freight"},"t_torque12":{"name":"1/2 in click torque wrench (ft-lb)","cat":"tool","tag":"buy","lo":15,"hi":52,"note":"Low end is a Harbor Freight coupon price (last one expired Aug 2026 — they recur).","src":"Harbor Freight; Harbor Freight coupons"},"t_torque_inlb":{"name":"Inch-pound torque wrench","cat":"tool","tag":"buy","lo":120,"hi":120,"nice":1,"note":"For pan, cover, and TBI bolts. Only the ICON price was checked; cheaper ones exist but weren't checked.","src":"Harbor Freight"},"t_prybar":{"name":"Pry bar set","cat":"tool","tag":"own","lo":7,"hi":12,"src":"Harbor Freight; Harbor Freight coupons"},"t_fueltool":{"name":"Fuel/trans line disconnect tools","cat":"tool","tag":"buy","lo":11,"hi":13,"src":"Harbor Freight; Harbor Freight"},"t_drainpan":{"name":"Drain pans ×2 (oil/ATF + coolant)","cat":"tool","tag":"buy","lo":30,"hi":40,"src":"Harbor Freight"},"t_balancer":{"name":"Harmonic balancer puller + installer (loaner)","cat":"tool","tag":"rent","lo":0,"hi":0,"note":"Free AutoZone Loan-A-Tool: deposit = tool price, refunded on return (up to 90 days).","src":"AutoZone Loan-A-Tool"},"t_scraper":{"name":"Gasket scraper","cat":"tool","tag":"buy","lo":12,"hi":12,"note":"Plastic razor blades are gentler on aluminum; steel on iron.","src":"Harbor Freight coupons"},"t_feeler":{"name":"Feeler gauge set","cat":"tool","tag":"buy","lo":5,"hi":5,"note":"Ring gap and warpage checks.","src":"Harbor Freight"},"t_straightedge":{"name":"Precision straightedge, 24 in","cat":"tool","tag":"buy","lo":49,"hi":60,"nice":1,"note":"The machine shop can check deck/head flatness instead.","src":"Phenix; AutoZone"},"t_micrometer":{"name":"Outside micrometer set (0–3 in)","cat":"tool","tag":"buy","lo":405,"hi":405,"nice":1,"note":"Usually cheaper to have the machine shop measure. Only the HF listing price was checked.","src":"Harbor Freight"},"t_boregauge":{"name":"Dial bore gauge (2–6 in)","cat":"tool","tag":"buy","lo":63,"hi":80,"nice":1,"note":"Machine shop can measure bores instead.","src":"Hardware Factory Store / lawnpartsman (HFS)"},"t_ringcomp":{"name":"Piston ring compressor","cat":"tool","tag":"buy","lo":20,"hi":20,"src":"Harbor Freight"},"t_rodboots":{"name":"Rod bolt protectors (16)","cat":"tool","tag":"buy","lo":6,"hi":12,"note":"Stop rod bolts from nicking the crank journals.","src":"Goodson; Toolifya"},"t_chaser":{"name":"7/16-14 thread chaser (head bolt holes)","cat":"tool","tag":"buy","lo":20,"hi":42,"note":"Chaser, not a cutting tap.","src":"Kanzen Motorsports; Search results"},"t_primer":{"name":"Oil pump priming tool (SBC)","cat":"tool","tag":"buy","lo":24,"hi":37,"note":"Drives the pump through the distributor hole with a 3/8 in drill.","src":"Poorman Motorsports; AutoZone (seen in search results)"},"t_timinglight":{"name":"Inductive timing light","cat":"tool","tag":"buy","lo":40,"hi":50,"src":"Harbor Freight; Harbor Freight"},"t_oilgauge":{"name":"Mechanical oil pressure test gauge","cat":"tool","tag":"buy","lo":75,"hi":75,"nice":1,"note":"Confirms the dash gauge on first start.","src":"AutoZone"},"p_penetrant":{"name":"Penetrating oil ×2 cans","cat":"part","tag":"must","lo":12,"hi":20,"src":"Walmart; AutoZone"},"p_brakeclean":{"name":"Brake parts cleaner ×4 cans","cat":"part","tag":"must","lo":30,"hi":34,"note":"Degreasing and final cleaning of mating surfaces.","src":"AutoZone"},"p_rtv":{"name":"RTV gasket maker (Permatex Ultra Grey)","cat":"part","tag":"must","lo":13,"hi":15,"note":"Intake end seals / corners only, thin bead.","src":"Walmart (and search results)"},"p_threadlock":{"name":"Blue threadlocker (Loctite 242)","cat":"part","tag":"must","lo":6,"hi":13,"src":"Whale Supply (and search results)"},"p_asmlube":{"name":"Engine assembly lube (Permatex Ultra Slick 4 oz)","cat":"part","tag":"must","lo":5,"hi":10,"src":"JB Tools; Pit Stop USA / others"},"p_plastigage":{"name":"Plastigage (green) ×2","cat":"part","tag":"must","lo":12,"hi":12,"note":"Mains + rods.","src":"AutoZone"},"p_headsealant":{"name":"Head bolt thread sealant (Permatex 59214)","cat":"part","tag":"must","lo":5,"hi":7,"note":"Required on bolts into the water jacket.","src":"JB Tools / PGT / Pit Stop USA"},"p_exhgasket":{"name":"Exhaust manifold-to-pipe gaskets/donuts + nuts","cat":"part","tag":"worn","lo":null,"hi":null,"note":"Price not checked — depends on your Y-pipe and whether studs snap.","src":""},"p_gasketset":{"name":"Full engine gasket set — Fel-Pro 260-1269","cat":"part","tag":"must","lo":102,"hi":139,"note":"1987–95 SBC w/ TBI. Head, intake, pan, timing cover, rear main (verify contents). Budget alt: Enginetech C350LM $51.79.","src":"JEGS; RockAuto; Summit Racing; Northern Auto Parts; Wheelfront"},"p_rings":{"name":"Piston ring set — Sealed Power","cat":"part","tag":"must","lo":45,"hi":94,"note":"Match bore size after machining and the oil-ring groove depth (deep .200 vs shallow .165).","src":"RockAuto; PartsHawk"},"p_mainbrg":{"name":"Main bearing set — Sealed Power / Clevite","cat":"part","tag":"must","lo":52,"hi":85,"note":"Size to the crank after polish/grind.","src":"RockAuto; GoTurbo / NeverEnoughAuto / others"},"p_rodbrg":{"name":"Rod bearings (8) — Clevite","cat":"part","tag":"must","lo":34,"hi":98,"src":"RockAuto; Summit Racing / others"},"p_cambrg":{"name":"Cam bearing set","cat":"part","tag":"must","lo":12,"hi":34,"note":"Shop installs them (see Phase 5).","src":"RockAuto; Summit Racing; Racecar Engineering"},"p_oilpump":{"name":"Oil pump — Melling M55 / Sealed Power","cat":"part","tag":"must","lo":34,"hi":42,"note":"Standard volume is fine for a stock build.","src":"90racing / others; RockAuto"},"p_pickup":{"name":"Oil pump pickup/screen (press-fit)","cat":"part","tag":"must","lo":14,"hi":34,"note":"Match your pan depth; set 3/8–1/2 in off the pan floor.","src":"RockAuto"},"p_timing":{"name":"Timing set — Cloyes (roller-cam style)","cat":"part","tag":"must","lo":18,"hi":41,"note":"Get the factory-roller-cam version.","src":"RockAuto; Competition Products; Amazon; Mechanic Surplus"},"p_freeze":{"name":"Freeze (core) plug kit","cat":"part","tag":"must","lo":11,"hi":25,"note":"Steel kit or brass (brass resists rust).","src":"RockAuto"},"p_headbolts":{"name":"Head bolt set — Fel-Pro ES72856 (stock style)","cat":"part","tag":"worn","lo":21,"hi":29,"note":"Only if old bolts are rusty, necked, or damaged. ES72856 is one head — check whether you need two. ARP sets start ~$84.","src":"RockAuto; Upstart Auto Parts; Race-Leader"},"p_cam":{"name":"Stock-replacement hydraulic roller cam — Melling MC1320","cat":"part","tag":"worn","lo":292,"hi":367,"note":"Only if lobes/journals are worn. Sold as a Vortec 350 cam; commonly used in 87–95 roller blocks — confirm fitment with the seller. Don't downgrade to flat tappet.","src":"PartsHawk; Walmart Business; NeverEnoughAuto"},"p_lifters":{"name":"Hydraulic roller lifters (16)","cat":"part","tag":"worn","lo":202,"hi":288,"note":"Only if rollers are pitted/flat or lifters are noisy.","src":"RockAuto; Amazon / Grand Prix Auto / others"},"p_pushrods":{"name":"Pushrods (16), factory roller length 7.200 in","cat":"part","tag":"worn","lo":40,"hi":80,"note":"Verify length before ordering; roll them on glass to check straightness.","src":"Search results (Engine Pro / COMP / AMS sets)"},"p_damper":{"name":"Harmonic balancer","cat":"part","tag":"worn","lo":43,"hi":67,"note":"Replace if the outer ring has walked or the rubber is cracked.","src":"RockAuto"},"p_pistons":{"name":"Pistons (only if the block is bored oversize)","cat":"part","tag":"optional","lo":null,"hi":null,"note":"Price not checked — depends on finished bore size from the shop.","src":""},"p_waterpump":{"name":"Water pump","cat":"part","tag":"must","lo":28,"hi":50,"src":"RockAuto"},"p_thermostat":{"name":"Thermostat (195°F)","cat":"part","tag":"must","lo":4,"hi":6,"note":"Gasket is in the Fel-Pro set.","src":"RockAuto"},"p_tbikit":{"name":"TBI injector seal / gasket kit","cat":"part","tag":"must","lo":25,"hi":43,"src":"RockAuto; Blazen Auto / Autoplicity / others"},"p_fuelfilter":{"name":"Fuel filter","cat":"part","tag":"must","lo":8,"hi":13,"note":"ACDelco GF481 is superseded by GF652.","src":"RockAuto; National Parts Depot"},"p_sparkplugs":{"name":"Spark plugs (8)","cat":"part","tag":"must","lo":10,"hi":26,"note":"Gap to the underhood label (often .035 in).","src":"RockAuto (earlier lookup; page later rate-limited)"},"p_ignition":{"name":"Distributor cap, rotor, plug wires","cat":"part","tag":"worn","lo":30,"hi":58,"src":"RockAuto"},"p_mounts":{"name":"Motor mounts (pair)","cat":"part","tag":"worn","lo":16,"hi":30,"note":"4WD uses different mounts — verify.","src":"RockAuto"},"p_flexplate":{"name":"Flexplate","cat":"part","tag":"worn","lo":31,"hi":46,"note":"Only if cracked at the bolt holes or ring gear is chewed.","src":"RockAuto (earlier lookup)"},"p_oil":{"name":"5W-30 oil, 2 × 5 qt (fill + 500-mile change)","cat":"part","tag":"must","lo":34,"hi":40,"src":"Walmart"},"p_oilfilter":{"name":"Oil filters ×2","cat":"part","tag":"must","lo":10,"hi":15,"src":"RockAuto"},"p_coolant":{"name":"Antifreeze concentrate, 2 gal (mix 50/50)","cat":"part","tag":"must","lo":28,"hi":36,"src":"Walmart"},"p_hoses":{"name":"Upper + lower radiator hoses","cat":"part","tag":"worn","lo":21,"hi":40,"note":"Depends on radiator width (26/34/41 in). Heater hoses not priced.","src":"RockAuto"},"p_belt":{"name":"Serpentine belt","cat":"part","tag":"worn","lo":8,"hi":24,"note":"Length depends on A/C, air pump, alternator (97.55–99.15 in).","src":"RockAuto; V-Belt Guys"},"p_transfilter":{"name":"4L60E filter + pan gasket kit","cat":"part","tag":"must","lo":16,"hi":29,"note":"1993–97 shallow pan.","src":"RockAuto; GM Transmission Parts; Transmission Parts Now"},"p_transseals":{"name":"Trans front pump seal + tailshaft seal","cat":"part","tag":"must","lo":4,"hi":12,"src":"RockAuto (earlier lookup)"},"p_atf":{"name":"Dexron VI ATF, ~10 qt","cat":"part","tag":"must","lo":69,"hi":85,"note":"Refill amount varies with how much drained from the converter.","src":"Walmart"},"p_coolerflush":{"name":"Trans cooler line flush","cat":"part","tag":"must","lo":16,"hi":16,"src":"AutoZone"},"p_converter":{"name":"Remanufactured torque converter","cat":"part","tag":"optional","lo":108,"hi":120,"note":"Only if the old one shed clutch material.","src":"RockAuto"},"p_coolerlines":{"name":"Trans cooler lines","cat":"part","tag":"optional","lo":24,"hi":56,"note":"Only if kinked, rusted, or clogged (one or both lines).","src":"RockAuto (earlier lookup)"},"p_transmount":{"name":"Transmission mount","cat":"part","tag":"worn","lo":5,"hi":7,"src":"RockAuto (earlier lookup)"},"p_convbolts":{"name":"Torque converter bolts (3)","cat":"part","tag":"optional","lo":9,"hi":9,"src":"RockAuto"},"p_breakin":{"name":"ZDDP break-in additive (flat-tappet cam only)","cat":"part","tag":"optional","lo":21,"hi":24,"note":"Not needed for the stock roller cam.","src":"JEGS / COMP"},"s_clean":{"name":"Machine shop: hot tank / clean block","cat":"service","tag":"must","lo":60,"hi":125,"note":"Regional range from published price lists (AR, WI, TN).","src":"Performance Engine & Machine (Middleton, WI); Ellis Machine Shop (Batesville, AR); Paragon Engines (Baxter, TN)"},"s_cambrg":{"name":"Machine shop: install cam bearings","cat":"service","tag":"must","lo":30,"hi":110,"src":"Performance Engine & Machine (Middleton, WI); Ellis Machine Shop (Batesville, AR); GAM Racing Engines (Greeley, CO) 2026"},"s_hone":{"name":"Machine shop: hone cylinders (bores in spec)","cat":"service","tag":"worn","lo":96,"hi":440,"note":"$12–$20/cyl basic; $440 with torque plates at one shop.","src":"Performance Engine & Machine (Middleton, WI); Ellis Machine Shop (Batesville, AR); GAM Racing Engines (Greeley, CO); Par"},"s_crankpolish":{"name":"Machine shop: polish crank","cat":"service","tag":"must","lo":40,"hi":95,"src":"Performance Engine & Machine (Middleton, WI); GAM Racing Engines (Greeley, CO); Paragon Engines (Baxter, TN)"},"s_valvejob":{"name":"Machine shop: valve job (pair of heads)","cat":"service","tag":"worn","lo":120,"hi":315,"src":"Ellis Machine Shop (Batesville, AR); Performance Engine & Machine (Middleton, WI); Paragon Engines (Baxter, TN)"},"s_bore":{"name":"Machine shop: bore + hone oversize (if worn past hone)","cat":"service","tag":"optional","lo":192,"hi":755,"note":"Plus oversize pistons.","src":"Performance Engine & Machine (Middleton, WI); Ellis Machine Shop (Batesville, AR); Paragon Engines (Baxter, TN)"},"s_crankgrind":{"name":"Machine shop: grind crank undersize","cat":"service","tag":"optional","lo":125,"hi":345,"note":"Only if polishing won't clean up the journals.","src":"Ellis Machine Shop (Batesville, AR); Performance Engine & Machine (Middleton, WI); GAM Racing Engines (Greeley, CO); Par"},"s_magna":{"name":"Machine shop: magnaflux (crack check)","cat":"service","tag":"optional","lo":30,"hi":95,"note":"Worth it if it was knocking or overheated.","src":"Performance Engine & Machine (Middleton, WI); Paragon Engines (Baxter, TN)"},"s_deck":{"name":"Machine shop: deck/resurface block","cat":"service","tag":"optional","lo":60,"hi":285,"src":"Ellis Machine Shop (Batesville, AR); Performance Engine & Machine (Middleton, WI); GAM Racing Engines (Greeley, CO); Par"},"s_rods":{"name":"Machine shop: check/resize rods (8)","cat":"service","tag":"optional","lo":80,"hi":128,"src":"Ellis Machine Shop (Batesville, AR); GAM Racing Engines (Greeley, CO)"}};
+const STEP_KIT = {"profile":{"items":["t_organize"]},"safety":{"items":["t_jackstands","t_floorjack","t_hoist","t_stand","t_extinguisher","t_ppe"]},"tools":{"items":["t_sockets","t_breaker","t_torque12","t_torque_inlb","t_prybar","t_fueltool","t_drainpan","p_penetrant","p_brakeclean","p_threadlock","p_rtv","p_asmlube","p_plastigage","t_organize"],"note":"4WD adds a pickle fork / ball-joint tool if you disturb the front end (price not checked)."},"bayclear":{"items":["t_fueltool","t_drainpan","p_penetrant","t_organize"]},"under":{"items":["t_transjack","p_exhgasket","t_drainpan","t_breaker","p_penetrant"],"note":"4WD: also remove the front driveshaft and support/remove the transfer case — plan on a helper or a second jack session (not priced)."},"lift":{"items":["t_hoist","t_leveler","t_transjack"]},"separate":{"items":["t_stand","p_flexplate","t_breaker"]},"topend":{"items":["t_scraper","t_organize","t_sockets"]},"bottom":{"items":["t_balancer","t_breaker","t_drainpan"]},"measure":{"items":["t_feeler","t_straightedge","t_micrometer","t_boregauge","p_plastigage"]},"parts":{"items":["p_gasketset","p_rings","p_mainbrg","p_rodbrg","p_cambrg","p_oilpump","p_pickup","p_timing","p_freeze","p_headbolts","p_cam","p_lifters","p_pushrods","p_damper","p_pistons","p_waterpump","p_thermostat","p_tbikit","p_fuelfilter","p_sparkplugs","p_ignition"],"note":"Prices are for the 5.7 L05. 4.3 V6: needs 4.3-specific gasket set, bearings, rings, and timing set — not priced here. 5.0 L03 shares most parts, but rings/pistons differ (smaller bore) — verify."},"shop":{"items":["s_clean","s_cambrg","s_hone","s_crankpolish","s_valvejob","s_bore","s_crankgrind","s_magna","s_deck","s_rods"],"note":"Machine shop prices vary a lot by region. These come from four published price lists (Arkansas, Wisconsin, Colorado, Tennessee). Get a written quote."},"shortblock":{"items":["p_asmlube","p_plastigage","t_ringcomp","t_rodboots","t_torque12","t_feeler","p_freeze"]},"longblock":{"items":["p_headsealant","t_chaser","t_torque12","p_headbolts","t_balancer"]},"intake":{"items":["p_rtv","p_tbikit","p_sparkplugs","p_ignition","t_torque_inlb"]},"transprep":{"items":["p_transfilter","p_transseals","p_atf","p_coolerflush","p_converter","p_coolerlines"],"note":"4L80E: different filter and more fluid; manual trans: clutch kit and pilot bearing instead — not priced."},"mate":{"items":["p_mounts","p_transmount","p_convbolts","t_transjack","t_hoist","p_threadlock"],"note":"4WD mounts differ from 2WD — check part numbers."},"hookup":{"items":["p_oil","p_oilfilter","p_coolant","p_hoses","p_belt","p_fuelfilter"]},"start":{"items":["t_primer","t_timinglight","t_oilgauge","p_breakin"]},"miles":{"items":["p_oil","p_oilfilter"],"note":"The second jug of oil and second filter in the list are for this change."}};
+const STEP_PRINTS = {"tools":[["bolt_tray","Fastener tray 3×2"]],"bayclear":[["bolt_tray","Fastener tray 3×2"],["dust_cap","Vacuum nipple cap (6 mm)"],["custom_box","Connector dust cover"]],"under":[["bolt_tray","Small parts 4×3"],["dust_cap","Cooler line cap (3/8 in)"]],"separate":[["bolt_tray","Bearing cap bolts 5×2"]],"topend":[["order_holder","Pushrods (16)"],["order_holder","Rockers (16, pegs)"],["order_holder","Head bolts (17 per head)"]],"bottom":[["order_holder","Lifters (16)"],["bolt_tray","Bearing cap bolts 5×2"]],"shortblock":[["dust_cap","Oil gallery / bolt hole plug (11 mm)"]],"longblock":[["order_holder","Pushrods (16)"]],"intake":[["wire_sep","Plug wires 8 mm, 4-way"],["dust_cap","Vacuum nipple cap (6 mm)"]],"hookup":[["hose_sep","Heater hoses 3/4 + 5/8 in"],["spacer","Battery hold-down spacer"],["shroud_hook","Fan shroud hook tab"],["push_clip","Push clip (8 mm hole)"],["fir_tree","Fir-tree retainer"]]};
+/*END_PARTS_DATA*/
+const TAGS = { must: "Must-replace", worn: "Replace-if-worn", optional: "Optional", buy: "Buy", rent: "Rent / borrow", own: "Probably own" };
+const PRICE_NOTE = "Prices are rough estimates checked Sep 2026; verify before buying.";
+function stepList() { return PHASES.flatMap(p => p.steps.map(s => ({ phase: p, step: s }))); }
+const FIRST_USE = {}, USED_IN = {};
+stepList().forEach(({ phase, step }) => ((STEP_KIT[step.id] || {}).items || []).forEach(id => {
+  if (!FIRST_USE[id]) FIRST_USE[id] = { phase: phase.id, step: step.id };
+  (USED_IN[id] = USED_IN[id] || []).push(step.id);
+}));
+let openKits = new Set();
+function isOpt(it) { return it.tag === "optional" || !!it.nice; }
+function money(n) { return "$" + Math.round(n).toLocaleString("en-US"); }
+function rng(lo, hi) { return Math.round(lo) === Math.round(hi) ? money(lo) : money(lo) + "–" + money(hi); }
+function itemPrice(it) { return it.lo == null ? "price not checked" : rng(it.lo, it.hi); }
+function tagHtml(it) { return `<span class="tag ${it.tag}">${TAGS[it.tag]}</span>${it.nice ? `<span class="tag nice">Nice-to-have</span>` : ""}`; }
+function phaseShort(pid) { const p = PHASES.find(x => x.id === pid); return p ? p.title.split(" — ")[0] : pid; }
+function stepTitle(sid) { const x = stepList().find(o => o.step.id === sid); return x ? x.step.title : sid; }
+// Per-step estimate: only items first needed in this step, excluding optional / nice-to-have and tools you probably own.
+function kitEstimate(stepId) {
+  let lo = 0, hi = 0;
+  for (const id of ((STEP_KIT[stepId] || {}).items || [])) {
+    const it = ITEMS[id];
+    if (FIRST_USE[id].step !== stepId || isOpt(it) || it.tag === "own" || it.lo == null) continue;
+    lo += it.lo; hi += it.hi;
+  }
+  return { lo, hi };
+}
+function partsFilter() { return { need: false, opt: false, own: false, ...(state.partsFilter || {}) }; }
+function hasItem(id) { return !!(state.have && state.have[id]); }
+function partsIncluded(id) {
+  const it = ITEMS[id], f = partsFilter();
+  if (isOpt(it) && !f.opt) return false;
+  if (it.tag === "own" && !f.own) return false;
+  return true;
+}
+function partsTotals() {
+  const z = () => ({ lo: 0, hi: 0, n: 0 });
+  const t = { all: z(), need: z(), worn: z(), unpriced: 0, part: z(), service: z(), buy: z(), rent: z(), own: z() };
+  for (const [id, it] of Object.entries(ITEMS)) {
+    if (!partsIncluded(id)) continue;
+    if (it.lo == null) { t.unpriced++; continue; }
+    const add = (o) => { o.lo += it.lo; o.hi += it.hi; o.n++; };
+    add(t.all);
+    if (!hasItem(id)) {
+      add(t.need);
+      if (it.tag === "worn") add(t.worn);
+      add(it.cat === "tool" ? t[it.tag] : t[it.cat]);
+    }
+  }
+  return t;
+}
+function kitToggle(id, open) { if (open) openKits.add(id); else openKits.delete(id); }
+function renderKit(phase, step) {
+  const kit = STEP_KIT[step.id];
+  if (!kit) return "";
+  const est = kitEstimate(step.id);
+  const rows = kit.items.map(id => {
+    const it = ITEMS[id], fu = FIRST_USE[id], first = fu.step === step.id, have = hasItem(id);
+    const meta = first ? `${tagHtml(it)}${it.note ? " " + esc(it.note) : ""}` : `listed in ${phaseShort(fu.phase)} (${esc(stepTitle(fu.step))})`;
+    return `<label class="prow${have ? " have" : ""}"><input type="checkbox" data-item="${id}" ${have ? "checked" : ""} onchange="toggleHave('${id}', this.checked)" aria-label="Have it: ${esc(it.name)}"><span class="pname"><span class="pn">${esc(it.name)}</span><small>${meta}</small></span><span class="pprice">${first ? itemPrice(it) : "—"}</span></label>`;
+  }).join("");
+  return `<details class="kit" id="kit-${step.id}" ${openKits.has(step.id) ? "open" : ""} ontoggle="kitToggle('${step.id}', this.open)">
+    <summary>🧰 Parts &amp; tools (est. ${rng(est.lo, est.hi)})</summary>
+    <div class="kitbody">
+      <div class="sub" style="margin-bottom:6px">Check the box when you have it. Estimate = new items for this step, excluding optional, nice-to-have, and tools you probably own. ${PRICE_NOTE}</div>
+      ${kit.note ? `<div class="tip"><strong>Note:</strong> ${esc(kit.note)}</div>` : ""}
+      ${rows}
+      <div class="row" style="margin-top:10px"><button class="btn ghost sm" onclick="setTab('parts')">Full shopping list</button></div>
+    </div>
+  </details>`;
+}
+function renderHelpers(step) {
+  const list = STEP_PRINTS[step.id];
+  if (!list) return "";
+  return `<div class="helpers"><div class="sub">🖨 Printable helpers for this step</div><div class="row" style="margin-top:6px">${list.map(([k, n]) =>
+    `<button class="btn ghost sm" data-k="${k}" data-p="${esc(n)}" onclick="openPrint(this.dataset.k, this.dataset.p)">${esc(n)}</button>`).join("")}</div></div>`;
+}
+function toggleHave(id, on) {
+  if (!ITEMS[id]) return;
+  state.have = state.have || {};
+  if (on) state.have[id] = true; else delete state.have[id];
+  save();
+  document.querySelectorAll(`input[data-item="${id}"]`).forEach(el => { el.checked = !!on; el.closest(".prow") && el.closest(".prow").classList.toggle("have", !!on); });
+  if (!document.getElementById("tab-parts").classList.contains("hidden")) renderParts();
+}
+function setPartsFilter(k, v) {
+  state.partsFilter = { ...partsFilter(), [k]: !!v };
+  save();
+  renderParts();
+}
+function shopListText() {
+  const f = partsFilter(), t = partsTotals();
+  const out = ["C1500 Rebuild Quest — shopping list" + (f.need ? " (still need)" : ""), "1994 C1500 2WD 5.7L TBI + 4L60E. " + PRICE_NOTE, ""];
+  for (const p of PHASES) {
+    const ids = Object.keys(ITEMS).filter(id => FIRST_USE[id].phase === p.id && partsIncluded(id) && !(f.need && hasItem(id)));
+    if (!ids.length) continue;
+    out.push(p.title);
+    ids.forEach(id => { const it = ITEMS[id]; out.push(`[${hasItem(id) ? "x" : " "}] ${it.name} — ${itemPrice(it)} (${TAGS[it.tag]}${it.nice ? ", nice-to-have" : ""})`); });
+    out.push("");
+  }
+  out.push(`Still need: ${rng(t.need.lo, t.need.hi)} (${t.need.n} priced items)`);
+  out.push(`Total for listed items: ${rng(t.all.lo, t.all.hi)}`);
+  if (t.unpriced) out.push(`${t.unpriced} item(s) marked "price not checked" are not in the totals.`);
+  return out.join("\n");
+}
+function copyShopList() {
+  const txt = shopListText();
+  const ta = document.getElementById("shopText");
+  ta.value = txt; ta.classList.remove("hidden");
+  const ok = () => toast("Shopping list copied");
+  const fallback = () => { ta.focus(); ta.select(); try { document.execCommand("copy") ? ok() : toast("Select the text below and copy it"); } catch { toast("Select the text below and copy it"); } };
+  try { navigator.clipboard.writeText(txt).then(ok, fallback); } catch { fallback(); }
+}
+function shareShopList() {
+  const txt = shopListText();
+  navigator.share({ title: "C1500 shopping list", text: txt }).catch(() => {});
+}
+function renderParts() {
+  const root = document.getElementById("tab-parts");
+  const f = partsFilter(), t = partsTotals();
+  const groups = PHASES.map(p => {
+    const ids = Object.keys(ITEMS).filter(id => FIRST_USE[id].phase === p.id && partsIncluded(id) && !(f.need && hasItem(id)));
+    if (!ids.length) return "";
+    let lo = 0, hi = 0;
+    ids.forEach(id => { const it = ITEMS[id]; if (it.lo != null && !hasItem(id)) { lo += it.lo; hi += it.hi; } });
+    const notes = p.steps.map(s => STEP_KIT[s.id] && STEP_KIT[s.id].note).filter(Boolean);
+    return `<div class="card pgroup" data-phase="${p.id}">
+      <div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="margin:0">${p.title}</h3><span class="sub">still need ${rng(lo, hi)}</span></div>
+      ${notes.map(n => `<div class="tip">${esc(n)}</div>`).join("")}
+      ${ids.map(id => {
+        const it = ITEMS[id], have = hasItem(id);
+        return `<label class="prow${have ? " have" : ""}"><input type="checkbox" data-item="${id}" ${have ? "checked" : ""} onchange="toggleHave('${id}', this.checked)" aria-label="Have it: ${esc(it.name)}"><span class="pname"><span class="pn">${esc(it.name)}</span><small>${tagHtml(it)} used in: ${USED_IN[id].map(s => esc(stepTitle(s))).join(", ")}${it.note ? "<br>" + esc(it.note) : ""}</small></span><span class="pprice">${itemPrice(it)}</span></label>`;
+      }).join("")}
+    </div>`;
+  }).join("");
+  root.innerHTML = `
+    <div class="card">
+      <h3 style="margin-top:0">Parts &amp; tools shopping list</h3>
+      <div class="warnbox" id="priceNote">${PRICE_NOTE} Sources are listed in price-sources.md.</div>
+      <div class="totals">
+        <div><div class="sub">Still need</div><strong id="needTotal">${rng(t.need.lo, t.need.hi)}</strong><div class="sub">${t.need.n} items</div></div>
+        <div><div class="sub">Total (listed)</div><strong id="allTotal">${rng(t.all.lo, t.all.hi)}</strong><div class="sub">${t.all.n} items</div></div>
+      </div>
+      <div class="sub" id="partsBreakdown">Still need, by type: parts ${rng(t.part.lo, t.part.hi)} · machine shop ${rng(t.service.lo, t.service.hi)} · tools to buy ${rng(t.buy.lo, t.buy.hi)} · rentals ${rng(t.rent.lo, t.rent.hi)}${f.own ? ` · tools you may own ${rng(t.own.lo, t.own.hi)}` : ""}.<br>
+        Of that, "replace-if-worn" items are ${rng(t.worn.lo, t.worn.hi)} — skip them if yours measure good.${t.unpriced ? `<br>${t.unpriced} listed item(s) are marked "price not checked" and aren't in the totals.` : ""}<br>
+        Machine shop prices vary a lot by region (ranges come from four published price lists).</div>
+      <div class="row" style="margin-top:10px">
+        <label class="pill"><input type="checkbox" id="fNeed" ${f.need ? "checked" : ""} onchange="setPartsFilter('need', this.checked)"> Still need only</label>
+        <label class="pill"><input type="checkbox" id="fOpt" ${f.opt ? "checked" : ""} onchange="setPartsFilter('opt', this.checked)"> Include optional + nice-to-have</label>
+        <label class="pill"><input type="checkbox" id="fOwn" ${f.own ? "checked" : ""} onchange="setPartsFilter('own', this.checked)"> Include tools you probably own</label>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="copyShop" onclick="copyShopList()">Copy shopping list</button>
+        ${navigator.share ? `<button class="btn ghost" id="shareShop" onclick="shareShopList()">Share…</button>` : ""}
+      </div>
+      <textarea id="shopText" class="hidden" readonly style="margin-top:10px;min-height:160px"></textarea>
+    </div>
+    ${groups || `<div class="card"><p>Nothing left on the list with these filters. 🎉</p></div>`}
+  `;
+}
+
+// ================= PRINT SHOP: parametric templates → binary STL in the browser =================
+// Mesh kit: every primitive is a closed, outward-wound body. Parts are multi-body STLs (overlapping bodies),
+// which slicers union automatically. Cavities (tubes, trays) are built directly from walls — no booleans.
+function Mesh() { this.t = []; this.bodies = 0; }
+Mesh.prototype.tri = function (a, b, c) { this.t.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]); };
+Mesh.prototype.quad = function (a, b, c, d) { this.tri(a, b, c); this.tri(a, c, d); };
+const SEG = 64; // circle segments (multiple of 4 so bounding boxes hit the exact radius)
+function cs(deg) { const r = deg * Math.PI / 180; let c = Math.cos(r), s = Math.sin(r); if (Math.abs(c) < 1e-12) c = 0; if (Math.abs(s) < 1e-12) s = 0; return [c, s]; }
+const CIRC = Array.from({ length: SEG }, (_, i) => cs(i * 360 / SEG));
+function cp(cx, cy, r, i, z) { const [c, s] = CIRC[i % SEG]; return [cx + r * c, cy + r * s, z]; }
+Mesh.prototype.box = function (x0, y0, z0, x1, y1, z1) {
+  const p = (x, y, z) => [x, y, z];
+  this.quad(p(x0, y0, z0), p(x0, y1, z0), p(x1, y1, z0), p(x1, y0, z0));
+  this.quad(p(x0, y0, z1), p(x1, y0, z1), p(x1, y1, z1), p(x0, y1, z1));
+  this.quad(p(x0, y0, z0), p(x1, y0, z0), p(x1, y0, z1), p(x0, y0, z1));
+  this.quad(p(x0, y1, z0), p(x0, y1, z1), p(x1, y1, z1), p(x1, y1, z0));
+  this.quad(p(x0, y0, z0), p(x0, y0, z1), p(x0, y1, z1), p(x0, y1, z0));
+  this.quad(p(x1, y0, z0), p(x1, y1, z0), p(x1, y1, z1), p(x1, y0, z1));
+  this.bodies++;
+};
+Mesh.prototype.frustum = function (cx, cy, z0, z1, r0, r1) { // solid cylinder / cone section
+  const c0 = [cx, cy, z0], c1 = [cx, cy, z1];
+  for (let i = 0; i < SEG; i++) {
+    const b0 = cp(cx, cy, r0, i, z0), b1 = cp(cx, cy, r0, i + 1, z0), t0 = cp(cx, cy, r1, i, z1), t1 = cp(cx, cy, r1, i + 1, z1);
+    this.quad(b0, b1, t1, t0); this.tri(c0, b1, b0); this.tri(c1, t0, t1);
+  }
+  this.bodies++;
+};
+Mesh.prototype.cyl = function (cx, cy, z0, z1, r) { this.frustum(cx, cy, z0, z1, r, r); };
+Mesh.prototype.tube = function (cx, cy, z0, z1, ro, ri) {
+  for (let i = 0; i < SEG; i++) {
+    const O = (k, z) => cp(cx, cy, ro, k, z), I = (k, z) => cp(cx, cy, ri, k, z);
+    this.quad(O(i, z0), O(i + 1, z0), O(i + 1, z1), O(i, z1));
+    this.quad(I(i, z0), I(i, z1), I(i + 1, z1), I(i + 1, z0));
+    this.quad(O(i, z1), O(i + 1, z1), I(i + 1, z1), I(i, z1));
+    this.quad(O(i, z0), I(i, z0), I(i + 1, z0), O(i + 1, z0));
+  }
+  this.bodies++;
+};
+// C-shaped ring from angle a0 to a1 (degrees), m segments, with flat end caps
+Mesh.prototype.sector = function (cx, cy, z0, z1, ro, ri, a0, a1, m) {
+  const P = (r, k, z) => { const [c, s] = cs(a0 + (a1 - a0) * k / m); return [cx + r * c, cy + r * s, z]; };
+  for (let i = 0; i < m; i++) {
+    this.quad(P(ro, i, z0), P(ro, i + 1, z0), P(ro, i + 1, z1), P(ro, i, z1));
+    this.quad(P(ri, i, z0), P(ri, i, z1), P(ri, i + 1, z1), P(ri, i + 1, z0));
+    this.quad(P(ro, i, z1), P(ro, i + 1, z1), P(ri, i + 1, z1), P(ri, i, z1));
+    this.quad(P(ro, i, z0), P(ri, i, z0), P(ri, i + 1, z0), P(ro, i + 1, z0));
+  }
+  this.quad(P(ro, 0, z0), P(ro, 0, z1), P(ri, 0, z1), P(ri, 0, z0));
+  this.quad(P(ro, m, z0), P(ri, m, z0), P(ri, m, z1), P(ro, m, z1));
+  this.bodies++;
+};
+// Open-top box built directly from walls (watertight single body): outer x×y×z, wall w, floor f
+Mesh.prototype.openBox = function (X, Y, Z, w, f) {
+  const O = [[0, 0], [X, 0], [X, Y], [0, Y]], I = [[w, w], [X - w, w], [X - w, Y - w], [w, Y - w]];
+  const p = (q, z) => [q[0], q[1], z];
+  this.quad(p(O[0], 0), p(O[3], 0), p(O[2], 0), p(O[1], 0));
+  for (let k = 0; k < 4; k++) {
+    const n = (k + 1) % 4;
+    this.quad(p(O[k], 0), p(O[n], 0), p(O[n], Z), p(O[k], Z));
+    this.quad(p(O[k], Z), p(O[n], Z), p(I[n], Z), p(I[k], Z));
+    this.quad(p(I[k], f), p(I[k], Z), p(I[n], Z), p(I[n], f));
+  }
+  this.quad(p(I[0], f), p(I[1], f), p(I[2], f), p(I[3], f));
+  this.bodies++;
+};
+// Raised 7-segment number (reads from the front edge). Segments overlap but never share vertices.
+const SEGS = ["abcdef", "bc", "abged", "abgcd", "fgbc", "afgcd", "afgedc", "abc", "abcdefg", "abcdfg"];
+function numWidth(n, W) { return String(n).length * W + (String(n).length - 1) * W * 0.35; }
+Mesh.prototype.number = function (n, x, y, W, H, t, zs) {
+  const e = 0.05, z0 = zs - 0.2, z1 = zs + 0.6;
+  for (const ch of String(n)) {
+    const on = SEGS[+ch];
+    if (on.includes("d")) this.box(x, y, z0, x + W, y + t, z1);
+    if (on.includes("g")) this.box(x, y + H / 2 - t / 2, z0, x + W, y + H / 2 + t / 2, z1);
+    if (on.includes("a")) this.box(x, y + H - t, z0, x + W, y + H, z1);
+    const lo = [y + t * 0.5, y + H / 2 + 0.05], hi = [y + H / 2 - 0.02, y + H - t * 0.5];
+    if (on.includes("e")) this.box(x + e, lo[0], z0, x + e + t, lo[1], z1);
+    if (on.includes("f")) this.box(x + e, hi[0], z0, x + e + t, hi[1], z1);
+    if (on.includes("c")) this.box(x + W - t - e, lo[0], z0, x + W - e, lo[1], z1);
+    if (on.includes("b")) this.box(x + W - t - e, hi[0], z0, x + W - e, hi[1], z1);
+    x += W * 1.35;
+  }
+};
+function F(k, label, def, min, max, hint, extra) { return { k, label, def, min, max, hint, step: 0.1, ...(extra || {}) }; }
+const INT = { step: 1, int: true };
+const USE = {
+  bay: "Engine bay → ASA or nylon (PETG only well away from the manifolds)",
+  cab: "Cab / body → PETG (ASA if it sits in sun on the dash)",
+  garage: "Garage organizer → PLA is fine away from heat; PETG if it lives in a hot truck"
+};
+const PRINTS = {
+  bolt_tray: {
+    name: "Bolt tray — N labeled compartments", use: "garage", mat: "PLA or PETG, 0.2 mm layers, 3 walls, 15% infill",
+    hint: "Label cells on your phone photo list (cell 1 = front-left). Tape a paper key to the lid.",
+    fields: [F("cols", "Columns", 3, 1, 8, "How many groups side by side", INT), F("rows", "Rows", 2, 1, 6, "Front-to-back rows", INT),
+      F("cell", "Cell size", 45, 20, 90, "Longest bolt length + 10 mm"), F("depth", "Depth", 25, 10, 60, "Tallest bolt head + 5 mm"), F("wall", "Wall", 2, 1.2, 4, "2 mm = 5 perimeters on a 0.4 nozzle")],
+    presets: { "Fastener tray 3×2": { cols: 3, rows: 2, cell: 45, depth: 25, wall: 2 }, "Small parts 4×3": { cols: 4, rows: 3, cell: 35, depth: 20, wall: 1.6 }, "Bearing cap bolts 5×2": { cols: 5, rows: 2, cell: 30, depth: 22, wall: 1.6 } },
+    build(p, M) {
+      const X = p.cols * p.cell, Y = p.rows * p.cell, w = p.wall;
+      M.openBox(X, Y, p.depth, w, w);
+      for (let k = 1; k < p.cols; k++) M.box(k * p.cell - w / 2, w / 2, w / 2, k * p.cell + w / 2, Y - w / 2, p.depth - 0.3);
+      for (let k = 1; k < p.rows; k++) M.box(w / 2, k * p.cell - w / 2, w / 2, X - w / 2, k * p.cell + w / 2, p.depth - 0.3);
+      const H = Math.min(10, Math.max(5, p.cell * 0.22)), W = H * 0.6, t = Math.max(0.9, H * 0.16);
+      for (let r = 0; r < p.rows; r++) for (let c = 0; c < p.cols; c++) M.number(r * p.cols + c + 1, c * p.cell + w + 1.5, r * p.cell + w + 1.5, W, H, t, w);
+    },
+    scad: p => `// Bolt tray ${p.cols}x${p.rows}
+cols=${p.cols}; rows=${p.rows}; cell=${p.cell}; depth=${p.depth}; wall=${p.wall};
+difference(){
+  cube([cols*cell, rows*cell, depth]);
+  for(c=[0:cols-1], r=[0:rows-1])
+    translate([c*cell + (c==0?wall:wall/2), r*cell + (r==0?wall:wall/2), wall])
+      cube([cell - (c==0?wall:wall/2) - (c==cols-1?wall:wall/2), cell - (r==0?wall:wall/2) - (r==rows-1?wall:wall/2), depth]);
+}
+// cell numbers: add with text() in OpenSCAD if you want them`
+  },
+  order_holder: {
+    name: "Order holder — numbered pushrods / lifters / rockers / bolts", use: "garage", mat: "PLA or PETG, 3 walls, 20% infill",
+    hint: "Number 1 is front-left. Write which cylinder/valve each number is on your notes (e.g. 1 = #1 exhaust).",
+    fields: [F("count", "How many parts", 16, 1, 40, "16 pushrods/lifters/rockers; 17 head bolts per head", INT), F("cols", "Columns", 8, 1, 12, "Per row", INT),
+      F("bore", "Hole / peg diameter", 8.5, 3, 30, "Part diameter + 0.5 mm (pushrod 5/16 in = 7.9 mm, lifter 0.842 in = 21.4 mm)"),
+      F("pitch", "Spacing", 16, 8, 45, "Center to center; auto-grows to hole + 5 mm"), F("depth", "Socket / peg height", 30, 5, 80, "About 1/4 of the part length"),
+      F("base", "Base thickness", 3, 2, 6, "3 mm is plenty"), F("style", "Style", 0, 0, 1, "Sockets hold rods/bolts; pegs hold rockers by the pivot hole", { sel: ["Sockets (holes)", "Pegs (for rockers)"], step: 1, int: true })],
+    presets: { "Pushrods (16)": { count: 16, cols: 8, bore: 8.5, pitch: 16, depth: 30, base: 3, style: 0 }, "Lifters (16)": { count: 16, cols: 4, bore: 22.6, pitch: 28, depth: 20, base: 3, style: 0 },
+      "Rockers (16, pegs)": { count: 16, cols: 4, bore: 9, pitch: 30, depth: 12, base: 3, style: 1 }, "Head bolts (17 per head)": { count: 17, cols: 6, bore: 12, pitch: 20, depth: 25, base: 3, style: 0 } },
+    build(p, M) {
+      const P = Math.max(p.pitch, p.bore + 5), rows = Math.ceil(p.count / p.cols), X = p.cols * P, Y = rows * (P + 8);
+      M.box(0, 0, 0, X, Y, p.base);
+      for (let n = 0; n < p.count; n++) {
+        const r = Math.floor(n / p.cols), c = n % p.cols, cx = c * P + P / 2, cy = r * (P + 8) + 8 + P / 2;
+        if (p.style === 1) M.cyl(cx, cy, p.base / 2, p.base + p.depth, p.bore / 2);
+        else M.tube(cx, cy, p.base / 2, p.base + p.depth, p.bore / 2 + 1.6, p.bore / 2);
+        M.number(n + 1, cx - numWidth(n + 1, 3.3) / 2, r * (P + 8) + 1.2, 3.3, 5.5, 0.9, p.base);
+      }
+    },
+    scad: p => `// Numbered order holder
+count=${p.count}; cols=${p.cols}; bore=${p.bore}; pitch=max(${p.pitch}, bore+5); depth=${p.depth}; base=${p.base}; pegs=${p.style ? "true" : "false"};
+rows=ceil(count/cols); $fn=64;
+cube([cols*pitch, rows*(pitch+8), base]);
+for(n=[0:count-1]) let(r=floor(n/cols), c=n%cols) translate([c*pitch+pitch/2, r*(pitch+8)+8+pitch/2, base/2]) {
+  if(pegs) cylinder(h=base/2+depth, d=bore);
+  else difference(){ cylinder(h=base/2+depth, d=bore+3.2); translate([0,0,-1]) cylinder(h=depth+base, d=bore); }
+}
+for(n=[0:count-1]) let(r=floor(n/cols), c=n%cols) translate([c*pitch+pitch/2, r*(pitch+8)+1.2, base-0.2]) linear_extrude(0.8) text(str(n+1), size=5, halign="center");`
+  },
+  dust_cap: {
+    name: "Port / nipple dust cap or plug", use: "garage", mat: "PETG (storage) — ASA if left on while running",
+    hint: "For storage while the engine is apart. Remove every cap before first start. Not for fuel lines.",
+    fields: [F("d", "Port / hole diameter", 6, 2, 40, "Cap: nipple OD. Plug: hole ID. Test-fit, adjust ±0.2 mm"), F("depth", "Depth", 8, 3, 30, "How far it should slide on / in"),
+      F("wall", "Wall", 1.2, 0.8, 3, "Cap wall thickness"), F("style", "Style", 0, 0, 1, "Cap slides over a nipple; plug pushes into a hole", { sel: ["Cap (over a nipple)", "Plug (into a hole)"], step: 1, int: true })],
+    presets: { "Vacuum nipple cap (6 mm)": { d: 6, depth: 8, wall: 1.2, style: 0 }, "Large vacuum port cap (10 mm)": { d: 10, depth: 10, wall: 1.4, style: 0 },
+      "Oil gallery / bolt hole plug (11 mm)": { d: 11, depth: 10, wall: 1.2, style: 1 }, "Cooler line cap (3/8 in)": { d: 9.5, depth: 12, wall: 1.6, style: 0 } },
+    build(p, M) {
+      if (p.style === 1) { M.cyl(0, 0, 0, 1.6, p.d / 2 + 2); M.frustum(0, 0, 1, 1.6 + p.depth, p.d / 2 + 0.15, Math.max(p.d / 2 - 0.3, 0.5)); }
+      else { const ri = p.d / 2 + 0.1, ro = ri + p.wall; M.cyl(0, 0, 0, 1.6, ro); M.tube(0, 0, 0.8, 1.6 + p.depth, ro, ri); }
+    },
+    scad: p => p.style === 1 ? `// Plug
+d=${p.d}; depth=${p.depth}; $fn=64;
+cylinder(h=1.6, d=d+4);
+translate([0,0,1]) cylinder(h=0.6+depth, d1=d+0.3, d2=max(d-0.6,1));` : `// Cap
+d=${p.d}; depth=${p.depth}; wall=${p.wall}; $fn=64;
+ri=d/2+0.1; ro=ri+wall;
+cylinder(h=1.6, r=ro);
+translate([0,0,0.8]) difference(){ cylinder(h=0.8+depth, r=ro); translate([0,0,-1]) cylinder(h=depth+3, r=ri); }`
+  },
+  wire_sep: {
+    name: "Plug wire separator / loom", use: "bay", mat: "ASA or nylon only (near exhaust manifolds) — keep 2 in / 50 mm off the manifolds",
+    hint: "Snap-in C-rings keep wires from touching each other and the manifold. Route wires away from heat; the separator does not insulate.",
+    fields: [F("n", "Number of wires", 4, 1, 8, "Count wires that run together", INT), F("d", "Wire diameter", 8, 3, 14, "8 mm wires = 8; measure the boot-free section"),
+      F("t", "Thickness", 10, 4, 25, "Along the wire"), F("wall", "Ring wall", 2, 1.2, 4, "Thicker = stiffer snap"), F("spacing", "Spacing (0 = auto)", 0, 0, 40, "Center to center; auto keeps rings from blocking each other")],
+    presets: { "Plug wires 8 mm, 4-way": { n: 4, d: 8, t: 10, wall: 2, spacing: 0 }, "Plug wires 8 mm, 2-way": { n: 2, d: 8, t: 10, wall: 2, spacing: 0 } },
+    build(p, M) {
+      const ri = p.d / 2 + 0.2, ro = ri + p.wall; let sp = Math.max(p.spacing, ro + ri + 0.5);
+      if (Math.abs(sp - 2 * ro) < 0.01) sp += 0.02; // avoid rings touching at exactly one edge
+      for (let i = 0; i < p.n; i++) M.sector(ro + i * sp, 0, 0, p.t, ro, ri, 125, 415, 58);
+      if (p.n > 1) M.box(ro + 0.37, -ro, 0, ro + (p.n - 1) * sp - 0.37, -ri, p.t);
+    },
+    scad: p => `// Wire separator
+n=${p.n}; d=${p.d}; t=${p.t}; wall=${p.wall};
+ri=d/2+0.2; ro=ri+wall; sp=max(${p.spacing}, ro+ri+0.5); $fn=64;
+module c(){ difference(){ cylinder(h=t, r=ro); translate([0,0,-1]) cylinder(h=t+2, r=ri); translate([0,0,-1]) rotate([0,0,55]) cube([ro*2, ro*2, t+2]); } }
+for(i=[0:n-1]) translate([ro+i*sp,0,0]) c();
+if(n>1) translate([ro, -ro, 0]) cube([(n-1)*sp, ro-ri, t]);`
+  },
+  push_clip: {
+    name: "Push-type panel clip", use: "cab", mat: "PETG, 4 walls, 40% infill (nylon grips best)",
+    hint: "Solid barb: slit the stem lengthwise with a hacksaw if it needs to squeeze through the hole.",
+    fields: [F("head", "Head diameter", 18, 8, 40, "Across the head of an intact clip"), F("head_h", "Head thickness", 2.2, 1.2, 5, "Edge of the head with calipers"),
+      F("stem", "Stem diameter", 7, 3, 15, "Panel hole minus ~0.3 mm"), F("len", "Stem length", 14, 5, 40, "Panel + backing + 3 mm")],
+    presets: { "Push clip (8 mm hole)": { head: 20, head_h: 2.2, stem: 7.7, len: 14 } },
+    build(p, M) {
+      const top = p.head_h + p.len;
+      M.cyl(0, 0, 0, p.head_h, p.head / 2);
+      M.cyl(0, 0, p.head_h * 0.5, top - 1.5, p.stem / 2);
+      M.frustum(0, 0, top - 3, top, p.stem / 2 + 1.2, Math.max(p.stem / 2 - 0.3, 0.5));
+    },
+    scad: p => `// GMT400-style push clip
+head_d=${p.head}; head_h=${p.head_h}; stem_d=${p.stem}; stem_h=${p.len}; barb=1.2; $fn=64;
+union(){
+  cylinder(h=head_h, d=head_d);
+  translate([0,0,head_h*0.5]) cylinder(h=head_h*0.5+stem_h-1.5, d=stem_d);
+  translate([0,0,head_h+stem_h-3]) cylinder(h=3, d1=stem_d+barb*2, d2=max(stem_d-0.6,1));
+}`
+  },
+  fir_tree: {
+    name: "Fir-tree retainer", use: "cab", mat: "PETG or nylon, 0.16–0.20 mm layers",
+    hint: "Print standing up. Use nylon for anything that gets removed often.",
+    fields: [F("stem", "Hole diameter", 6.5, 3, 14, "The hole it pushes into"), F("len", "Length", 16, 6, 40, "Panel stack + 4 mm")],
+    presets: { "Fir-tree retainer": { stem: 6.5, len: 16 } },
+    build(p, M) {
+      M.cyl(0, 0, 0, 1.8, p.stem / 2 + 5);
+      M.cyl(0, 0, 1.2, 2 + p.len, (p.stem - 0.8) / 2);
+      for (let i = 0; 2 + i * 2.6 + 2.2 <= 2 + p.len; i++) M.frustum(0, 0, 2 + i * 2.6, 2 + i * 2.6 + 2.2, (p.stem + 2.4) / 2, p.stem / 2);
+    },
+    scad: p => `// Fir-tree clip
+d=${p.stem}; h=${p.len}; $fn=64;
+union(){
+  cylinder(h=1.8, d=d+10);
+  for(i=[0:20]) if(2+i*2.6+2.2 <= 2+h) translate([0,0,2+i*2.6]) cylinder(h=2.2, d1=d+2.4, d2=d);
+  translate([0,0,1.2]) cylinder(h=h+0.8, d=d-0.8);
+}`
+  },
+  hose_sep: {
+    name: "Hose / loom separator", use: "bay", mat: "ASA or nylon in the bay; PETG only on cool lines away from manifolds",
+    hint: "Measure hose OUTSIDE diameter. Heater hoses run hot — not on the exhaust side.",
+    fields: [F("a", "Hose A outside dia.", 19, 5, 40, "Calipers across hose A"), F("b", "Hose B outside dia.", 16, 5, 40, "Calipers across hose B"),
+      F("wall", "Wall", 3, 1.6, 5, "3 mm snaps firmly"), F("t", "Thickness", 10, 5, 25, "Along the hose")],
+    presets: { "Heater hoses 3/4 + 5/8 in": { a: 28, b: 24, wall: 3, t: 12 } },
+    build(p, M) {
+      const ra = p.a / 2 + p.wall, rb = p.b / 2 + p.wall, c1 = ra, c2 = c1 + p.a / 2 + p.b / 2 + p.wall + 0.5; // 0.5 mm keeps ring A clear of hose B
+      M.sector(c1, 0, 0, p.t, ra, p.a / 2, 125, 415, 58);
+      M.sector(c2, 0, 0, p.t, rb, p.b / 2, 125, 415, 58);
+    },
+    scad: p => `// Two-hose snap separator
+a=${p.a}; b=${p.b}; wall=${p.wall}; t=${p.t}; $fn=64;
+module c(d){ difference(){ cylinder(h=t, r=d/2+wall); translate([0,0,-1]) cylinder(h=t+2, d=d); translate([0,0,-1]) rotate([0,0,55]) cube([d+2*wall, d+2*wall, t+2]); } }
+translate([a/2+wall,0,0]) c(a);
+translate([a/2+wall + a/2+b/2+wall+0.5,0,0]) c(b);`
+  },
+  spacer: {
+    name: "Battery hold-down / cover spacer", use: "bay", mat: "ASA or PETG, 100% infill (it gets clamped)",
+    hint: "Only as a spacer under the factory hold-down — never as the hold-down itself.",
+    fields: [F("od", "Outside diameter", 24, 6, 60, "Washer face of the bracket"), F("id", "Hole diameter", 8.5, 2, 40, "Bolt diameter + 0.5 mm"), F("h", "Height", 8, 1, 40, "Gap you need to fill")],
+    presets: { "Battery hold-down spacer": { od: 24, id: 8.5, h: 8 } },
+    build(p, M) { M.tube(0, 0, 0, p.h, p.od / 2, Math.min(p.id, p.od - 2) / 2); },
+    scad: p => `// Spacer
+od=${p.od}; id=${p.id}; h=${p.h}; $fn=64;
+difference(){ cylinder(h=h, d=od); translate([0,0,-1]) cylinder(h=h+2, d=id); }`
+  },
+  shroud_hook: {
+    name: "Fan shroud hook tab", use: "bay", mat: "ASA or nylon, 5 walls, print flat",
+    hint: "Secondary retainer only. A loose shroud can hit the fan — keep the factory fasteners.",
+    fields: [F("L", "Length", 40, 20, 90, "Tab length along the shroud edge"), F("W", "Width", 16, 10, 40, "Width of the broken tab"),
+      F("T", "Plate thickness", 3.2, 2, 6, "Shroud plastic thickness"), F("hook_h", "Hook height", 12, 6, 30, "Radiator lip height + 2 mm")],
+    presets: { "Fan shroud hook tab": { L: 40, W: 16, T: 3.2, hook_h: 12 } },
+    build(p, M) {
+      M.box(0, 0, 0, p.L - 3, p.W, p.T);
+      M.box(p.L - 6, 0, 0, p.L, p.W, p.hook_h);
+      M.box(0, p.W / 2 - 4, 0, 8, p.W / 2 + 4, p.T + 2);
+    },
+    scad: p => `// Shroud hook
+L=${p.L}; W=${p.W}; T=${p.T}; H=${p.hook_h};
+union(){ cube([L-3,W,T]); translate([L-6,0,0]) cube([6,W,H]); translate([0,W/2-4,0]) cube([8,8,T+2]); }`
+  },
+  custom_box: {
+    name: "Custom box / connector dust cover", use: "garage", mat: "PETG, 3 walls (PLA OK for garage storage)",
+    hint: "Inside size = outside minus 2× wall. Slip over unplugged connectors so dirt stays out while the engine is out.",
+    fields: [F("x", "Outside length", 80, 10, 200, "Longest side + 2× wall + 1 mm"), F("y", "Outside width", 50, 10, 200, "Other side + 2× wall + 1 mm"),
+      F("z", "Height", 20, 5, 120, "How deep it covers"), F("wall", "Wall", 2.4, 1.2, 5, "Also used for the floor")],
+    presets: { "Connector dust cover": { x: 30, y: 20, z: 25, wall: 1.6 }, "Default box": { x: 80, y: 50, z: 20, wall: 2.4 } },
+    build(p, M) { const w = Math.min(p.wall, p.x / 3, p.y / 3); M.openBox(p.x, p.y, p.z, w, Math.min(w, p.z - 1)); },
+    scad: p => `// Open box
+x=${p.x}; y=${p.y}; z=${p.z}; w=${p.wall};
+difference(){ cube([x,y,z]); translate([w,w,w]) cube([x-2*w,y-2*w,z]); }`
+  }
+};
+let printUI = { kind: "bolt_tray", vals: {}, preset: "" };
+let pview = { yaw: -0.6, pitch: 0.95 };
+function printVals(kind) {
+  const T = PRINTS[kind], v = {};
+  for (const f of T.fields) {
+    let x = Number(printUI.kind === kind && printUI.vals[f.k] !== undefined ? printUI.vals[f.k] : f.def);
+    if (!isFinite(x)) x = f.def;
+    x = Math.min(f.max, Math.max(f.min, x));
+    if (f.int) x = Math.round(x);
+    v[f.k] = x;
+  }
+  return v;
+}
+function buildMesh(kind, vals) { const M = new Mesh(); PRINTS[kind].build(vals || printVals(kind), M); return M; }
+function meshBBox(t) {
+  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  for (let i = 0; i < t.length; i++) { const a = i % 3; if (t[i] < lo[a]) lo[a] = t[i]; if (t[i] > hi[a]) hi[a] = t[i]; }
+  return { lo, hi, size: [hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]] };
+}
+function stlBytes(M, name) {
+  const t = M.t, n = t.length / 9, buf = new ArrayBuffer(84 + 50 * n), dv = new DataView(buf);
+  const head = ("C1500 Rebuild Quest STL: " + name).slice(0, 80);
+  for (let i = 0; i < head.length; i++) dv.setUint8(i, head.charCodeAt(i) & 0x7f);
+  dv.setUint32(80, n, true);
+  for (let k = 0; k < n; k++) {
+    const o = k * 9, off = 84 + k * 50;
+    const ux = t[o + 3] - t[o], uy = t[o + 4] - t[o + 1], uz = t[o + 5] - t[o + 2], vx = t[o + 6] - t[o], vy = t[o + 7] - t[o + 1], vz = t[o + 8] - t[o + 2];
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const L = Math.hypot(nx, ny, nz) || 1;
+    dv.setFloat32(off, nx / L, true); dv.setFloat32(off + 4, ny / L, true); dv.setFloat32(off + 8, nz / L, true);
+    for (let j = 0; j < 9; j++) dv.setFloat32(off + 12 + j * 4, t[o + j], true);
+    dv.setUint16(off + 48, 0, true);
+  }
+  return buf;
+}
+function saveBlob(data, filename, type) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([data], { type }));
+  a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
+function downloadStl() {
+  const kind = printUI.kind, M = buildMesh(kind);
+  saveBlob(stlBytes(M, kind), kind + ".stl", "model/stl");
+  toast("STL saved — open it in your slicer");
+}
+function downloadScad() {
+  const kind = printUI.kind, part = PRINTS[kind];
+  saveBlob(part.scad(printVals(kind)) + "\n// " + part.mat + "\n", kind + ".scad", "text/plain");
+  toast("Open in OpenSCAD (desktop) → Render → Export STL");
+}
+function openPrint(kind, preset) {
+  const T = PRINTS[kind];
+  if (!T) return;
+  printUI = { kind, vals: { ...((T.presets || {})[preset] || {}) }, preset: (T.presets || {})[preset] ? preset : "" };
+  pview = { yaw: -0.6, pitch: 0.95 };
+  setTab("print");
+  window.scrollTo({ top: 0 });
+}
+function setPrintKind(kind) { printUI = { kind, vals: {}, preset: "" }; pview = { yaw: -0.6, pitch: 0.95 }; renderPrint(); }
+function applyPreset(name) { const T = PRINTS[printUI.kind]; printUI.vals = { ...(T.presets[name] || {}) }; printUI.preset = T.presets[name] ? name : ""; renderPrint(); }
+function printVal(el) { printUI.vals[el.dataset.k] = Number(el.value); printUI.preset = ""; updatePrintPreview(); }
+function updatePrintPreview() {
+  const kind = printUI.kind, M = buildMesh(kind), bb = meshBBox(M.t);
+  const info = document.getElementById("printInfo");
+  if (info) {
+    const big = bb.size[0] > 220 || bb.size[1] > 220 || bb.size[2] > 250;
+    info.innerHTML = `${M.t.length / 9} triangles · ${M.bodies} bodies · ${bb.size.map(s => s.toFixed(1)).join(" × ")} mm${big ? ` <span style="color:var(--warn)">— bigger than most 220 mm beds</span>` : ""}`;
+  }
+  drawPreview(M);
+}
+function drawPreview(M) {
+  const cv = document.getElementById("printCanvas");
+  if (!cv) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1), W = Math.max(200, cv.clientWidth || 320), H = Math.max(160, cv.clientHeight || 260);
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = "#0c1622"; ctx.fillRect(0, 0, W, H);
+  if (!M.t.length) return;
+  const t = previewTris(M.t), n = t.length / 9;
+  const bb = meshBBox(t), c = bb.lo.map((l, i) => (l + bb.hi[i]) / 2), diag = Math.hypot(...bb.size) || 1, s = 0.82 * Math.min(W, H) / diag;
+  const cy = Math.cos(pview.yaw), sy = Math.sin(pview.yaw), cpv = Math.cos(pview.pitch), spv = Math.sin(pview.pitch);
+  const P = new Float32Array(n * 9);
+  for (let i = 0; i < n * 3; i++) {
+    const x = t[i * 3] - c[0], y = t[i * 3 + 1] - c[1], z = t[i * 3 + 2] - c[2];
+    const x1 = x * cy - y * sy, y1 = x * sy + y * cy;       // yaw about Z
+    const y2 = y1 * cpv - z * spv, z2 = y1 * spv + z * cpv;  // tilt: Z-up world → screen
+    P[i * 3] = x1; P[i * 3 + 1] = z2; P[i * 3 + 2] = -y2;   // screen x, screen up, depth (toward viewer +)
+  }
+  const L = [0.35, 0.75, 0.56], order = [];
+  for (let k = 0; k < n; k++) {
+    const o = k * 9;
+    const ux = P[o + 3] - P[o], uy = P[o + 4] - P[o + 1], uz = P[o + 5] - P[o + 2], vx = P[o + 6] - P[o], vy = P[o + 7] - P[o + 1], vz = P[o + 8] - P[o + 2];
+    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    if (nz <= 0) continue; // back face
+    const len = Math.hypot(nx, ny, nz) || 1;
+    order.push([P[o + 2] + P[o + 5] + P[o + 8], k, Math.max(0, (nx * L[0] + ny * L[1] + nz * L[2]) / len)]);
+  }
+  order.sort((a, b) => a[0] - b[0]);
+  const ox = W / 2, oy = H / 2;
+  for (const [, k, sh] of order) {
+    const o = k * 9, l = Math.round(28 + sh * 50);
+    ctx.fillStyle = ctx.strokeStyle = `hsl(158, 62%, ${l}%)`;
+    ctx.beginPath();
+    ctx.moveTo(ox + P[o] * s, oy - P[o + 1] * s); ctx.lineTo(ox + P[o + 3] * s, oy - P[o + 4] * s); ctx.lineTo(ox + P[o + 6] * s, oy - P[o + 7] * s);
+    ctx.closePath(); ctx.fill(); ctx.lineWidth = 0.4; ctx.stroke();
+  }
+}
+// Preview only: split big triangles so the painter's sort stays correct around walls and dividers.
+function previewTris(t) {
+  const bb = meshBBox(t), thr = Math.hypot(...bb.size) / 14, out = [];
+  const d = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+  const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+  const rec = (a, b, c, lvl) => {
+    if (lvl >= 4 || Math.max(d(a, b), d(b, c), d(c, a)) <= thr || out.length > 400000) { out.push(...a, ...b, ...c); return; }
+    const ab = mid(a, b), bc = mid(b, c), ca = mid(c, a);
+    rec(a, ab, ca, lvl + 1); rec(ab, b, bc, lvl + 1); rec(ca, bc, c, lvl + 1); rec(ab, bc, ca, lvl + 1);
+  };
+  for (let o = 0; o < t.length; o += 9) rec([t[o], t[o + 1], t[o + 2]], [t[o + 3], t[o + 4], t[o + 5]], [t[o + 6], t[o + 7], t[o + 8]], 0);
+  return out;
+}
+function bindPreviewDrag() {
+  const cv = document.getElementById("printCanvas");
+  if (!cv) return;
+  let drag = null;
+  cv.addEventListener("pointerdown", e => { drag = [e.clientX, e.clientY]; try { cv.setPointerCapture(e.pointerId); } catch {} });
+  cv.addEventListener("pointermove", e => {
+    if (!drag) return;
+    pview.yaw += (e.clientX - drag[0]) * 0.01;
+    pview.pitch = Math.max(0, Math.min(Math.PI, pview.pitch + (e.clientY - drag[1]) * 0.01));
+    drag = [e.clientX, e.clientY];
+    drawPreview(buildMesh(printUI.kind));
+  });
+  const end = () => { drag = null; };
+  cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end);
+}
+function renderPrint() {
+  const kind = printUI.kind, T = PRINTS[kind], v = printVals(kind), gs = state.grokScad;
+  document.getElementById("tab-print").innerHTML = `
+    <div class="card">
+      <h3 style="margin-top:0">Print shop</h3>
+      <div class="safety" id="printSafety"><strong>Safety rule:</strong> never print anything load-bearing (engine/trans mounts, lifting points, brackets that hold weight), anything that touches fuel or fuel vapor, or anything near the exhaust manifolds, Y-pipe, or other high heat. Prints are helpers, organizers, clips, and covers — test-fit, and buy the real part when it matters.</div>
+      <label class="sub">Template</label>
+      <select id="printKind" onchange="setPrintKind(this.value)">${Object.entries(PRINTS).map(([k, x]) => `<option value="${k}" ${k === kind ? "selected" : ""}>${x.name}</option>`).join("")}</select>
+      ${Object.keys(T.presets || {}).length ? `<div style="height:8px"></div><label class="sub">Preset</label>
+      <select id="printPreset" onchange="applyPreset(this.value)"><option value="">Custom / defaults</option>${Object.keys(T.presets).map(n => `<option ${printUI.preset === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select>` : ""}
+      <div class="tip" style="margin-top:10px"><strong>Material:</strong> ${esc(USE[T.use])}. ${esc(T.mat)}.<br><strong>Tip:</strong> ${esc(T.hint)}</div>
+      <div class="fgrid" id="printFields">
+        ${T.fields.map(f => `<div><label for="pf-${f.k}">${f.label}${f.sel || f.int ? "" : " (mm)"}</label>
+          ${f.sel ? `<select id="pf-${f.k}" data-k="${f.k}" onchange="printVal(this)">${f.sel.map((o, i) => `<option value="${i}" ${v[f.k] === i ? "selected" : ""}>${o}</option>`).join("")}</select>`
+            : `<input type="number" inputmode="decimal" id="pf-${f.k}" data-k="${f.k}" value="${v[f.k]}" min="${f.min}" max="${f.max}" step="${f.step}" oninput="printVal(this)">`}
+          <small>📏 ${esc(f.hint)}</small></div>`).join("")}
+      </div>
+      <canvas id="printCanvas" aria-label="3D preview — drag to rotate" style="margin-top:12px"></canvas>
+      <div class="sub" id="printInfo" style="margin-top:6px"></div>
+      <div class="sub">Drag the preview to rotate.</div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="stlBtn" onclick="downloadStl()">Download .stl</button>
+        <button class="btn ghost" id="scadBtn" onclick="downloadScad()">Download .scad</button>
+        <button class="btn ghost" onclick="askPrintHelp()">Ask Grok to size it</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Something else? Ask Grok to design it</h3>
+      <p class="sub">Describe the part and give measurements in mm. Grok returns OpenSCAD code. Open it in OpenSCAD on a computer → Render (F6) → Export STL. This app can't render arbitrary OpenSCAD itself; it only previews the templates above.</p>
+      <textarea id="grokPartDesc" placeholder="Example: clip that holds two 8 mm vacuum lines to a 3 mm steel edge, 12 mm wide, snap fit">${esc(gs ? gs.desc : "")}</textarea>
+      <div class="row" style="margin-top:10px"><button class="btn" id="grokDesignBtn" onclick="designWithGrok()">Ask Grok to design it</button></div>
+      ${gs && gs.code ? `<div style="margin-top:12px"><div class="sub">Returned OpenSCAD (${esc(fmtTime(gs.t))})</div><pre class="code" id="grokScadCode">${esc(gs.code)}</pre>
+        ${gs.notes ? `<p class="sub" style="white-space:pre-wrap">${esc(gs.notes)}</p>` : ""}
+        <div class="row"><button class="btn ghost" id="grokScadDl" onclick="downloadGrokScad()">Download .scad</button></div>
+        <p class="sub">Check every dimension before printing. Same safety rule applies.</p></div>` : ""}
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Which filament?</h3>
+      <div class="mat">
+        <strong>ASA / nylon</strong><span>Anything in the engine bay or near heat (ASA softens ~100 °C; nylon PA higher). Still keep clear of the manifolds.</span>
+        <strong>PETG</strong><span>OK for the cab, interior clips, and garage organizers (softens ~75–80 °C — not for the engine bay near the engine).</span>
+        <strong>PLA</strong><span>Garage organizers only, away from heat (softens ~55–60 °C; a closed truck in the sun can wreck it).</span>
+      </div>
+      <ul class="clean">
+        <li>0.2 mm layers, 4+ walls, 30–50% infill on clips; organizers can be 15%.</li>
+        <li>Orient barbs so layer lines don't run across the snap.</li>
+        <li>STLs are multi-body (overlapping pieces). Slicers merge them automatically.</li>
+        <li>Buy real GM/Dorman clips when they're cheap. Print when the dealer pack is $18 for one broken ear.</li>
+      </ul>
+    </div>
+  `;
+  bindPreviewDrag();
+  updatePrintPreview();
+}
+function askPrintHelp() {
+  askGrok("Help me size a 3D-printed " + PRINTS[printUI.kind].name + " for a 1994 C1500. Ask me the 3 measurements you need, then give OpenSCAD-ready dimensions and material (ASA/nylon in the engine bay, PETG in the cab). Never print load-bearing engine or transmission mounts, fuel parts, or anything near the exhaust.");
+  setTab("grok");
+}
+async function callXai(messages) {
+  const res = await fetch("https://api.x.ai/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + state.grokKey },
+    body: JSON.stringify({ model: state.grokModel || "grok-4-fast", messages })
+  });
+  let data;
+  try { data = await res.json(); } catch { throw new Error("HTTP " + res.status + " with a non-JSON response"); }
+  if (data.choices && data.choices[0] && data.choices[0].message) return data.choices[0].message.content;
+  throw new Error((data.error && (data.error.message || data.error)) || "HTTP " + res.status);
+}
+function grokDesignPrompt(desc) {
+  return "Design a 3D-printable part for a 1994 Chevy C1500 (GMT400) rebuild.\nDescription and measurements (mm): " + desc +
+    "\n\nRules: return exactly ONE ```openscad code block. Put every dimension in a named variable at the top. Use only built-in OpenSCAD (no libraries). Keep it printable without supports if possible. After the code, give at most 5 short notes: material (ASA or nylon in the engine bay, PETG in the cab, PLA only for garage organizers), print orientation, and what to test-fit. Refuse anything load-bearing (engine/trans mounts, lifting), anything that touches fuel, or anything near the exhaust — say why instead.";
+}
+async function designWithGrok() {
+  const desc = (document.getElementById("grokPartDesc").value || "").trim();
+  if (!desc) return toast("Describe the part and its measurements first");
+  const prompt = grokDesignPrompt(desc);
+  if (!state.grokKey) {
+    const ok = () => toast("No API key — design prompt copied. Paste it into Grok, then open the code in OpenSCAD.", 4000);
+    try { navigator.clipboard.writeText(prompt).then(ok, () => toast("No API key set (Grok tab). Copy failed — type the request into Grok.", 4000, true)); } catch { toast("No API key set (Grok tab).", 4000, true); }
+    return;
+  }
+  const btn = document.getElementById("grokDesignBtn");
+  if (btn) { btn.disabled = true; btn.textContent = "Grok is designing…"; }
+  try {
+    const text = await callXai([{ role: "system", content: "You are a careful mechanical designer who writes clean, parametric OpenSCAD." }, { role: "user", content: prompt }]);
+    const m = text.match(/```(?:openscad|scad)?\s*\n([\s\S]*?)```/i);
+    const code = m ? m[1].trim() : "";
+    const notes = (m ? text.replace(m[0], "") : text).trim().slice(0, 2000);
+    state.grokScad = { desc, code: code || "// Grok did not return a code block — see notes below.", notes, t: new Date().toISOString() };
+    state.log.unshift({ t: new Date().toISOString(), text: "Grok design: " + desc.slice(0, 80) });
+    save();
+  } catch (err) {
+    toast("Grok design failed: " + err.message + (err instanceof TypeError ? " — no signal or the request was blocked." : ""), 6000, true);
+  }
+  renderPrint();
+}
+function downloadGrokScad() {
+  const g = state.grokScad;
+  if (!g || !g.code) return;
+  saveBlob("// " + g.desc.replace(/\n/g, " ").slice(0, 200) + "\n// Open in OpenSCAD (desktop) → Render (F6) → Export STL\n" + g.code + "\n", "grok-part.scad", "text/plain");
+}
+
+function render() {
+  renderHeader();
+  const active = document.querySelector(".nav button.active").dataset.tab;
+  if (active === "home") renderHome();
+  if (active === "bay") renderBay();
+  if (active === "parts") renderParts();
+  if (active === "grok") renderGrok();
+  if (active === "print") renderPrint();
+  if (active === "specs") renderSpecs();
+  if (active === "log") renderLog();
+}
+
+renderHeader();
+render(); // renders with photo placeholders; photos fill in once IndexedDB has loaded
+initPhotos().finally(render);
+</script>
+</body>
+</html>
