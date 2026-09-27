@@ -319,6 +319,34 @@
   .tour h3 { font-size: 21px; margin: 6px 0; }
   .tour p { font-size: 16px; color: #d5e4f1; margin: 6px 0 14px; }
   .tdots { display: flex; gap: 6px; margin-bottom: 12px; } .tdots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); } .tdots i.on { background: var(--accent); }
+
+  /* ================= Scan a photo (v7) ================= */
+  .scanbtn { width: 100%; margin-top: 10px; }
+  .nsheet button[aria-label="Close"] { min-width: 48px; }
+  .ssheet .scol { display: grid; gap: 8px; margin: 12px 0 6px; }
+  .ssheet .scol .btn { width: 100%; justify-content: center; display: flex; align-items: center; }
+  .ssheet input#scanVin { font-family: ui-monospace, Menlo, monospace; letter-spacing: 1px; text-transform: uppercase; margin-top: 10px; }
+  .ssheet .serr { color: #ffd0d0; }
+  .snokey { margin-top: 10px; background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  .snokey .btn { margin-top: 8px; width: 100%; }
+  .sthumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin: 10px 0; }
+  .sthumb { position: relative; display: block; border: 3px solid var(--line); border-radius: 12px; overflow: hidden; min-height: 96px; cursor: pointer; }
+  .sthumb.on { border-color: var(--accent); }
+  .sthumb img { width: 100%; height: 96px; object-fit: cover; display: block; }
+  .sthumb input { position: absolute; top: 6px; left: 6px; width: 26px; height: 26px; accent-color: var(--accent); }
+  .sthumb .stag { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(7,16,24,.85); font-size: 13px; padding: 2px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .scard { background: var(--panel2); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-top: 10px; overflow-wrap: anywhere; }
+  .scard .shead { display: flex; gap: 12px; align-items: center; }
+  .scard .shead img, .scard .sicon { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; flex: 0 0 auto; }
+  .scard .sicon { display: grid; place-items: center; font-size: 28px; background: var(--panel); border: 1px solid var(--line); }
+  .slines { margin: 10px 0 4px; padding-left: 20px; font-size: 16px; }
+  .slines li { margin: 4px 0; }
+  .sprop span { min-width: 0; }
+  .sprop select { margin-top: 6px; }
+  .swas { display: block; color: var(--muted); font-size: 14px; }
+  .srescan { margin-top: 8px; }
+  .sbusy { font-size: 16px; padding: 12px; }
+  .vinrow input { font-family: ui-monospace, Menlo, monospace; letter-spacing: 1px; text-transform: uppercase; }
   @media (prefers-reduced-motion: reduce) { .npressing { transform: none; } .nflash, .nsheet, .spin { animation: none; } }
 </style>
 </head>
@@ -359,13 +387,14 @@
 <div id="toast" class="toast hidden"></div>
 <button id="swToast" class="swtoast hidden" type="button">Updated, tap to reload</button>
 <div id="noteSheet" class="nsheet-wrap hidden"></div>
+<div id="scanSheet" class="nsheet-wrap hidden"></div>
 
 <script>
 const PHASES = [
   {
     id: "setup",
     title: "Phase 0 — Garage Setup",
-    blurb: "Build your loadout before a single bolt moves.",
+    blurb: "Get the garage ready before a single bolt moves.",
     xp: 80,
     steps: [
       {
@@ -810,7 +839,7 @@ function specsFor() {
 }
 
 const defaultState = () => ({
-  truck: { engine: "5.7L TBI L05 / VIN K", drive: "2WD", trans: "4L60E", miles: "", notes: "" },
+  truck: { engine: "5.7L TBI L05 / VIN K", drive: "2WD", trans: "4L60E", miles: "", notes: "", vin: "" },
   done: {},
   notes: {},
   log: [],
@@ -829,7 +858,9 @@ const defaultState = () => ({
   infoCache: {},       // "More info" -> last Grok deep dive per item: {text, t, title}
   lastExportAt: 0,     // ms; last time a backup file was saved (export or Save backup)
   backupNagUntil: 0,   // ms; "Not today" on the backup reminder
-  firstProgressAt: 0   // ms; when this phone first had progress worth backing up
+  firstProgressAt: 0,  // ms; when this phone first had progress worth backing up
+  scans: {},           // photo scan results, keyed by photoKey(photo data): {t, step, source, kind, r, applied}
+  scanModel: ""        // "" = default vision model (SCAN_MODEL)
 });
 
 const STORE_KEY = "c1500-quest-v1";
@@ -1223,7 +1254,7 @@ function goMore(id, anchor) {
 }
 function renderMore() {
   const rows = [
-    ["bay", "🚚", "Your truck", "Engine, drive, transmission, mileage"],
+    ["bay", "🚚", "Your truck", "Engine, drive, transmission, mileage, VIN"],
     ["bay", "💾", "Backups", "Save a backup file, snapshots, move to a new phone", "backupsCard"],
     ["log", "📝", "Notes & history", "Every note you've left, and what you've done"],
     ["specs", "📐", "Specs & torque", "Firing order, torque, clearances"],
@@ -1233,6 +1264,7 @@ function renderMore() {
   document.getElementById("tab-more").innerHTML = `<div class="card">
     <h2 style="margin-top:0">More</h2>
     ${rows.map(([t, i, name, d, a]) => `<button class="mrow" data-go="${t}"${a ? ` data-anchor="${a}"` : ""} onclick="goMore(this.dataset.go, this.dataset.anchor)"><span class="mi" aria-hidden="true">${i}</span><span><b>${name}</b><span class="sub">${d}</span></span></button>`).join("")}
+    <button class="mrow" id="scanRow" onclick="openScan()"><span class="mi" aria-hidden="true">📷</span><span><b>Scan photos</b><span class="sub">Fill in info from a VIN, sticker, odometer or receipt, or from photos you already took</span></span></button>
     <button class="mrow" id="tourAgain" onclick="openTour()"><span class="mi" aria-hidden="true">👋</span><span><b>Quick tour</b><span class="sub">How this app works, in 4 taps</span></span></button>
   </div>`;
 }
@@ -1358,7 +1390,7 @@ function renderStep(phase, step, spotlight) {
     </div>
     <p class="why">${step.why}</p>
     ${noteExtras("step:" + step.id, true)}
-    ${spotlight ? `<div class="todo-h">What to do</div>${stepChecklist(step)}${doneBtn}` : ""}
+    ${spotlight ? `<div class="todo-h">What to do</div>${stepChecklist(step)}${doneBtn}${scanBtn(step.id)}` : ""}
     <details class="stepmore" data-step="${step.id}" ${open ? "open" : ""} ontoggle="stepToggle('${step.id}', this.open)">
       <summary>${spotlight ? "Warnings, parts, notes &amp; photos" : `How to do it (${step.do.length} steps)`}</summary>
       ${spotlight ? "" : stepChecklist(step)}
@@ -1372,11 +1404,14 @@ function renderStep(phase, step, spotlight) {
         ${photoBackend === "loading" ? `<div class="phph">Loading…</div>` : photos.map((src, i) => `<img src="${src}" alt="step photo" onclick="if(confirm('Delete this photo?')) delPhoto('${step.id}',${i})" />`).join("")}
         ${step.photo && photoBackend !== "loading" ? `<label class="phadd" aria-label="Add a photo">📷<input type="file" accept="image/*" capture="environment" hidden onchange="addPhoto('${step.id}', this)"></label>` : ""}
       </div>
-      ${spotlight ? "" : doneBtn}
+      ${spotlight ? "" : scanBtn(step.id) + doneBtn}
     </details>
   </div>`;
 }
 
+function scanBtn(stepId) {
+  return `<button class="btn ghost scanbtn" data-scan-step="${stepId}" onclick="event.stopPropagation(); openScan(this.dataset.scanStep)">📷 Scan photo to fill info</button>`;
+}
 function toggleStep(phaseId, stepId, fromBottom) {
   const phase = PHASES.find(p => p.id === phaseId);
   const step = phase.steps.find(s => s.id === stepId);
@@ -1453,7 +1488,14 @@ function renderBay() {
   root.innerHTML = `
     <div class="card">
       <h3 style="margin-top:0">Your truck</h3>
-      <p class="sub" style="margin-top:0">Not sure? Tap ⋯ next to a field for how to check.</p>
+      <p class="sub" style="margin-top:0">Not sure? Tap ⋯ next to a field for how to check, or scan the VIN plate or the RPO sticker in the glove box.</p>
+      <button class="btn scanbtn" id="bayScan" style="margin:0 0 12px" onclick="openScan('profile')">📷 Scan photo to fill info</button>
+      <div class="bayfield vinrow">
+      <div class="fieldhead"><label class="sub" for="bayVin">VIN (17 characters)</label></div>
+      <input id="bayVin" maxlength="20" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="On the dash by the windshield" value="${esc(t.vin || "")}" onchange="setVinField(this.value)">
+      <div class="sub" id="vinInfo" style="margin-top:4px">${esc(vinInfoLine(t.vin))}</div>
+      <button class="btn ghost sm ${t.vin && vinCheck(t.vin) ? "" : "hidden"}" id="vinFill" style="margin-top:6px" onclick="fillFromVin()">Fill in engine + drive from the VIN</button>
+      </div>
       <div class="bayfield"${pa("bay:engine", "Engine")}>
       <div class="fieldhead"><label class="sub" for="bayEngine">Engine${noteBadge("bay:engine")}</label>${nbtn("Engine")}</div>
       <select id="bayEngine" onchange="updTruck('engine', this.value)">
@@ -1516,7 +1558,7 @@ function renderBay() {
 function updTruck(k, v) {
   state.truck[k] = v;
   save();
-  toast("Loadout saved");
+  toast("Saved");
 }
 
 function renderSpecs() {
@@ -1603,10 +1645,11 @@ function validateImport(d) {
       out.adjust.added.push(x);
     }
   }
-  const PATHS = ["have", "price", "skip", "done", "checks", "truck", "added"];
+  const PATHS = ["have", "price", "skip", "done", "checks", "truck", "added", "notes"];
   if (Array.isArray(d.changes)) out.changes = d.changes.slice(0, 60).filter(c => isObj(c) && typeof c.id === "string" && typeof c.target === "string" && Array.isArray(c.ops))
-    .map(c => ({ id: c.id, target: c.target, source: c.source === "grok" ? "grok" : "local", summary: typeof c.summary === "string" ? c.summary.slice(0, 240) : "", t: typeof c.t === "string" ? c.t : "",
-      ops: c.ops.filter(o => isObj(o) && PATHS.includes(o.path) && typeof o.key === "string") }));
+    .map(c => ({ id: c.id, target: c.target, source: ["grok", "scan"].includes(c.source) ? c.source : "local", summary: typeof c.summary === "string" ? c.summary.slice(0, 240) : "", t: typeof c.t === "string" ? c.t : "",
+      ops: c.ops.filter(o => isObj(o) && PATHS.includes(o.path) && typeof o.key === "string")
+        .map(o => o.path === "notes" ? { ...o, prev: typeof o.prev === "string" ? o.prev.slice(0, 20000) : undefined, next: typeof o.next === "string" ? o.next.slice(0, 20000) : undefined, add: typeof o.add === "string" ? o.add.slice(0, 400) : undefined } : o) }));
   if (typeof d.noteHintSeen === "boolean") out.noteHintSeen = d.noteHintSeen;
   // "More info" Grok deep dives (absent in older exports -> empty)
   out.infoCache = {};
@@ -1614,6 +1657,17 @@ function validateImport(d) {
     if (!isObj(v) || typeof v.text !== "string" || !v.text.trim() || k.length > 120 || !parseTarget({ id: k })) continue;
     out.infoCache[k] = { text: v.text.slice(0, 6000), t: typeof v.t === "string" ? v.t : "", title: typeof v.title === "string" ? v.title.slice(0, 120) : k };
   }
+  // photo scan results (absent in older exports -> empty)
+  out.scans = {};
+  if (isObj(d.scans)) for (const [k, v] of Object.entries(d.scans).slice(0, 150)) {
+    if (!/^ph[0-9a-z]{1,8}:\d{1,9}$/.test(k) || !isObj(v)) continue;
+    const r = sanitizeScan(v.r);
+    if (!r) continue;
+    out.scans[k] = { t: typeof v.t === "string" ? v.t.slice(0, 40) : "", step: typeof v.step === "string" && findStep(v.step) ? v.step : "profile",
+      source: ["barcode", "grok", "barcode+grok"].includes(v.source) ? v.source : "grok", kind: r.kind, r, applied: v.applied === true };
+  }
+  if (typeof d.scanModel === "string" && /^[\w.-]{0,40}$/.test(d.scanModel)) out.scanModel = d.scanModel;
+  if (typeof out.truck.vin === "string") out.truck.vin = cleanVin(out.truck.vin).slice(0, 17);
   return out;
 }
 
@@ -1684,6 +1738,7 @@ function contextPack() {
     "Engine: " + state.truck.engine,
     "Drive: " + state.truck.drive,
     "Trans: " + state.truck.trans,
+    ...(state.truck.vin ? ["VIN: " + state.truck.vin] : []),
     "Miles/symptoms: " + (state.truck.miles || "n/a"),
     "Completed steps: " + (done.join(", ") || "none"),
     "Current step: " + (next ? next.step.title : "all steps done"),
@@ -1719,6 +1774,12 @@ function renderGrok() {
       <label class="sub">Model</label>
       <select onchange="state.grokModel=this.value; save();">
         ${["grok-4-fast","grok-4","grok-4.5"].map(m => `<option ${state.grokModel===m?"selected":""}>${m}</option>`).join("")}
+      </select>
+      <div style="height:8px"></div>
+      <label class="sub" for="scanModel">Photo reading model (for Scan photo)</label>
+      <select id="scanModel" onchange="state.scanModel=this.value; save();">
+        <option value="" ${state.scanModel ? "" : "selected"}>Auto (${SCAN_MODEL})</option>
+        ${[...SCAN_MODELS, ...(state.scanModel && !SCAN_MODELS.includes(state.scanModel) ? [state.scanModel] : [])].map(m => `<option value="${esc(m)}" ${state.scanModel === m ? "selected" : ""}>${esc(m)}</option>`).join("")}
       </select>
       <div class="row" style="margin-top:10px;align-items:center">
         <label class="pill"><input type="checkbox" ${state.autoGrok?"checked":""} onchange="state.autoGrok=this.checked; save();"> Auto-ask after each checked step</label>
@@ -2498,6 +2559,10 @@ function normNoteState(st) {
   if (!Array.isArray(st.changes)) st.changes = [];
   if (typeof st.noteHintSeen !== "boolean") st.noteHintSeen = false;
   if (!isObj(st.infoCache)) st.infoCache = {};
+  if (!isObj(st.scans)) st.scans = {};
+  if (typeof st.scanModel !== "string") st.scanModel = "";
+  if (!isObj(st.truck)) st.truck = { ...defaultState().truck };
+  if (typeof st.truck.vin !== "string") st.truck.vin = "";
   return st;
 }
 function stripTags(s) { return String(s || "").replace(/<[^>]*>/g, ""); }
@@ -2663,6 +2728,7 @@ function readOp(path, key) {
   if (path === "checks") return state.checks[key] ? true : undefined;
   if (path === "truck") return state.truck[key];
   if (path === "added") return state.adjust.added.find(e => e.id === key);
+  if (path === "notes") return typeof state.notes[key] === "string" && state.notes[key] ? state.notes[key] : undefined;
 }
 function setMap(map, key, v) { if (v === undefined) delete map[key]; else map[key] = v; }
 function writeOp(op, v) {
@@ -2672,7 +2738,8 @@ function writeOp(op, v) {
   else if (op.path === "checks") setMap(state.checks, op.key, b);
   else if (op.path === "skip") setMap(state.adjust.skip, op.key, b);
   else if (op.path === "price") setMap(state.adjust.price, op.key, typeof v === "number" ? v : undefined);
-  else if (op.path === "truck") { if (typeof v === "string" && ["engine", "drive", "trans", "miles"].includes(op.key)) state.truck[op.key] = v; }
+  else if (op.path === "truck") { if (typeof v === "string" && ["engine", "drive", "trans", "miles", "vin"].includes(op.key)) state.truck[op.key] = v; else if (v === undefined && ["miles", "vin"].includes(op.key)) state.truck[op.key] = ""; }
+  else if (op.path === "notes") { if (!findStep(op.key)) return; if (typeof v === "string" && v) state.notes[op.key] = v; else delete state.notes[op.key]; }
   else if (op.path === "added") {
     state.adjust.added = state.adjust.added.filter(e => e.id !== op.key);
     if (v && typeof v === "object") state.adjust.added.push(v);
@@ -2723,7 +2790,11 @@ function recordChange(id, source, summary, ops) {
 function undoChange(cid) {
   const c = state.changes.find(x => x.id === cid);
   if (!c) return;
-  [...c.ops].reverse().forEach(op => writeOp(op, op.prev));
+  [...c.ops].reverse().forEach(op => {
+    // a line added to field notes: take back just that line, keep anything typed since
+    if (op.path === "notes" && op.add) { const cur = state.notes[op.key] || ""; if (cur !== op.next && cur.includes(op.add)) return writeOp(op, cur.replace(op.add, "").replace(/\n{2,}/g, "\n").trim() || undefined); }
+    writeOp(op, op.prev);
+  });
   state.changes = state.changes.filter(x => x.id !== cid);
   if (save()) toast("Undone");
   render();
@@ -2770,7 +2841,7 @@ function noteExtras(id, hideParts) {
   if (busy && busy.state === "busy") h += `<div class="nbusy" role="status"><span class="spin"></span>Grok is adjusting from your note…</div>`;
   else if (busy && busy.state === "error") h += `<div class="nerr" role="status">${esc(busy.message)}<br><span style="color:var(--muted)">Your note and any instant changes are saved.</span><div class="row">${note ? `<button class="nundo" data-retry="${esc(id)}" onclick="event.stopPropagation(); retryNoteGrok(this.dataset.retry)">Try again</button>` : ""}<button class="nundo" data-dismiss="${esc(id)}" onclick="event.stopPropagation(); delete noteBusy[this.dataset.dismiss]; render()">Dismiss</button></div></div>`;
   chips.forEach(c => {
-    h += `<div class="nchip" role="status"><span>${c.source === "grok" ? "✨ <b>Grok:</b> " : "⚡ "}${esc(c.summary)}</span>${c.ops.length ? `<button class="nundo" data-chg="${c.id}" onclick="event.stopPropagation(); undoChange(this.dataset.chg)">↶ Undo</button>` : ""}</div>`;
+    h += `<div class="nchip" role="status"><span>${c.source === "grok" ? "✨ <b>Grok:</b> " : c.source === "scan" ? "📷 <b>From a photo:</b> " : "⚡ "}${esc(c.summary)}</span>${c.ops.length ? `<button class="nundo" data-chg="${c.id}" onclick="event.stopPropagation(); undoChange(this.dataset.chg)">↶ Undo</button>` : ""}</div>`;
   });
   added.forEach(e => {
     const label = { tip: "💡 Tip", warning: "⚠ Warning", substep: "➕ Sub-step", part: "📦 Part" }[e.kind];
@@ -3485,8 +3556,544 @@ function gotoNote(id) {
     if ((Date.now() - openedAt < 900 && el === openedEl) || noteSheetRef) return;
     clear(); open(el);
   }, true);
-  document.addEventListener("keydown", e => { if (e.key === "Escape" && noteSheetRef) closeNoteSheet(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && noteSheetRef) closeNoteSheet(); else if (e.key === "Escape" && scanUI) closeScan(); });
 })();
+
+// ================= Scan a photo to fill info =================
+// Reads a VIN barcode on the phone (BarcodeDetector, no key needed), or with the xAI key asks Grok to read the
+// sticker/odometer/label/receipt. Nothing is applied until you tick it and tap Apply; every apply is one Undo.
+const SCAN_MODEL = "grok-4.7";                     // default vision model (Grok settings → Photo reading model overrides)
+const SCAN_MODELS = ["grok-4.7", "grok-4.6", "grok-4.5", "grok-4.3"];
+const SCAN_KINDS = ["vin_plate", "rpo_sticker", "odometer", "part_label", "casting_number", "trans_tag", "receipt", "other"];
+const SCAN_KIND_LABEL = { vin_plate: "VIN plate", rpo_sticker: "RPO sticker", odometer: "Odometer", part_label: "Part label", casting_number: "Casting number",
+  trans_tag: "Transmission tag", receipt: "Receipt", other: "Photo" };
+const VIN_T = { A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, J: 1, K: 2, L: 3, M: 4, N: 5, P: 7, R: 9, S: 2, T: 3, U: 4, V: 5, W: 6, X: 7, Y: 8, Z: 9 };
+const VIN_W = [8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2];
+const VIN_YEARS = "ABCDEFGHJKLMNPRSTVWXY123456789"; // A = 1980 … Y = 2000, 1 = 2001 … 9 = 2009
+// 8th VIN digit for 1990s GM C/K trucks -> [what it is, matching engine option in this app or null]
+const VIN_ENGINE = { K: ["5.7L V8 TBI (L05)", 0], H: ["5.0L V8 TBI (L03)", 1], Z: ["4.3L V6 TBI (LB4)", 2], N: ["7.4L V8 (L19)", null],
+  C: ["6.2L diesel", null], F: ["6.5L turbo diesel", null], P: ["6.5L diesel", null], S: ["6.5L turbo diesel", null], Y: ["6.5L turbo diesel", null] };
+// GM RPO codes (Service Parts Identification sticker, usually in the glove box)
+const RPO = {
+  L05: { t: "5.7L V8 TBI engine", engine: 0 }, L03: { t: "5.0L V8 TBI engine", engine: 1 }, LB4: { t: "4.3L V6 TBI engine", engine: 2 },
+  L31: { t: "5.7L Vortec engine (1996 and newer, not a 1994 original)", engine: 3 }, L30: { t: "5.0L Vortec engine (1996 and newer)", engine: 3 },
+  L35: { t: "4.3L Vortec V6 (1996 and newer)", engine: 3 }, L19: { t: "7.4L V8 engine", engine: 3 }, L56: { t: "6.5L turbo diesel", engine: 3 }, L65: { t: "6.5L turbo diesel", engine: 3 },
+  M30: { t: "4L60E automatic", trans: "4L60E" }, MT1: { t: "4L80E automatic", trans: "4L80E" }, MXO: { t: "4L60 (700R4) automatic", trans: "700R4 / 4L60" },
+  MG5: { t: "5-speed manual", trans: "Manual" }, ML2: { t: "5-speed manual", trans: "Manual" }, M50: { t: "5-speed manual", trans: "Manual" }, M20: { t: "4-speed manual", trans: "Manual" },
+  GU4: { t: "3.08 rear axle ratio", note: 1 }, GU5: { t: "3.23 rear axle ratio", note: 1 }, GU6: { t: "3.42 rear axle ratio", note: 1 },
+  GT4: { t: "3.73 rear axle ratio", note: 1 }, GT5: { t: "4.10 rear axle ratio", note: 1 }, G80: { t: "locking rear differential", note: 1 },
+  NP1: { t: "transfer case, so it's 4WD", drive: "4WD" }, NP8: { t: "transfer case, so it's 4WD", drive: "4WD" }, Z71: { t: "Z71 off-road package (4WD)", drive: "4WD" },
+  KNP: { t: "extra transmission cooler", note: 1 }, KC4: { t: "engine oil cooler", note: 1 }, Z85: { t: "heavy-duty suspension", note: 1 }
+};
+const PROFILE_LINE = { year: 0, engine: 1, trans: 2, drive: 3, miles: 4 };
+const PROFILE_LABEL = ["Confirm year", "Identify engine", "Note transmission", "Note 2WD or 4WD", "Write mileage and symptoms"];
+
+function cleanVin(s) { return String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); }
+function vinCheck(v) {
+  v = cleanVin(v);
+  if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(v)) return false;
+  let s = 0;
+  for (let i = 0; i < 17; i++) s += (/\d/.test(v[i]) ? Number(v[i]) : VIN_T[v[i]]) * VIN_W[i];
+  const c = s % 11;
+  return (c === 10 ? "X" : String(c)) === v[8];
+}
+// find a VIN inside barcode text (GM labels sometimes add a leading "I" or other characters)
+function findVin(raw) {
+  const s = cleanVin(raw);
+  let loose = null;
+  for (let i = 0; i + 17 <= s.length; i++) {
+    const w = s.slice(i, i + 17);
+    if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(w)) continue;
+    if (vinCheck(w)) return { vin: w, valid: true };
+    if (!loose) loose = w;
+  }
+  return loose ? { vin: loose, valid: false } : null;
+}
+function decodeVin(v) {
+  v = cleanVin(v);
+  const d = { vin: v, valid: vinCheck(v) };
+  if (v.length !== 17) return d;
+  const yi = VIN_YEARS.indexOf(v[9]);
+  if (yi >= 0) d.year = 1980 + yi;
+  d.gmTruck = /^[123]G[CTB]/.test(v);
+  if (d.gmTruck) {
+    d.make = v[2] === "T" ? "GMC" : "Chevrolet";
+    d.drive = v[4] === "C" ? "2WD" : v[4] === "K" ? "4WD" : null;
+    d.series = { 1: "1500", 2: "2500", 3: "3500" }[v[5]] || null;
+    d.cab = { 3: "crew cab", 4: "regular cab", 9: "extended cab" }[v[6]] || null;
+    const e = VIN_ENGINE[v[7]];
+    if (e) { d.engineLabel = e[0]; d.engine = e[1] == null ? null : ENGINES[e[1]]; }
+    if (d.drive && d.series) d.model = (d.drive === "4WD" ? "K" : "C") + d.series;
+  }
+  return d;
+}
+function vinSummary(d) {
+  if (!d.gmTruck) return [d.year, "not a GM truck VIN"].filter(Boolean).join(", ");
+  return [d.year, [d.make, d.model].filter(Boolean).join(" "), d.engineLabel, d.drive, d.cab].filter(Boolean).join(", ");
+}
+function vinInfoLine(v) {
+  v = cleanVin(v);
+  if (!v) return "Type it, or scan the VIN plate or door sticker.";
+  if (v.length !== 17) return `⚠ A VIN has 17 characters (this has ${v.length}).`;
+  const d = decodeVin(v);
+  if (!d.valid) return "⚠ This VIN doesn't pass the check digit. Look again: VINs never use I, O or Q.";
+  return "✓ Check digit OK: " + vinSummary(d);
+}
+
+function sanitizeScan(o) {
+  if (!o || typeof o !== "object" || Array.isArray(o)) return null;
+  const str = (v, n) => typeof v === "string" ? v.replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, n) : "";
+  const arr = (v, n, re) => Array.isArray(v) ? [...new Set(v.map(x => str(typeof x === "number" ? String(x) : x, 40).toUpperCase()).filter(x => x && (!re || re.test(x))))].slice(0, n) : [];
+  const numOf = v => typeof v === "number" ? v : typeof v === "string" && /\d/.test(v) ? Number(v.replace(/[^0-9.]/g, "")) : NaN;
+  const r = { kind: SCAN_KINDS.includes(o.kind) ? o.kind : "other" };
+  const v = cleanVin(o.vin); if (v.length === 17) r.vin = v;
+  r.rpo_codes = arr(o.rpo_codes, 60, /^[A-Z0-9]{3}$/);
+  const mi = numOf(o.mileage); if (Number.isFinite(mi) && mi > 0 && mi <= 2000000) r.mileage = Math.round(mi);
+  r.part_numbers = arr(o.part_numbers, 10);
+  r.casting_numbers = arr(o.casting_numbers, 10);
+  const b = str(o.brand, 40); if (b) r.brand = b;
+  const p = numOf(o.price); if (Number.isFinite(p) && p > 0 && p <= 20000) r.price = Math.round(p * 100) / 100;
+  const n = str(o.notes, 300); if (n) r.notes = n;
+  let c = o.confidence;
+  if (typeof c === "string") c = ({ high: 0.9, medium: 0.6, low: 0.3 })[c.trim().toLowerCase()] ?? Number(c);
+  if (typeof c === "number" && Number.isFinite(c)) r.confidence = Math.max(0, Math.min(1, c > 1 ? c / 100 : c));
+  return r;
+}
+function scanHasData(r) {
+  return !!(r && (r.vin || r.rpo_codes.length || r.mileage || r.part_numbers.length || r.casting_numbers.length || r.price || r.notes));
+}
+function photoKey(src) { return "ph" + hashStr(String(src)); }
+
+// ---- reading ----
+function loadImg(src) {
+  return new Promise((res, rej) => { const img = new Image(); img.onload = () => res(img); img.onerror = () => rej(new Error("could not open the image")); img.src = src; });
+}
+function imgToJpeg(img, max, q) {
+  const scale = Math.min(1, max / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+  const c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round((img.naturalWidth || img.width) * scale));
+  c.height = Math.max(1, Math.round((img.naturalHeight || img.height) * scale));
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", q);
+}
+function fileToDataUrl(file) {
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(new Error("could not read the file")); r.readAsDataURL(file); });
+}
+function barcodeSupported() { return typeof window.BarcodeDetector === "function"; }
+async function readBarcodes(img) {
+  if (!barcodeSupported()) return { supported: false, values: [] };
+  try {
+    const sup = typeof BarcodeDetector.getSupportedFormats === "function" ? await BarcodeDetector.getSupportedFormats() : ["code_39"];
+    const formats = ["code_39", "data_matrix", "code_128", "pdf417", "qr_code"].filter(f => sup.includes(f));
+    if (!formats.length) return { supported: false, values: [] };
+    const det = new BarcodeDetector({ formats });
+    let codes = await det.detect(img);
+    if (!codes.length) { // try sideways too (door labels are often shot rotated)
+      const c = document.createElement("canvas"), w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+      c.width = h; c.height = w;
+      const g = c.getContext("2d"); g.translate(h, 0); g.rotate(Math.PI / 2); g.drawImage(img, 0, 0);
+      codes = await det.detect(c);
+    }
+    return { supported: true, values: codes.map(x => String(x.rawValue || "")) };
+  } catch (err) {
+    console.warn("barcode read failed", err);
+    return { supported: true, values: [] };
+  }
+}
+const SCAN_SYSTEM = [
+  "You read one photo for a home mechanic rebuilding a 1994 Chevy C1500 pickup (GMT400). Read only what is actually printed, stamped or shown in the photo.",
+  'Reply with ONLY one JSON object with exactly these keys: {"kind": "vin_plate"|"rpo_sticker"|"odometer"|"part_label"|"casting_number"|"trans_tag"|"receipt"|"other", "vin": string, "rpo_codes": [string], "mileage": number or null, "part_numbers": [string], "casting_numbers": [string], "brand": string, "price": number or null, "notes": string, "confidence": number}',
+  'vin: the 17-character VIN if one is visible, else "". Copy it exactly. VINs never contain I, O or Q.',
+  "rpo_codes: the 3-character GM option codes from a Service Parts Identification sticker (glove box), e.g. L05, M30, GU6. Empty list if none.",
+  "mileage: the odometer reading in miles as a whole number (not the trip meter), else null.",
+  "part_numbers / casting_numbers: numbers printed on a part label or box, or cast into metal. brand: the part brand if shown.",
+  "price: for a receipt, the price paid for the main part before tax, else null.",
+  "notes: under 200 characters, plain words: what the photo shows and anything useful (for a transmission tag, the transmission model if printed).",
+  "confidence: 0 to 1, how sure you are of the readings. Never guess a VIN or a number you can't read clearly; leave it empty instead."
+].join("\n");
+async function callXaiVision(dataUrl, stepId) {
+  const t = state.truck, h = findStep(stepId);
+  const ctx = `Truck on file: engine ${t.engine}, drive ${t.drive}, transmission ${t.trans}${t.vin ? ", VIN " + t.vin : ""}.\nPhoto taken during: ${h ? h.step.title : "truck setup"}.\nRead this photo and reply with the JSON object.`;
+  const body = {
+    model: state.scanModel || SCAN_MODEL,
+    messages: [{ role: "system", content: SCAN_SYSTEM },
+      { role: "user", content: [{ type: "image_url", image_url: { url: dataUrl, detail: "high" } }, { type: "text", text: ctx }] }],
+    response_format: { type: "json_object" }
+  };
+  const post = () => fetch("https://api.x.ai/v1/chat/completions", {
+    method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + state.grokKey }, body: JSON.stringify(body)
+  });
+  let res = await post(), data;
+  try { data = await res.json(); } catch { throw new Error("HTTP " + res.status + " with a non-JSON response"); }
+  if (res.status === 400 && /response_format|json/i.test(JSON.stringify(data.error || data))) { // some models refuse JSON mode with images: ask once more without it
+    delete body.response_format;
+    res = await post();
+    try { data = await res.json(); } catch { throw new Error("HTTP " + res.status + " with a non-JSON response"); }
+  }
+  const txt = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  if (typeof txt !== "string") throw new Error((data.error && (data.error.message || data.error)) || "HTTP " + res.status);
+  const raw = parsePlanText(txt);
+  if (raw === null) throw new Error("the reply wasn't valid JSON");
+  return sanitizeScan(raw);
+}
+// one photo -> entry {key, src, step, source, r, err, noBarcode}
+async function scanOne(src, stepId, scanSrc) {
+  const key = photoKey(src), entry = { key, src, step: stepId, source: null, r: null, err: "" };
+  let img;
+  try { img = await loadImg(scanSrc || src); } catch (e) { entry.err = "Could not open this photo."; return entry; }
+  const bc = await readBarcodes(img);
+  entry.noBarcode = !bc.supported;
+  let vin = null;
+  for (const v of bc.values) { const f = findVin(v); if (f && (f.valid || !vin)) vin = f; if (vin && vin.valid) break; }
+  if (state.grokKey) {
+    try { entry.r = await callXaiVision(scanSrc || src, stepId); entry.source = "grok"; }
+    catch (e) { entry.err = "Grok could not read this photo: " + e.message + (e instanceof TypeError ? " (no signal or the request was blocked)." : ""); }
+  }
+  if (vin) {
+    entry.r = entry.r || sanitizeScan({ kind: "vin_plate" });
+    if (vin.valid || !entry.r.vin || !vinCheck(entry.r.vin)) entry.r.vin = vin.vin;
+    if (entry.r.kind === "other") entry.r.kind = "vin_plate";
+    entry.source = entry.source ? "barcode+grok" : "barcode";
+  }
+  if (entry.r && (scanHasData(entry.r) || entry.source === "grok" || entry.source === "barcode+grok")) {
+    state.scans[key] = { t: new Date().toISOString(), step: stepId, source: entry.source, kind: entry.r.kind, r: entry.r, applied: false };
+    const keys = Object.keys(state.scans);
+    if (keys.length > 150) keys.sort((a, b) => String(state.scans[a].t).localeCompare(String(state.scans[b].t))).slice(0, keys.length - 150).forEach(k => delete state.scans[k]);
+    save();
+  }
+  return entry;
+}
+
+// ---- turning a reading into suggested changes ----
+function partIndex() {
+  if (partIndex.c) return partIndex.c;
+  const norm = s => String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  partIndex.c = Object.entries(ITEMS).map(([id, it]) => [id, norm([it.name, ...((INFO_ITEM[id] || {}).pn || []), (INFO_ITEM[id] || {}).q || ""].join(" "))]);
+  return partIndex.c;
+}
+function matchParts(r) {
+  const nums = [...r.part_numbers, ...r.casting_numbers].map(p => p.replace(/[^A-Z0-9]/g, "")).filter(p => p.length >= 4 && /\d/.test(p));
+  const out = [];
+  partIndex().forEach(([id, text]) => { if (nums.some(n => text.includes(n)) && !out.includes(id)) out.push(id); });
+  return out.slice(0, 3);
+}
+function milesText(n) { return n.toLocaleString("en-US") + " mi"; }
+function scanProposals(entry) {
+  const r = entry.r, lines = [], warns = [], props = [], same = [], step = entry.step || "profile";
+  if (!r) return { lines, warns, props, same };
+  const def = defaultState().truck, LBL = { engine: "engine", drive: "drive", trans: "transmission", vin: "VIN" };
+  const truckProp = (field, value, strong) => {
+    const cur = state.truck[field] || "";
+    if (cur === value) { lines.push(`Your ${LBL[field]} is already set to ${value} ✓`); same.push({ sig: "truck|" + field, val: value }); return true; }
+    const userSet = cur && cur !== def[field];
+    const p = { text: `Set ${LBL[field]} to ${value}`, was: cur ? `was ${cur}` : "", on: strong && !userSet, short: `set ${LBL[field]} to ${value}`,
+      ops: [{ path: "truck", key: field, next: value }], sig: "truck|" + field, val: value };
+    props.push(p);
+    return p;
+  };
+  // tick a step 1 line; tied to its field so a conflicting (unticked) value doesn't tick it
+  const checkProp = (i, tp) => {
+    const k = "profile:" + i;
+    if (state.checks[k]) return;
+    if (tp && tp !== true) { props.push({ text: `Tick “${PROFILE_LABEL[i]}” on step 1`, on: tp.on, short: `ticked “${PROFILE_LABEL[i]}”`, ops: [{ path: "checks", key: k, next: true }], sig: "checks|" + k, val: true }); return; }
+    const lbl = PROFILE_LABEL[i];
+    props.push({ text: `Tick “${lbl}” on step 1`, on: true, short: `ticked “${lbl}”`, ops: [{ path: "checks", key: k, next: true }], sig: "checks|" + k, val: true });
+  };
+  const noteLines = [];
+  if (r.vin) {
+    const d = decodeVin(r.vin);
+    lines.push(`VIN ${d.vin}: ${vinSummary(d)}`);
+    if (!d.valid) warns.push("This VIN doesn't pass the check digit, so it was probably misread. Type it by hand to be sure.");
+    else {
+      truckProp("vin", d.vin, true);
+      if (d.year && d.year !== 1994) warns.push(`This VIN says ${d.year}, not 1994. The steps in this app are written for a 1994.`);
+      if (d.series && d.series !== "1500") warns.push(`This VIN is a ${d.series}, not a 1500. Parts and specs can differ.`);
+      if (d.gmTruck && d.engine) checkProp(PROFILE_LINE.engine, truckProp("engine", d.engine, true));
+      else if (d.engineLabel) warns.push(`Engine code ${d.vin[7]} is a ${d.engineLabel}. This app's steps cover the 5.7, 5.0 and 4.3 TBI engines.`);
+      if (d.drive) checkProp(PROFILE_LINE.drive, truckProp("drive", d.drive, true));
+      if (d.year === 1994 && d.series === "1500" && d.gmTruck) checkProp(PROFILE_LINE.year);
+    }
+  }
+  if (r.rpo_codes.length) {
+    const known = r.rpo_codes.filter(c => RPO[c]), other = r.rpo_codes.filter(c => !RPO[c]);
+    known.forEach(c => lines.push(`RPO ${c}: ${RPO[c].t}`));
+    if (other.length) lines.push("Other codes: " + other.join(", "));
+    const eng = known.find(c => RPO[c].engine != null), tr = known.find(c => RPO[c].trans), dr = known.find(c => RPO[c].drive);
+    if (eng) { const val = ENGINES[RPO[eng].engine]; if (RPO[eng].engine === 3) warns.push(`${eng} is a ${RPO[eng].t}. This app's steps cover the 5.7, 5.0 and 4.3 TBI engines.`); const tp = truckProp("engine", val, RPO[eng].engine !== 3); if (RPO[eng].engine !== 3) checkProp(PROFILE_LINE.engine, tp); }
+    if (tr) checkProp(PROFILE_LINE.trans, truckProp("trans", RPO[tr].trans, true));
+    if (dr) checkProp(PROFILE_LINE.drive, truckProp("drive", "4WD", true));
+    const extra = known.filter(c => RPO[c].note).map(c => `${c} = ${RPO[c].t}`);
+    noteLines.push("RPO codes: " + r.rpo_codes.join(" ") + (extra.length ? " (" + extra.join(", ") + ")" : ""));
+  }
+  if (r.kind === "trans_tag" || /\b4L[68]0-?E\b/i.test(r.notes || "")) {
+    const m = String(r.notes || "").match(/\b4L([68])0-?E\b/i);
+    if (m && !r.rpo_codes.some(c => RPO[c] && RPO[c].trans)) { const tp = truckProp("trans", m[1] === "6" ? "4L60E" : "4L80E", r.kind === "trans_tag"); if (r.kind === "trans_tag") checkProp(PROFILE_LINE.trans, tp); }
+  }
+  if (r.mileage) {
+    lines.push("Odometer " + milesText(r.mileage));
+    const cur = state.truck.miles || "", nice = milesText(r.mileage);
+    const m = cur.match(/(\d{1,3}(?:,\d{3})+|\d{4,7})\s*(?:mi\b|miles\b)?/i);
+    if (m && Number(m[1].replace(/,/g, "")) === r.mileage) lines.push("Your mileage already says " + m[1] + " ✓");
+    else if (!cur.trim()) props.push({ text: "Set mileage to " + nice, on: true, short: "set mileage to " + nice, ops: [{ path: "truck", key: "miles", next: nice }], sig: "truck|miles", val: nice });
+    else if (m) props.push({ text: "Change mileage to " + nice, was: "was " + m[0].trim(), on: false, short: "changed mileage to " + nice, ops: [{ path: "truck", key: "miles", next: cur.replace(m[0].trim(), nice) }], sig: "truck|miles", val: nice });
+    else props.push({ text: "Add " + nice + " to Mileage + symptoms", was: "keeps what you wrote: " + cur.slice(0, 60), on: true, short: "added mileage " + nice, ops: [{ path: "truck", key: "miles", next: nice + " · " + cur }], sig: "truck|miles", val: nice });
+  }
+  if (r.brand) lines.push("Brand: " + r.brand);
+  if (r.part_numbers.length) lines.push("Part number" + (r.part_numbers.length > 1 ? "s" : "") + ": " + r.part_numbers.join(", "));
+  if (r.casting_numbers.length) lines.push("Casting number" + (r.casting_numbers.length > 1 ? "s" : "") + ": " + r.casting_numbers.join(", "));
+  if (r.price) lines.push("Price paid: " + cash(r.price));
+  const hits = (r.part_numbers.length || r.casting_numbers.length) ? matchParts(r) : [];
+  hits.forEach(id => {
+    const nm = itemName(id);
+    if (!hasItem(id)) props.push({ text: `Mark “${nm}” as have it`, on: true, short: `marked ${nm} have-it`, ops: [{ path: "have", key: id, next: true }], sig: "have|" + id, val: true });
+    else lines.push(`You already have “${nm}” ✓`);
+  });
+  if (r.price && r.kind === "receipt") {
+    if (hits.length) {
+      const id = hits[0], cur = state.adjust.price[id];
+      if (cur !== r.price) props.push({ text: `Set price paid for “${itemName(id)}” to ${cash(r.price)}`, was: typeof cur === "number" ? "was " + cash(cur) : "", on: typeof cur !== "number", short: `set price to ${cash(r.price)}`, ops: [{ path: "price", key: id, next: r.price }], sig: "price|" + id, val: r.price });
+    } else props.push({ text: `Which part is this ${cash(r.price)} receipt for?`, pick: true, on: false, price: r.price, short: `paid ${cash(r.price)}`, ops: [], sig: "pick|" + entry.key });
+  }
+  if (r.part_numbers.length || r.casting_numbers.length || (r.kind === "trans_tag" && r.notes)) {
+    const bits = [SCAN_KIND_LABEL[r.kind] + ":", r.brand, r.part_numbers.join(", "), r.casting_numbers.length ? "casting " + r.casting_numbers.join(", ") : "", r.kind === "trans_tag" ? r.notes : ""].filter(Boolean);
+    noteLines.push(bits.join(" "));
+  }
+  noteLines.forEach(t => {
+    const add = "📷 " + t, cur = state.notes[step] || "";
+    if (cur.includes(add)) return;
+    props.push({ text: `Add to “${stepTitle(step)}” notes: ${t}`, on: true, short: "added a line to your notes", ops: [{ path: "notes", key: step, add }], sig: "notes|" + step + "|" + t, val: t });
+  });
+  if (r.notes) lines.push("Grok: " + r.notes);
+  if (typeof r.confidence === "number" && r.confidence < 0.5 && entry.source !== "barcode" && entry.source !== "typed") {
+    warns.push("Grok wasn't sure about this photo. Check each line before you apply it.");
+    props.forEach(p => { p.on = false; });
+  }
+  return { lines, warns, props, same };
+}
+function itemName(id) { return String((ITEMS[id] || {}).name || id).split(/[,(]/)[0].trim(); }
+
+// ---- the scan sheet ----
+let scanUI = null;
+function scanStepFor(stepId) { return findStep(stepId) ? stepId : (findNext() ? findNext().step.id : "profile"); }
+function openScan(stepId) {
+  scanUI = { stage: "start", step: scanStepFor(stepId), entries: [], props: [], changes: [] };
+  const el = document.getElementById("scanSheet");
+  el.classList.remove("hidden");
+  el.onclick = closeScan;
+  drawScan();
+}
+function closeScan() {
+  scanUI = null;
+  const el = document.getElementById("scanSheet");
+  el.classList.add("hidden");
+  el.innerHTML = "";
+}
+function scanKeyHtml() {
+  return `<div class="sub snokey" id="scanNoKey">Reading stickers, odometers, part labels and receipts needs an xAI key. <button class="btn ghost sm" id="scanKeyLink" onclick="closeScan(); grokSettingsOpen = true; goMore('grok')">Add key in More → Grok settings</button></div>`;
+}
+function scanHead(title, sub) {
+  return `<div class="grab"></div><div class="row" style="justify-content:space-between;align-items:flex-start;flex-wrap:nowrap">
+    <div style="min-width:0"><div class="sub" style="color:var(--accent)">${sub || "Scan a photo"}</div><h3 id="scanTitle">${title}</h3></div>
+    <button class="btn ghost sm" aria-label="Close" onclick="closeScan()">✕</button></div>`;
+}
+function drawScan() {
+  const el = document.getElementById("scanSheet");
+  if (!scanUI || el.classList.contains("hidden")) return;
+  const u = scanUI, hasKey = !!state.grokKey, n = photoCount();
+  let h = "";
+  if (u.stage === "start") {
+    h = scanHead("Fill in info from a photo") + `
+      <p class="sub" style="margin-top:6px">Take a photo of the VIN plate, the RPO sticker in the glove box, the odometer, a part label or a receipt. You'll see what was read before anything changes.</p>
+      <div class="scol">
+        <label class="btn" id="scanTake">📷 Take a photo<input type="file" accept="image/*" capture="environment" hidden onchange="scanFile(this)"></label>
+        <label class="btn ghost" id="scanPick">🖼 Pick from gallery<input type="file" accept="image/*" hidden onchange="scanFile(this)"></label>
+        ${n ? `<button class="btn ghost" id="scanSaved" onclick="scanPickSaved()">🗂 Scan my saved photos (${n})</button>` : ""}
+        <button class="btn ghost" id="scanVinBtn" onclick="scanUI.stage='vin'; drawScan()">⌨ Type the VIN instead</button>
+      </div>
+      <p class="sub">New photos are also saved to “${esc(stepTitle(u.step))}”.</p>
+      ${hasKey ? "" : `<p class="sub" id="scanNoKeyStart">Without an xAI key the app can still read VIN barcodes${barcodeSupported() ? "" : " (not on this browser, though)"} and check a typed VIN.</p>` + scanKeyHtml()}`;
+  } else if (u.stage === "vin") {
+    h = scanHead("Type the VIN") + `
+      <p class="sub" style="margin-top:6px">It's on the dash by the windshield (driver side) and on the driver door edge. 17 characters, never I, O or Q.</p>
+      <input id="scanVin" maxlength="20" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="1GCEC14K?RZ??????" value="${esc(u.vinDraft || state.truck.vin || "")}" oninput="document.getElementById('scanVinInfo').textContent = vinInfoLine(this.value)">
+      <div class="sub" id="scanVinInfo" style="margin-top:6px">${esc(vinInfoLine(u.vinDraft || state.truck.vin || ""))}</div>
+      <div class="grid2"><button class="btn" id="scanVinGo" onclick="scanTypedVin(document.getElementById('scanVin').value)">Check VIN</button><button class="btn ghost" onclick="scanUI.stage='start'; drawScan()">Back</button></div>`;
+  } else if (u.stage === "pick") {
+    const all = [];
+    Object.entries(photoCache).forEach(([sid, arr]) => (arr || []).forEach((src, i) => all.push({ sid, i, src, key: photoKey(src) })));
+    u.pickList = all;
+    const unread = all.filter(p => !state.scans[p.key]).length;
+    h = scanHead("Scan my saved photos") + `
+      <p class="sub" style="margin-top:6px">${all.length} photo${all.length === 1 ? "" : "s"} saved in the app, ${unread} not read yet. Tap to choose.</p>
+      ${hasKey ? "" : scanKeyHtml()}
+      <div class="sthumbs">${all.map((p, k) => { const read = !!state.scans[p.key]; return `<label class="sthumb${read ? "" : " on"}"><input type="checkbox" data-pk="${k}" ${read ? "" : "checked"} onchange="this.parentElement.classList.toggle('on', this.checked); scanPickCount()"><img src="${p.src}" alt="Photo from ${esc(stepTitle(p.sid))}"><span class="stag">${read ? "Read ✓" : esc(stepTitle(p.sid)).slice(0, 18)}</span></label>`; }).join("")}</div>
+      <div class="grid2"><button class="btn" id="scanPickGo" onclick="scanRunSaved()">Scan ${unread} photo${unread === 1 ? "" : "s"}</button><button class="btn ghost" onclick="scanUI.stage='start'; drawScan()">Back</button></div>`;
+  } else if (u.stage === "busy") {
+    const p = u.progress || { i: 1, n: 1 };
+    h = scanHead("Reading…") + `<div class="nbusy sbusy" role="status" id="scanBusy"><span class="spin"></span>Reading photo ${p.i} of ${p.n}…</div>
+      <div class="progbar" style="margin-top:10px"><div class="progfill" style="width:${Math.round(((p.i - 1) / p.n) * 100)}%"></div></div>`;
+  } else if (u.stage === "review") {
+    u.props = [];
+    const all = u.entries.map(scanProposals), vals = {}, seen = {};
+    all.forEach(P => [...P.props, ...P.same].forEach(p => { if (!p.pick) (vals[p.sig] = vals[p.sig] || new Set()).add(String(p.val)); }));
+    const cards = u.entries.map((e, ei) => {
+      const P = all[ei];
+      P.props.forEach(p => {
+        if (seen[p.sig] === String(p.val)) return; // same change from another photo
+        if (vals[p.sig] && vals[p.sig].size > 1) { p.on = false; p.was = (p.was ? p.was + " · " : "") + "another photo says something different"; }
+        const dep = { "checks|profile:1": "truck|engine", "checks|profile:2": "truck|trans", "checks|profile:3": "truck|drive" }[p.sig];
+        if (dep && vals[dep] && vals[dep].size > 1) p.on = false; // don't tick “Identify engine” while photos disagree on the engine
+        seen[p.sig] = String(p.val); p.entry = ei; u.props.push(p);
+      });
+      const mine = u.props.map((p, i) => [p, i]).filter(([p]) => p.entry === ei);
+      const empty = !e.r || (!P.lines.length && !mine.length);
+      return `<div class="scard" data-entry="${ei}">
+        <div class="shead">${e.src ? `<img src="${e.src}" alt="">` : `<div class="sicon" aria-hidden="true">⌨</div>`}<div style="min-width:0"><b>${e.r ? SCAN_KIND_LABEL[e.r.kind] : "Photo"}</b><div class="sub">${{ barcode: "Read from the barcode", grok: "Read by Grok", "barcode+grok": "Barcode + Grok", typed: "Typed in", saved: "Read earlier" }[e.source] || "Not read"}</div></div></div>
+        ${P.lines.length ? `<ul class="slines">${P.lines.map(l => `<li>${esc(l)}</li>`).join("")}</ul>` : ""}
+        ${P.warns.map(w => `<div class="warnbox">${esc(w)}</div>`).join("")}
+        ${e.err ? `<div class="nerr">${esc(e.err)}</div>` : ""}
+        ${empty && !e.err ? (hasKey ? `<p class="sub">Nothing useful could be read from this photo. Try again closer, with less glare.</p>` : `<p class="sub">No VIN barcode found in this photo.</p>` + scanKeyHtml()) : ""}
+        ${mine.map(([p, i]) => `<label class="ftoggle sprop"><input type="checkbox" data-prop="${i}" ${p.on ? "checked" : ""}><span>${esc(p.text)}${p.was ? `<span class="swas">${esc(p.was)}</span>` : ""}${p.pick ? `<select data-pick="${i}" onclick="event.stopPropagation()" onchange="this.closest('label').querySelector('input').checked = !!this.value"><option value="">Pick a part…</option>${scanPickOptions(u.step)}</select>` : ""}</span></label>`).join("")}
+        ${e.key && e.src && state.grokKey ? `<button class="btn ghost sm srescan" onclick="scanAgain(${ei})">Read this photo again</button>` : ""}
+      </div>`;
+    }).join("");
+    const any = u.props.length > 0;
+    h = scanHead(any ? "Here's what was read" : "Nothing to fill in", "Check before applying") + cards + `
+      <div class="grid2">${any ? `<button class="btn" id="scanApply" onclick="applyScan()">Apply ticked</button>` : ""}<button class="btn ghost" id="scanClose" onclick="closeScan()" ${any ? "" : `style="grid-column:1 / -1"`}>${any ? "Not now" : "Close"}</button></div>
+      <button class="btn ghost sm" style="width:100%;margin-top:8px" onclick="scanUI.stage='start'; drawScan()">Scan another photo</button>`;
+  } else if (u.stage === "done") {
+    h = scanHead(u.changes.length ? "Filled in ✓" : "Nothing changed") + `
+      <div class="nchip" role="status" id="scanDone"><span>📷 ${esc(u.summary || "Nothing needed changing.")}</span>${u.changes.length ? `<button class="nundo" id="scanUndo" onclick="undoScan()">↶ Undo</button>` : ""}</div>
+      <div class="grid2"><button class="btn" onclick="closeScan()">Done</button><button class="btn ghost" onclick="scanUI.stage='start'; scanUI.entries=[]; drawScan()">Scan another</button></div>`;
+  }
+  el.innerHTML = `<div class="nsheet ssheet" role="dialog" aria-modal="true" aria-labelledby="scanTitle" onclick="event.stopPropagation()">${h}</div>`;
+}
+function scanPickOptions(stepId) {
+  const kit = ((STEP_KIT[stepId] || {}).items || []).filter(id => ITEMS[id]);
+  const rest = Object.keys(ITEMS).filter(id => !kit.includes(id)).sort((a, b) => ITEMS[a].name.localeCompare(ITEMS[b].name));
+  const opt = id => `<option value="${id}">${esc(itemName(id))}</option>`;
+  return (kit.length ? `<optgroup label="This step">${kit.map(opt).join("")}</optgroup>` : "") + `<optgroup label="All parts and tools">${rest.map(opt).join("")}</optgroup>`;
+}
+function scanPickCount() {
+  const n = document.querySelectorAll("#scanSheet [data-pk]:checked").length, b = document.getElementById("scanPickGo");
+  if (b) { b.textContent = `Scan ${n} photo${n === 1 ? "" : "s"}`; b.disabled = !n; }
+}
+function scanPickSaved() { scanUI.stage = "pick"; drawScan(); scanPickCount(); }
+async function scanFile(input) {
+  const file = input.files && input.files[0];
+  input.value = "";
+  if (!file || !scanUI) return;
+  if (photoBackend === "loading") return toast("Photos still loading — try again");
+  const u = scanUI;
+  u.stage = "busy"; u.progress = { i: 1, n: 1 }; drawScan();
+  let store, big;
+  try {
+    const img = await loadImg(await fileToDataUrl(file));
+    store = imgToJpeg(img, 900, 0.7);   // same size/quality as a normal step photo
+    big = imgToJpeg(img, 1600, 0.85);   // sharper copy just for reading (not stored)
+  } catch (e) { u.stage = "start"; drawScan(); return toast("Could not read that image", 3000, true); }
+  const next = [...(photoCache[u.step] || [])];
+  if (next.length >= 6) next.shift();
+  next.push(store);
+  try {
+    await putPhotos(u.step, next);
+    state.log.unshift({ t: new Date().toISOString(), text: "Photo added to " + u.step + " (scan)" });
+    save(); render();
+  } catch (err) { console.warn("photo save failed", err); toast("⚠ Photo NOT saved — device storage is full or blocked. Reading it anyway.", 5000, true); }
+  const e = await scanOne(store, u.step, big);
+  if (scanUI !== u) return;
+  u.entries = [e]; u.stage = "review"; drawScan();
+}
+async function scanRunSaved() {
+  const u = scanUI; if (!u || !u.pickList) return;
+  const picked = [...document.querySelectorAll("#scanSheet [data-pk]:checked")].map(x => u.pickList[Number(x.dataset.pk)]).filter(Boolean);
+  if (!picked.length) return;
+  u.entries = []; u.stage = "busy";
+  const todo = picked.filter(p => !state.scans[p.key]);
+  let i = 0;
+  for (const p of picked) {
+    const saved = state.scans[p.key];
+    if (saved) { u.entries.push({ key: p.key, src: p.src, step: p.sid, source: "saved", r: saved.r, err: "" }); continue; }
+    i++; u.progress = { i, n: todo.length }; drawScan();
+    const e = await scanOne(p.src, p.sid);
+    if (scanUI !== u) return;
+    u.entries.push(e);
+  }
+  u.stage = "review"; drawScan();
+}
+async function scanAgain(ei) {
+  const u = scanUI, e = u && u.entries[ei];
+  if (!e || !e.src) return;
+  delete state.scans[e.key];
+  u.stage = "busy"; u.progress = { i: 1, n: 1 }; drawScan();
+  const n = await scanOne(e.src, e.step);
+  if (scanUI !== u) return;
+  u.entries[ei] = n; u.stage = "review"; drawScan();
+}
+function scanTypedVin(v) {
+  v = cleanVin(v);
+  if (!scanUI) openScan("profile");
+  scanUI.vinDraft = v;
+  if (v.length !== 17 || !vinCheck(v)) { scanUI.stage = "vin"; drawScan(); const i = document.getElementById("scanVinInfo"); if (i) i.classList.add("serr"); return; }
+  scanUI.entries = [{ key: null, src: null, step: "profile", source: "typed", r: sanitizeScan({ kind: "vin_plate", vin: v }), err: "" }];
+  scanUI.stage = "review"; drawScan();
+}
+function fillFromVin() { const v = document.getElementById("bayVin"); openScan("profile"); scanTypedVin(v ? v.value : state.truck.vin); }
+function applyScan() {
+  const u = scanUI; if (!u) return;
+  const chosen = [...document.querySelectorAll("#scanSheet [data-prop]:checked")].map(x => {
+    const i = Number(x.dataset.prop), p = u.props[i];
+    if (p && p.pick) {
+      const sel = document.querySelector(`#scanSheet [data-pick="${i}"]`), id = sel && sel.value;
+      if (!id || !ITEMS[id]) return null;
+      return { ...p, short: `marked ${itemName(id)} bought, paid ${cash(p.price)}`, ops: [{ path: "have", key: id, next: true }, { path: "price", key: id, next: p.price }] };
+    }
+    return p;
+  }).filter(Boolean);
+  const byEntry = new Map();
+  chosen.forEach(p => { if (!byEntry.has(p.entry)) byEntry.set(p.entry, []); byEntry.get(p.entry).push(p); });
+  u.changes = []; const allWords = [];
+  byEntry.forEach((ps, ei) => {
+    const e = u.entries[ei], ops = [], words = [];
+    ps.forEach(p => {
+      let did = false;
+      p.ops.forEach(o => {
+        const prev = readOp(o.path, o.key);
+        let next = o.next;
+        if (o.path === "notes") next = ((prev || "").trimEnd() + ((prev || "").trim() ? "\n" : "") + o.add);
+        if (prev === next) return;
+        const op = { path: o.path, key: o.key, prev, next, ...(o.add ? { add: o.add } : {}) };
+        writeOp(op, next); ops.push(op); did = true;
+      });
+      if (did && !words.includes(p.short)) words.push(p.short);
+    });
+    if (!ops.length) return;
+    const summary = sentence(words);
+    const c = recordChange("step:" + (e.step || "profile"), "scan", summary, ops);
+    u.changes.push(c.id); allWords.push(...words);
+    if (e.key && state.scans[e.key]) state.scans[e.key].applied = true;
+    state.log.unshift({ t: new Date().toISOString(), text: "From a photo (" + (e.r ? SCAN_KIND_LABEL[e.r.kind] : "photo") + "): " + summary.slice(0, 200) });
+  });
+  u.summary = allWords.length ? sentence([...new Set(allWords)]) : "";
+  u.stage = "done";
+  if (save()) toast(u.changes.length ? "Filled in from your photo" : "Nothing changed");
+  render(); drawScan();
+}
+function undoScan() {
+  const u = scanUI; if (!u) return;
+  [...u.changes].reverse().forEach(id => undoChange(id));
+  u.entries.forEach(e => { if (e.key && state.scans[e.key]) state.scans[e.key].applied = false; });
+  u.changes = []; u.summary = "Undone. Nothing from the photo is applied now.";
+  save(); drawScan();
+}
+function setVinField(v) {
+  const c = cleanVin(v);
+  state.truck.vin = c;
+  save();
+  const i = document.getElementById("vinInfo"); if (i) i.textContent = vinInfoLine(c);
+  const b = document.getElementById("vinFill"); if (b) b.classList.toggle("hidden", !(c.length === 17 && vinCheck(c)));
+  const f = document.getElementById("bayVin"); if (f) f.value = c;
+}
 
 function render() {
   renderHeader();
