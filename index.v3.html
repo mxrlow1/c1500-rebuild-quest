@@ -3,14 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#071018" />
+<meta name="theme-color" content="#0b1220" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-title" content="C1500 Quest" />
-<link rel="manifest" href="manifest.webmanifest" />
-<link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48" />
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
 <title>C1500 Rebuild Quest</title>
 <style>
   :root {
@@ -96,20 +90,13 @@
   }
   ul.clean { margin: 8px 0 0 18px; padding: 0; color: #d5e4f1; }
   ul.clean li { margin: 6px 0; }
-  .specgrid { font-size: 14px; }
+  .specgrid { display:grid; grid-template-columns: 1fr auto; gap: 8px 12px; font-size: 14px; }
+  .specgrid span:nth-child(odd) { color: var(--muted); }
   .logo { flex: 0 0 auto; }
   .stepdone { width: 100%; margin-top: 12px; min-height: 48px; }
   .card[id^="step-"] { scroll-margin-top: 170px; }
   .banner { background: #102433; border: 1px solid #21435d; color: #b9ddff; border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px; font-size: 13px; }
   .banner .row { margin-top: 8px; }
-  .swtoast { white-space: nowrap; position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 90; background: var(--accent); color: #062015; border: 0; border-radius: 999px; padding: 10px 18px; font-weight: 700; box-shadow: var(--shadow); cursor: pointer; }
-  .swtoast.hidden { display: none; }
-  .backupnag { background: #1d2412; border-color: #4d5d22; color: #e3efc0; }
-  .snaprow { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
-  .snaprow .snapt { font-weight: 600; font-size: 14px; }
-  .snaprow .btn { flex: none; }
-  .pgood { color: var(--accent); font-weight: 600; }
-  .pwarn { color: var(--warn); font-weight: 600; }
   @media (max-width: 400px) { .xpwrap { min-width: 118px; } }
   .nav { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
   .nav button { font-size: 12px; padding: 12px 0; }
@@ -142,52 +129,6 @@
   pre.code { white-space: pre-wrap; word-break: break-word; background: #0c1622; border: 1px solid var(--line); border-radius: 12px; padding: 10px; font-size: 12px; max-height: 320px; overflow: auto; }
   .safety { background: #3a1c22; border: 1px solid #7a3440; color: #ffd0d0; padding: 12px; border-radius: 12px; font-size: 13px; margin: 10px 0; }
   .mat { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; font-size: 13px; }
-  /* ---- press-and-hold notes ---- */
-  [data-note-id] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-  [data-note-id] textarea, [data-note-id] input, [data-note-id] select, [data-note-id] .ntext, .nsheet textarea { -webkit-touch-callout: default; -webkit-user-select: text; user-select: text; }
-  .npressing { transform: scale(.985); box-shadow: 0 0 0 2px rgba(62,224,164,.45); border-radius: 12px; transition: transform .34s cubic-bezier(.23,1,.32,1), box-shadow .34s; }
-  .nflash { animation: nflash 1.5s cubic-bezier(.23,1,.32,1); border-radius: 12px; }
-  @keyframes nflash { 0%, 45% { box-shadow: 0 0 0 2px var(--accent); } 100% { box-shadow: 0 0 0 2px transparent; } }
-  .nbadge { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 99px; background: #1d3348; font-size: 11px; line-height: 18px; vertical-align: middle; text-decoration: none; }
-  .nextras { display: grid; gap: 6px; margin: 6px 0 4px; }
-  .ntext { font-size: 12px; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
-  .nchip { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: #123325; border: 1px solid #2d6a4f; color: #c8ffdf; border-radius: 12px; padding: 7px 8px 7px 10px; font-size: 13px; }
-  .nchip b { color: var(--accent); }
-  .nundo { flex: 0 0 auto; background: #1b2d40; color: var(--text); border: 1px solid var(--line); border-radius: 10px; min-height: 36px; padding: 0 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
-  .nadd { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; font-size: 13px; color: #d5e4f1; }
-  .nadd .nhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .nlabel { font-size: 11px; font-weight: 700; color: var(--accent); }
-  .nadd.warning .nlabel { color: var(--warn); }
-  .nadd p { margin: 4px 0 0; }
-  .nbusy { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 7px 10px; }
-  .spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent); animation: spin .8s linear infinite; flex: 0 0 auto; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .nerr { background: #3a1c22; border: 1px solid #5a2a32; color: #ffd0d0; border-radius: 12px; padding: 8px 10px; font-size: 12px; }
-  .nerr .row { margin-top: 6px; }
-  .lskip { text-decoration: line-through; color: var(--muted); }
-  .ltag { font-size: 11px; color: var(--muted); margin-left: 6px; text-decoration: none; display: inline-block; }
-  .nsheet-wrap { position: fixed; inset: 0; background: rgba(7,16,24,.82); z-index: 60; display: flex; align-items: flex-end; justify-content: center; }
-  .nsheet { width: 100%; max-width: 760px; background: var(--panel); border: 1px solid var(--line); border-bottom: 0; border-radius: 22px 22px 0 0; padding: 10px 16px max(16px, env(safe-area-inset-bottom)); box-shadow: var(--shadow); animation: nsheet .25s cubic-bezier(.23,1,.32,1); max-height: 92vh; overflow: auto; }
-  @keyframes nsheet { from { transform: translateY(24px); opacity: 0; } }
-  .nsheet .grab { width: 40px; height: 4px; border-radius: 99px; background: var(--line); margin: 0 auto 10px; }
-  .nsheet h3 { margin: 2px 0 0; font-size: 18px; }
-  .nsheet textarea { margin-top: 10px; font-size: 16px; min-height: 110px; }
-  .nsheet .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-  .nsheet details { font-size: 12px; color: var(--muted); margin-top: 6px; }
-  .nsheet details li { margin: 4px 0; }
-  .nhint { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-  .noterow { background: var(--panel2); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; }
-  .noterow .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-  .noterow h4 { margin: 2px 0 0; font-size: 14px; }
-  .prow-wrap .nextras { margin-left: 38px; }
-  .specrow { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 7px 0; border-top: 1px solid var(--line); }
-  .specrow:first-child { border-top: 0; }
-  .specrow > span:first-child { color: var(--muted); }
-  .specrow .nextras { grid-column: 1 / -1; }
-  .bayfield { margin-bottom: 10px; }
-  .bayfield > label.sub { display: block; padding: 6px 0 4px; }
-  .ptpl { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; margin-top: 10px; }
-  @media (prefers-reduced-motion: reduce) { .npressing { transform: none; } .nflash, .nsheet, .spin { animation: none; } }
 </style>
 </head>
 <body>
@@ -226,8 +167,6 @@
   <section id="tab-log" class="hidden"></section>
 </div>
 <div id="toast" class="toast hidden"></div>
-<button id="swToast" class="swtoast hidden" type="button">Updated, tap to reload</button>
-<div id="noteSheet" class="nsheet-wrap hidden"></div>
 
 <script>
 const PHASES = [
@@ -689,15 +628,7 @@ const defaultState = () => ({
   grokChat: [],
   autoGrok: false,
   have: {},
-  partsFilter: { need: false, opt: false, own: false },
-  checks: {},
-  itemNotes: {},
-  adjust: { price: {}, skip: {}, added: [] },
-  changes: [],
-  noteHintSeen: false,
-  lastExportAt: 0,     // ms; last time a backup file was saved (export or Save backup)
-  backupNagUntil: 0,   // ms; "Not today" on the backup reminder
-  firstProgressAt: 0   // ms; when this phone first had progress worth backing up
+  partsFilter: { need: false, opt: false, own: false }
 });
 
 const STORE_KEY = "c1500-quest-v1";
@@ -707,8 +638,7 @@ function load() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
     if (!raw) return defaultState();
-    const st = { ...defaultState(), ...JSON.parse(raw) };
-    return normNoteState(st);
+    return { ...defaultState(), ...JSON.parse(raw) };
   } catch {
     return defaultState();
   }
@@ -716,7 +646,6 @@ function load() {
 // Everything except photos lives in localStorage. Photos live in IndexedDB (see below).
 function save() {
   state.xp = computeXP();
-  if (!state.firstProgressAt && photoBackend !== "loading" && hasProgress()) state.firstProgressAt = Date.now();
   const out = { ...state };
   if (photoBackend === "idb") delete out.photos;
   else if (photoBackend === "local") out.photos = photoCache; // fallback only when IndexedDB is unavailable
@@ -750,12 +679,8 @@ function idbOpen() {
   if (_dbp) return _dbp;
   _dbp = new Promise((resolve, reject) => {
     if (!window.indexedDB) return reject(new Error("IndexedDB unavailable"));
-    const req = indexedDB.open(IDB_NAME, 2); // v2 adds the "snapshots" store
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
-      if (!db.objectStoreNames.contains("snapshots")) db.createObjectStore("snapshots");
-    };
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
     req.onblocked = () => reject(new Error("IndexedDB blocked"));
@@ -763,10 +688,10 @@ function idbOpen() {
   _dbp.catch(() => { _dbp = null; });
   return _dbp;
 }
-function idbTx(mode, fn, storeName = IDB_STORE) {
+function idbTx(mode, fn) {
   return idbOpen().then(db => new Promise((resolve, reject) => {
-    const tx = db.transaction(storeName, mode);
-    const store = tx.objectStore(storeName);
+    const tx = db.transaction(IDB_STORE, mode);
+    const store = tx.objectStore(IDB_STORE);
     let result;
     const r = fn(store);
     if (r) r.onsuccess = () => { result = r.result; };
@@ -814,6 +739,7 @@ async function initPhotos() {
     photoCache = legacy || {};
     delete state.photos;
   }
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch {}
 }
 async function putPhotos(id, arr) {
   if (photoBackend === "idb") {
@@ -824,222 +750,6 @@ async function putPhotos(id, arr) {
     photoCache[id] = arr;
     if (!save()) { photoCache[id] = prev; throw new Error("storage full"); }
   }
-}
-
-// ---- Auto-snapshots + backup reminder ----
-// Snapshots live in their own IndexedDB store. They are local rollback points, not a replacement for a
-// backup file: if the browser clears site data, snapshots go with it.
-const SNAP_STORE = "snapshots", SNAP_EVERY = 10 * 60 * 1000, SNAP_KEEP = 12, SNAP_DAYS = 7;
-const SNAP_PHOTO_INLINE = 1024 * 1024; // photos ride along inline up to ~1 MB total; above that only counts are kept
-const DAY_MS = 24 * 60 * 60 * 1000;
-let lastSnapHash = null, snapBusy = null, persistState = "checking";
-const snapIdb = {
-  put: rec => idbTx("readwrite", s => s.put(rec, rec.id), SNAP_STORE),
-  get: id => idbTx("readonly", s => s.get(id), SNAP_STORE),
-  del: ids => idbTx("readwrite", s => { for (const id of ids) s.delete(id); }, SNAP_STORE),
-  all: () => idbOpen().then(db => new Promise((resolve, reject) => {
-    const out = [];
-    const tx = db.transaction(SNAP_STORE, "readonly");
-    const req = tx.objectStore(SNAP_STORE).openCursor();
-    req.onsuccess = () => { const c = req.result; if (c) { out.push(c.value); c.continue(); } };
-    tx.oncomplete = () => resolve(out.sort((a, b) => b.id - a.id));
-    tx.onerror = () => reject(tx.error);
-  }))
-};
-function photoCount(p = photoCache) { return Object.values(p || {}).reduce((n, a) => n + (Array.isArray(a) ? a.length : 0), 0); }
-function hasProgress() {
-  return doneCount() > 0 || Object.values(state.notes || {}).some(v => v && String(v).trim()) || Object.keys(state.itemNotes || {}).length > 0
-    || Object.keys(state.have || {}).length > 0 || photoCount() > 0;
-}
-function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36) + ":" + s.length; }
-const LOCAL_ONLY = ["grokKey", "photos", "lastExportAt", "backupNagUntil", "firstProgressAt", "storageNoteDismissed"];
-function snapData() {
-  const o = JSON.parse(JSON.stringify({ ...state, xp: computeXP() }));
-  for (const k of LOCAL_ONLY) delete o[k];
-  return o;
-}
-function snapSummary(data, photos) {
-  const done = PHASES.reduce((n, p) => n + p.steps.filter(s => data.done && data.done[s.id]).length, 0);
-  const notes = Object.values(data.notes || {}).filter(v => v && String(v).trim()).length + Object.keys(data.itemNotes || {}).length;
-  return { done, total: totalSteps(), notes, photos };
-}
-// which snapshot ids survive: the newest SNAP_KEEP, plus the newest snapshot of each of the last SNAP_DAYS local days
-function snapKeepIds(list, now = Date.now()) {
-  const sorted = [...list].sort((a, b) => b.id - a.id);
-  const keep = new Set(sorted.slice(0, SNAP_KEEP).map(s => s.id));
-  const dayKey = t => { const d = new Date(t); return d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate(); };
-  const days = new Set();
-  for (let i = 0; i < SNAP_DAYS; i++) days.add(dayKey(now - i * DAY_MS));
-  const seen = new Set();
-  for (const s of sorted) { const k = dayKey(s.id); if (days.has(k) && !seen.has(k)) { seen.add(k); keep.add(s.id); } }
-  return keep;
-}
-async function pruneSnapshots(now = Date.now()) {
-  const list = await snapIdb.all();
-  const keep = snapKeepIds(list, now);
-  const drop = list.filter(s => !keep.has(s.id)).map(s => s.id);
-  if (drop.length) await snapIdb.del(drop);
-  return drop.length;
-}
-// reason: "auto" (10-minute timer), "left" (page hidden/closed), "manual", "before restore", "before import", "before reset"
-function takeSnapshot(reason = "auto", opts = {}) {
-  if (photoBackend !== "idb") return Promise.resolve(null);
-  const run = async () => {
-    if (!opts.force && !hasProgress()) return null;
-    const data = snapData();
-    const refs = Object.fromEntries(Object.entries(photoCache).filter(([, a]) => Array.isArray(a) && a.length).map(([k, a]) => [k, a.length]));
-    const hash = hashStr(JSON.stringify(data) + JSON.stringify(refs));
-    if (!opts.force && hash === lastSnapHash) return null; // nothing changed since the last snapshot
-    const size = Object.values(photoCache).reduce((n, a) => n + (Array.isArray(a) ? a.reduce((m, x) => m + x.length, 0) : 0), 0);
-    let id = Date.now();
-    const newest = (await snapIdb.all())[0];
-    if (newest && newest.id >= id) id = newest.id + 1;
-    const rec = { id, t: new Date(id).toISOString(), reason, hash, summary: snapSummary(data, photoCount()), data, photoRefs: refs,
-      photos: size <= SNAP_PHOTO_INLINE ? JSON.parse(JSON.stringify(photoCache)) : null };
-    await snapIdb.put(rec);
-    lastSnapHash = hash;
-    await pruneSnapshots(id);
-    renderSnapList();
-    return rec;
-  };
-  // serialize: the timer, page-hide, and restore can race
-  const p = (snapBusy || Promise.resolve()).catch(() => {}).then(run);
-  snapBusy = p.catch(err => { console.warn("snapshot failed", err); return null; });
-  return snapBusy;
-}
-function snapNow() { takeSnapshot("manual", { force: true }).then(r => toast(r ? "Snapshot saved" : "Could not save a snapshot", 2000, !r)); }
-const SNAP_REASON = { auto: "Auto", left: "On close", manual: "Manual", "before restore": "Before restore", "before import": "Before import", "before reset": "Before reset" };
-async function renderSnapList() {
-  const box = document.getElementById("snapList");
-  if (!box) return;
-  if (photoBackend !== "idb") { box.innerHTML = `<p class="sub">Snapshots need IndexedDB, which this browser is blocking. Use Save backup file instead.</p>`; return; }
-  let list = [];
-  try { list = await snapIdb.all(); } catch (err) { box.innerHTML = `<p class="sub">Could not read snapshots.</p>`; return; }
-  const el = document.getElementById("snapList");
-  if (!el) return;
-  el.innerHTML = list.length ? list.map(s => `<div class="snaprow" data-snap="${s.id}">
-      <div><div class="snapt">${esc(fmtTime(s.t))}</div>
-      <div class="sub">${esc(SNAP_REASON[s.reason] || s.reason)} · ${s.summary.done}/${s.summary.total} steps · ${s.summary.notes} note${s.summary.notes === 1 ? "" : "s"}${s.summary.photos ? " · " + s.summary.photos + " photo" + (s.summary.photos === 1 ? "" : "s") + (s.photos ? "" : " (not copied)") : ""}</div></div>
-      <button class="btn ghost" onclick="restoreSnapshot(${s.id})">Restore</button></div>`).join("")
-    : `<p class="sub">No snapshots yet. The first one is saved 10 minutes after you make progress, or when you leave the app.</p>`;
-}
-async function restoreSnapshot(id) {
-  let rec;
-  try { rec = await snapIdb.get(id); } catch {}
-  if (!rec || !rec.data) return toast("That snapshot is gone", 3000, true);
-  const s = rec.summary;
-  if (!confirm(`Restore the snapshot from ${fmtTime(rec.t)}?\n\n${s.done}/${s.total} steps done, ${s.notes} notes.\n\nWhat you have now is saved as a snapshot first, so you can switch back from the Backups list.`)) return;
-  const before = await takeSnapshot("before restore", { force: true });
-  if (!before) return toast("Restore stopped: could not save your current state first. Nothing was changed.", 5000, true);
-  const v = validateImport({ ...rec.data, photos: {} });
-  if (typeof v === "string") return toast("That snapshot is damaged: " + v, 5000, true);
-  // photos are merged back, never removed: a restore can't lose a photo you took since
-  if (rec.photos && typeof rec.photos === "object") {
-    try {
-      for (const [k, arr] of Object.entries(rec.photos)) {
-        if (!Array.isArray(arr)) continue;
-        const cur = photoCache[k] || [];
-        const merged = [...cur, ...arr.filter(x => !cur.includes(x))].slice(-6);
-        if (merged.length !== cur.length) await putPhotos(k, merged);
-      }
-    } catch (err) { console.warn("restore photos failed", err); }
-  }
-  const keep = { grokKey: state.grokKey, storageNoteDismissed: state.storageNoteDismissed, noteHintSeen: state.noteHintSeen || !!v.noteHintSeen,
-    lastExportAt: state.lastExportAt, backupNagUntil: state.backupNagUntil, firstProgressAt: state.firstProgressAt };
-  const { photos, ...rest } = v;
-  noteBusy = {};
-  state = normNoteState({ ...defaultState(), ...rest, ...keep });
-  state.log.unshift({ t: new Date().toISOString(), text: "Restored snapshot from " + fmtTime(rec.t) });
-  openPhaseId = null;
-  save();
-  render();
-  toast("Restored. Your previous state is the newest snapshot in Backups, so restore that one to undo.", 4500);
-}
-// ---- persistent storage ----
-function persistLine() {
-  if (persistState === "yes") return `<span class="pgood">Storage protected</span> · this browser won't clear the app's data on its own.`;
-  if (persistState === "checking") return `Checking storage protection…`;
-  return `<span class="pwarn">Browser may clear storage</span> · save a backup file now and then.${persistState === "unsupported" ? "" : " Installing the app to your home screen usually turns protection on."}`;
-}
-function showPersist() { const el = document.getElementById("persistLine"); if (el) el.innerHTML = persistLine(); }
-async function askPersist() {
-  try {
-    if (!navigator.storage || !navigator.storage.persist) { persistState = "unsupported"; return showPersist(); }
-    if (navigator.storage.persisted && await navigator.storage.persisted()) persistState = "yes";
-    else persistState = (await navigator.storage.persist()) ? "yes" : "no";
-  } catch { persistState = "no"; }
-  showPersist();
-}
-// some browsers only grant persistence after a user gesture: ask again once on the first tap
-document.addEventListener("pointerdown", function once() { if (persistState !== "yes" && persistState !== "unsupported") askPersist(); document.removeEventListener("pointerdown", once, true); }, true);
-// ---- backup reminder ----
-function needsBackupNag(now = Date.now()) {
-  if (!hasProgress()) return false;
-  if (state.backupNagUntil && now < state.backupNagUntil) return false;
-  const since = state.lastExportAt || state.firstProgressAt;
-  return !!since && now - since > DAY_MS;
-}
-function backupNagHtml() {
-  if (!needsBackupNag()) return "";
-  const last = state.lastExportAt ? "Last backup file: " + fmtTime(new Date(state.lastExportAt).toISOString()) + "." : "You haven't saved a backup file yet.";
-  return `<div class="banner backupnag" id="backupNag"><strong>Save a backup?</strong> ${last} Your progress, notes, and photos live only in this browser. A backup file can go to Files, Drive, or email.
-    <div class="row"><button class="btn" onclick="saveBackupFile()">Save backup</button><button class="btn ghost" onclick="snoozeBackupNag()">Not today</button></div></div>`;
-}
-function snoozeBackupNag() { state.backupNagUntil = Date.now() + DAY_MS; save(); render(); }
-function markExported() { state.lastExportAt = Date.now(); state.backupNagUntil = 0; save(); }
-async function exportPayload() {
-  let photos = photoCache;
-  try { if (photoBackend === "idb") photos = await idb.all(); } catch (err) { console.warn(err); toast("Could not read photos — exporting without latest photos", 3000, true); }
-  const out = { ...state, xp: computeXP(), photos };
-  delete out.grokKey; // never put the API key in an export file
-  delete out.lastExportAt; delete out.backupNagUntil; delete out.firstProgressAt;
-  return JSON.stringify(out, null, 2);
-}
-function downloadJson(json, name) {
-  const blob = new Blob([json], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-}
-// Share sheet where the phone supports sharing files (Android/iOS), plain download everywhere else.
-async function saveBackupFile() {
-  const json = await exportPayload();
-  const d = new Date(), pad = n => String(n).padStart(2, "0");
-  const name = `c1500-rebuild-quest-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`;
-  let file = null;
-  try { file = new File([json], name, { type: "application/json" }); } catch {}
-  if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title: "C1500 Rebuild Quest backup" });
-      markExported(); render(); toast("Backup saved");
-      return "shared";
-    } catch (err) {
-      if (err && err.name === "AbortError") return "cancelled"; // closed the share sheet: keep the reminder
-      console.warn("share failed, downloading instead", err);
-    }
-  }
-  downloadJson(json, name);
-  markExported(); render(); toast("Backup file downloaded");
-  return "downloaded";
-}
-async function initBackups() {
-  if (!state.firstProgressAt && hasProgress()) {
-    // older saves: date progress from the oldest log entry
-    const ts = (state.log || []).map(x => Date.parse(x.t)).filter(Number.isFinite);
-    state.firstProgressAt = ts.length ? Math.min(...ts) : Date.now();
-    save();
-  }
-  askPersist();
-  if (photoBackend === "idb") {
-    try { const newest = (await snapIdb.all())[0]; lastSnapHash = newest ? newest.hash : null; } catch {}
-  }
-  setInterval(() => takeSnapshot("auto"), SNAP_EVERY);
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") takeSnapshot("left"); });
-  window.addEventListener("pagehide", () => takeSnapshot("left"));
 }
 
 function totalSteps() {
@@ -1096,7 +806,6 @@ function renderHome() {
   const root = document.getElementById("tab-home");
   const next = findNext();
   root.innerHTML = `
-    ${backupNagHtml()}
     ${state.storageNoteDismissed ? "" : `<div class="banner" id="storageBanner">
       <strong>Keep your progress safe:</strong> everything is saved only in this browser on this phone. On iPhone, add this page to your Home Screen (Share → Add to Home Screen), and export a backup weekly (Bay → Export) — Safari can clear site data, including photos, after about 7 days of not opening it.
       <div class="row"><button class="btn ghost" onclick="dismissStorageNote()">Got it</button><button class="btn ghost" onclick="setTab('bay')">Go to Bay</button></div>
@@ -1111,18 +820,16 @@ function renderHome() {
         <button class="btn ghost" onclick="setTab('bay')">Edit build</button>
       </div>
     </div>
-    ${noteHintHtml()}
     ${next ? renderStep(next.phase, next.step, true) : `<div class="card"><h2>Quest complete</h2><p>You walked the full C1500 path. Keep the log and first-500-mile notes.</p></div>`}
     <div class="card">
       <h3 style="margin-top:0">Campaign map</h3>
       ${PHASES.map(p => {
         const all = p.steps.every(s => state.done[s.id]);
         const some = p.steps.some(s => state.done[s.id]);
-        return `<div class="phase" onclick="openPhase('${p.id}')"${pa("phase:" + p.id, p.title)}>
+        return `<div class="phase" onclick="openPhase('${p.id}')">
           <div>
-            <h3>${p.title}${noteBadge("phase:" + p.id)}</h3>
+            <h3>${p.title}</h3>
             <p>${p.blurb}</p>
-            ${noteExtras("phase:" + p.id)}
           </div>
           <span class="badge ${all ? "done" : ""}">${all ? "CLEARED" : some ? "IN PROGRESS" : p.xp + " XP"}</span>
         </div>`;
@@ -1159,11 +866,10 @@ function renderPhase(id) {
   const phase = PHASES.find(p => p.id === id);
   const root = document.getElementById("tab-home");
   root.innerHTML = `
-    <div class="card"${pa("phase:" + phase.id, phase.title)}>
+    <div class="card">
       <button class="btn ghost" onclick="closePhase()">← Campaign map</button>
-      <h2>${phase.title}${noteBadge("phase:" + phase.id)}</h2>
+      <h2>${phase.title}</h2>
       <p class="sub">${phase.blurb}</p>
-      ${noteExtras("phase:" + phase.id)}
     </div>
     ${phase.steps.map(s => renderStep(phase, s, false)).join("")}
   `;
@@ -1172,21 +878,17 @@ function renderPhase(id) {
 function renderStep(phase, step, spotlight) {
   const on = !!state.done[step.id];
   const photos = photoCache[step.id] || [];
-  return `<div class="card" id="step-${step.id}"${pa("step:" + step.id, step.title)}>
+  return `<div class="card" id="step-${step.id}">
     <div class="stephead">
       <div>
         ${spotlight ? `<div class="sub">Current objective</div>` : ""}
-        <h3 style="margin:0 0 6px">${step.title}${noteBadge("step:" + step.id)}</h3>
+        <h3 style="margin:0 0 6px">${step.title}</h3>
         <div class="sub">${phase.title} · ${stepXP(phase, step)} XP</div>
       </div>
       <button class="check ${on ? "on" : ""}" aria-label="${on ? "Reopen step" : "Mark step done"}" onclick="toggleStep('${phase.id}','${step.id}')">${on ? "✓" : ""}</button>
     </div>
     <p>${step.why}</p>
-    <ul class="clean">${step.do.map((x, i) => {
-      const sid = `sub:${step.id}:${i}`, skip = isSkipped(sid), ck = !!state.checks[`${step.id}:${i}`], t = lineText(x);
-      return `<li${pa(sid, t.length > 70 ? t.slice(0, 68) + "…" : t, step.id)}><span class="${skip || ck ? "lskip" : ""}">${x === "{{FIRING}}" ? esc(firingText()) : x}</span>${skip ? `<span class="ltag">· skipped</span>` : ck ? `<span class="ltag">✓ done</span>` : ""}${noteBadge(sid)}${noteExtras(sid, true)}</li>`;
-    }).join("")}</ul>
-    ${noteExtras("step:" + step.id, true)}
+    <ul class="clean">${step.do.map(x => `<li>${x === "{{FIRING}}" ? esc(firingText()) : x}</li>`).join("")}</ul>
     <div class="warnbox"><strong>Fail state:</strong> ${step.warn}</div>
     <div class="tip"><strong>Budget tip:</strong> ${step.tip}</div>
     ${renderKit(phase, step)}
@@ -1278,32 +980,23 @@ function renderBay() {
   root.innerHTML = `
     <div class="card">
       <h3 style="margin-top:0">Truck loadout</h3>
-      <div class="bayfield"${pa("bay:engine", "Engine")}>
-      <label class="sub" for="bayEngine">Engine${noteBadge("bay:engine")}</label>
-      <select id="bayEngine" onchange="updTruck('engine', this.value)">
-        ${ENGINES.map(v => `<option ${t.engine===v?"selected":""}>${v}</option>`).join("")}${ENGINES.includes(t.engine) ? "" : `<option selected>${esc(t.engine)}</option>`}
+      <label class="sub">Engine</label>
+      <select onchange="updTruck('engine', this.value)">
+        ${["5.7L TBI L05 / VIN K","5.0L TBI L03 / VIN H","4.3L V6 TBI","Other / not sure"].map(v => `<option ${t.engine===v?"selected":""}>${v}</option>`).join("")}
       </select>
-      ${noteExtras("bay:engine")}
-      </div>
-      <div class="bayfield"${pa("bay:drive", "Drive")}>
-      <label class="sub" for="bayDrive">Drive${noteBadge("bay:drive")}</label>
-      <select id="bayDrive" onchange="updTruck('drive', this.value)">
-        ${DRIVES.map(v => `<option ${t.drive===v?"selected":""}>${v}</option>`).join("")}
+      <div style="height:10px"></div>
+      <label class="sub">Drive</label>
+      <select onchange="updTruck('drive', this.value)">
+        ${["2WD","4WD"].map(v => `<option ${t.drive===v?"selected":""}>${v}</option>`).join("")}
       </select>
-      ${noteExtras("bay:drive")}
-      </div>
-      <div class="bayfield"${pa("bay:trans", "Transmission")}>
-      <label class="sub" for="bayTrans">Transmission${noteBadge("bay:trans")}</label>
-      <select id="bayTrans" onchange="updTruck('trans', this.value)">
-        ${TRANSMISSIONS.map(v => `<option ${t.trans===v?"selected":""}>${v}</option>`).join("")}
+      <div style="height:10px"></div>
+      <label class="sub">Transmission</label>
+      <select onchange="updTruck('trans', this.value)">
+        ${["4L60E","4L80E","700R4 / 4L60","Manual","Not sure"].map(v => `<option ${t.trans===v?"selected":""}>${v}</option>`).join("")}
       </select>
-      ${noteExtras("bay:trans")}
-      </div>
-      <div class="bayfield"${pa("bay:miles", "Mileage + symptoms")}>
-      <label class="sub" for="bayMiles">Mileage + symptoms${noteBadge("bay:miles")}</label>
-      <textarea id="bayMiles" onchange="updTruck('miles', this.value)">${esc(t.miles)}</textarea>
-      ${noteExtras("bay:miles")}
-      </div>
+      <div style="height:10px"></div>
+      <label class="sub">Mileage + symptoms</label>
+      <textarea onchange="updTruck('miles', this.value)">${esc(t.miles)}</textarea>
     </div>
     <div class="card">
       <h3 style="margin-top:0">Bay rules</h3>
@@ -1320,18 +1013,7 @@ function renderBay() {
         <button class="btn danger" onclick="resetAll()">Reset quest</button>
       </div>
     </div>
-    <div class="card" id="backupsCard">
-      <h3 style="margin-top:0">Backups</h3>
-      <p class="sub" id="persistLine">${persistLine()}</p>
-      <p class="sub">Last backup file: <strong>${state.lastExportAt ? esc(fmtTime(new Date(state.lastExportAt).toISOString())) : "never"}</strong>. Snapshots below are saved on this phone every 10 minutes while the app is open and when you leave it (the last 12, plus one a day for a week). They live in the same browser storage as your progress, so they don't replace a backup file.</p>
-      <div class="row" style="margin:10px 0">
-        <button class="btn" onclick="saveBackupFile()">Save backup file</button>
-        <button class="btn ghost" onclick="snapNow()">Snapshot now</button>
-      </div>
-      <div id="snapList"><p class="sub">Loading snapshots…</p></div>
-    </div>
   `;
-  renderSnapList();
 }
 
 function updTruck(k, v) {
@@ -1347,7 +1029,7 @@ function renderSpecs() {
       <p class="sub">These are common 1994 C1500 small-block truck values. Your bolt type, machine work, cam card, and underhood label win if they disagree.</p>
       <p class="sub">Showing: <strong>${esc(state.truck.engine)}</strong>${engineKind() === "unknown" ? " — both V8 and V6 values shown. Confirm your engine (8th VIN digit or RPO sticker) and set it in the Bay tab." : " (change in the Bay tab)"}</p>
       <div class="specgrid" id="specgrid">
-        ${specsFor().map(([k,v]) => `<div class="specrow"${pa("spec:" + slug(k), k)}><span>${k}${noteBadge("spec:" + slug(k))}</span><span>${v}</span>${noteExtras("spec:" + slug(k))}</div>`).join("")}
+        ${specsFor().map(([k,v]) => `<span>${k}</span><span>${v}</span>`).join("")}
       </div>
     </div>
     <div class="card">
@@ -1364,7 +1046,7 @@ function renderSpecs() {
 
 function renderLog() {
   const items = state.log.slice(0, 80).map(x => `<div class="phase"><div><h3 style="font-size:14px">${esc(x.text)}</h3><p>${esc(fmtTime(x.t))}</p></div></div>`).join("") || "<p class='sub'>No events yet.</p>";
-  document.getElementById("tab-log").innerHTML = allNotesHtml() + `<div class="card"><h3 style="margin-top:0">Quest log</h3>${items}</div>`;
+  document.getElementById("tab-log").innerHTML = `<div class="card"><h3 style="margin-top:0">Quest log</h3>${items}</div>`;
 }
 
 function fmtTime(iso) {
@@ -1374,9 +1056,18 @@ function fmtTime(iso) {
 }
 
 async function exportLog() {
-  downloadJson(await exportPayload(), "c1500-rebuild-quest.json");
-  markExported();
-  if (document.querySelector(".nav button.active").dataset.tab === "bay") renderBay();
+  let photos = photoCache;
+  try { if (photoBackend === "idb") photos = await idb.all(); } catch (err) { console.warn(err); toast("Could not read photos — exporting without latest photos", 3000, true); }
+  const out = { ...state, xp: computeXP(), photos };
+  delete out.grokKey; // never put the API key in an export file
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "c1500-rebuild-quest.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
 }
 
 function validateImport(d) {
@@ -1401,35 +1092,6 @@ function validateImport(d) {
   out.have = {};
   if (isObj(d.have)) for (const [k, v] of Object.entries(d.have)) if (ITEMS[k] && v === true) out.have[k] = true;
   if (isObj(d.partsFilter)) out.partsFilter = { need: d.partsFilter.need === true, opt: d.partsFilter.opt === true, own: d.partsFilter.own === true };
-  // press-and-hold notes (absent in older exports -> empty)
-  out.itemNotes = {}; out.checks = {}; out.adjust = { price: {}, skip: {}, added: [] }; out.changes = [];
-  if (isObj(d.itemNotes)) for (const [k, n] of Object.entries(d.itemNotes)) {
-    if (!isObj(n) || typeof n.text !== "string" || !n.text.trim() || !parseTarget({ id: k, step: typeof n.step === "string" ? n.step : undefined })) continue;
-    out.itemNotes[k] = { text: n.text.slice(0, 2000), t: typeof n.t === "string" ? n.t : new Date().toISOString(), title: typeof n.title === "string" ? n.title.slice(0, 120) : k, ...(typeof n.step === "string" ? { step: n.step } : {}) };
-  }
-  if (isObj(d.checks)) for (const [k, v] of Object.entries(d.checks)) if (v === true && typeof k === "string" && k.length < 120) out.checks[k] = true;
-  const num = v => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 20000;
-  if (isObj(d.adjust)) {
-    if (isObj(d.adjust.price)) for (const [k, v] of Object.entries(d.adjust.price)) if (ITEMS[k] && num(v)) out.adjust.price[k] = v;
-    if (isObj(d.adjust.skip)) for (const [k, v] of Object.entries(d.adjust.skip)) if (v === true && (ITEMS[k] || parseTarget({ id: k }))) out.adjust.skip[k] = true;
-    if (Array.isArray(d.adjust.added)) for (const e of d.adjust.added.slice(0, 200)) {
-      if (!isObj(e) || typeof e.id !== "string" || typeof e.target !== "string" || typeof e.text !== "string" || !e.text.trim()) continue;
-      if (!["tip", "substep", "warning", "part"].includes(e.kind)) continue;
-      const x = { id: e.id.slice(0, 60), target: e.target.slice(0, 120), kind: e.kind, text: e.text.trim().slice(0, 240), t: typeof e.t === "string" ? e.t : "" };
-      if (typeof e.step === "string" && findStep(e.step)) x.step = e.step;
-      if (typeof e.phase === "string" && PHASES.some(p => p.id === e.phase)) x.phase = e.phase;
-      if (e.kind === "part") {
-        if (!num(e.lo) || !num(e.hi) || !x.phase) continue;
-        x.lo = Math.min(e.lo, e.hi); x.hi = Math.max(e.lo, e.hi); x.category = ["must", "if-worn", "optional"].includes(e.category) ? e.category : "must";
-      }
-      out.adjust.added.push(x);
-    }
-  }
-  const PATHS = ["have", "price", "skip", "done", "checks", "truck", "added"];
-  if (Array.isArray(d.changes)) out.changes = d.changes.slice(0, 60).filter(c => isObj(c) && typeof c.id === "string" && typeof c.target === "string" && Array.isArray(c.ops))
-    .map(c => ({ id: c.id, target: c.target, source: c.source === "grok" ? "grok" : "local", summary: typeof c.summary === "string" ? c.summary.slice(0, 240) : "", t: typeof c.t === "string" ? c.t : "",
-      ops: c.ops.filter(o => isObj(o) && PATHS.includes(o.path) && typeof o.key === "string") }));
-  if (typeof d.noteHintSeen === "boolean") out.noteHintSeen = d.noteHintSeen;
   return out;
 }
 
@@ -1448,7 +1110,6 @@ function importLog(input) {
     const nPhotos = Object.values(v.photos).reduce((n, a) => n + a.length, 0);
     const nDone = Object.keys(v.done).length;
     if (!confirm(`Replace everything on this phone with this backup?\n\n${nDone} steps done, ${Object.keys(v.notes).length} notes, ${nPhotos} photos.\n\nCurrent progress, notes, and photos will be overwritten.`)) return;
-    await takeSnapshot("before import");
     try {
       if (photoBackend === "idb") {
         await idb.replaceAll(v.photos);
@@ -1461,9 +1122,7 @@ function importLog(input) {
       return;
     }
     photoCache = v.photos;
-    const keep = { grokKey: state.grokKey, storageNoteDismissed: state.storageNoteDismissed, noteHintSeen: state.noteHintSeen || !!v.noteHintSeen,
-      lastExportAt: state.lastExportAt, backupNagUntil: state.backupNagUntil, firstProgressAt: state.firstProgressAt || Date.now() };
-    noteBusy = {};
+    const keep = { grokKey: state.grokKey, storageNoteDismissed: state.storageNoteDismissed };
     const { photos, ...rest } = v;
     state = { ...defaultState(), ...rest, ...keep };
     state.log.unshift({ t: new Date().toISOString(), text: "Imported backup (" + nDone + " steps, " + nPhotos + " photos)" });
@@ -1476,12 +1135,10 @@ function importLog(input) {
 
 async function resetAll() {
   if (!confirm("Reset all progress, notes, and photos on this device?")) return;
-  await takeSnapshot("before reset"); // a way back from a mis-tap (Bay → Backups)
   try { if (photoBackend === "idb") await idb.clear(); }
   catch (err) { console.warn(err); toast("⚠ Could not clear photos from storage", 4000, true); }
   photoCache = {};
   state = defaultState();
-  noteBusy = {};
   openPhaseId = null;
   if (save()) toast("Quest reset");
   render();
@@ -1614,18 +1271,16 @@ function stepTitle(sid) { const x = stepList().find(o => o.step.id === sid); ret
 function kitEstimate(stepId) {
   let lo = 0, hi = 0;
   for (const id of ((STEP_KIT[stepId] || {}).items || [])) {
-    const it = effItem(id);
-    if (FIRST_USE[id].step !== stepId || isSkipped(id) || isOpt(it) || it.tag === "own" || it.lo == null) continue;
+    const it = ITEMS[id];
+    if (FIRST_USE[id].step !== stepId || isOpt(it) || it.tag === "own" || it.lo == null) continue;
     lo += it.lo; hi += it.hi;
   }
-  for (const x of extraParts()) { if (x.step === stepId && !isOpt(x.item)) { lo += x.item.lo; hi += x.item.hi; } }
   return { lo, hi };
 }
 function partsFilter() { return { need: false, opt: false, own: false, ...(state.partsFilter || {}) }; }
 function hasItem(id) { return !!(state.have && state.have[id]); }
 function partsIncluded(id) {
-  const it = effItem(id), f = partsFilter();
-  if (!it) return false;
+  const it = ITEMS[id], f = partsFilter();
   if (isOpt(it) && !f.opt) return false;
   if (it.tag === "own" && !f.own) return false;
   return true;
@@ -1633,9 +1288,8 @@ function partsIncluded(id) {
 function partsTotals() {
   const z = () => ({ lo: 0, hi: 0, n: 0 });
   const t = { all: z(), need: z(), worn: z(), unpriced: 0, part: z(), service: z(), buy: z(), rent: z(), own: z() };
-  for (const id of allPartIds()) {
-    const it = effItem(id);
-    if (!it || isSkipped(id) || !partsIncluded(id)) continue;
+  for (const [id, it] of Object.entries(ITEMS)) {
+    if (!partsIncluded(id)) continue;
     if (it.lo == null) { t.unpriced++; continue; }
     const add = (o) => { o.lo += it.lo; o.hi += it.hi; o.n++; };
     add(t.all);
@@ -1650,22 +1304,18 @@ function partsTotals() {
 function kitToggle(id, open) { if (open) openKits.add(id); else openKits.delete(id); }
 function renderKit(phase, step) {
   const kit = STEP_KIT[step.id];
-  const extras = extraParts().filter(x => x.step === step.id);
-  if (!kit && !extras.length) return "";
+  if (!kit) return "";
   const est = kitEstimate(step.id);
-  const rows = (kit ? kit.items : []).map(id => {
-    const base = ITEMS[id], it = effItem(id), fu = FIRST_USE[id], first = fu.step === step.id, have = hasItem(id), skip = isSkipped(id);
-    const meta = (skip ? "<strong>Skipped</strong> · not in the totals · " : "") + (first ? `${tagHtml(it)}${it.note ? " " + esc(it.note) : ""}` : `listed in ${phaseShort(fu.phase)} (${esc(stepTitle(fu.step))})`);
-    return `<div class="prow-wrap"${pa("item:" + id, base.name, step.id)}><label class="prow${have || skip ? " have" : ""}"><input type="checkbox" data-item="${id}" ${have ? "checked" : ""} onchange="toggleHave('${id}', this.checked)" aria-label="Have it: ${esc(it.name)}"><span class="pname"><span class="pn">${esc(it.name)}</span>${noteBadge("item:" + id)}<small>${meta}</small></span><span class="pprice">${first ? priceCell(id, it, base) : "—"}</span></label>${noteExtras("item:" + id, true)}</div>`;
-  }).join("") + extras.map(x => {
-    const have = hasItem(x.id);
-    return `<div class="prow-wrap nextra-part"><label class="prow${have ? " have" : ""}"><input type="checkbox" data-item="${x.id}" ${have ? "checked" : ""} onchange="toggleHave('${x.id}', this.checked)" aria-label="Have it: ${esc(x.item.name)}"><span class="pname"><span class="pn">${esc(x.item.name)}</span><small><span class="nlabel">Added from your note</span> ${tagHtml(x.item)}</small></span><span class="pprice">${itemPrice(x.item)}</span></label><button class="nundo" style="margin-left:38px" data-add="${x.id}" onclick="event.stopPropagation(); removeAdded(this.dataset.add)">↶ Undo added part</button></div>`;
+  const rows = kit.items.map(id => {
+    const it = ITEMS[id], fu = FIRST_USE[id], first = fu.step === step.id, have = hasItem(id);
+    const meta = first ? `${tagHtml(it)}${it.note ? " " + esc(it.note) : ""}` : `listed in ${phaseShort(fu.phase)} (${esc(stepTitle(fu.step))})`;
+    return `<label class="prow${have ? " have" : ""}"><input type="checkbox" data-item="${id}" ${have ? "checked" : ""} onchange="toggleHave('${id}', this.checked)" aria-label="Have it: ${esc(it.name)}"><span class="pname"><span class="pn">${esc(it.name)}</span><small>${meta}</small></span><span class="pprice">${first ? itemPrice(it) : "—"}</span></label>`;
   }).join("");
   return `<details class="kit" id="kit-${step.id}" ${openKits.has(step.id) ? "open" : ""} ontoggle="kitToggle('${step.id}', this.open)">
     <summary>🧰 Parts &amp; tools (est. ${rng(est.lo, est.hi)})</summary>
     <div class="kitbody">
       <div class="sub" style="margin-bottom:6px">Check the box when you have it. Estimate = new items for this step, excluding optional, nice-to-have, and tools you probably own. ${PRICE_NOTE}</div>
-      ${kit && kit.note ? `<div class="tip"><strong>Note:</strong> ${esc(kit.note)}</div>` : ""}
+      ${kit.note ? `<div class="tip"><strong>Note:</strong> ${esc(kit.note)}</div>` : ""}
       ${rows}
       <div class="row" style="margin-top:10px"><button class="btn ghost sm" onclick="setTab('parts')">Full shopping list</button></div>
     </div>
@@ -1675,10 +1325,10 @@ function renderHelpers(step) {
   const list = STEP_PRINTS[step.id];
   if (!list) return "";
   return `<div class="helpers"><div class="sub">🖨 Printable helpers for this step</div><div class="row" style="margin-top:6px">${list.map(([k, n]) =>
-    `<button class="btn ghost sm" data-k="${k}" data-p="${esc(n)}"${pa("print:" + k, PRINTS[k] ? PRINTS[k].name : n)} onclick="openPrint(this.dataset.k, this.dataset.p)">${esc(n)}${noteBadge("print:" + k)}</button>`).join("")}</div></div>`;
+    `<button class="btn ghost sm" data-k="${k}" data-p="${esc(n)}" onclick="openPrint(this.dataset.k, this.dataset.p)">${esc(n)}</button>`).join("")}</div></div>`;
 }
 function toggleHave(id, on) {
-  if (!ITEMS[id] && !extraParts().some(x => x.id === id)) return;
+  if (!ITEMS[id]) return;
   state.have = state.have || {};
   if (on) state.have[id] = true; else delete state.have[id];
   save();
@@ -1694,10 +1344,10 @@ function shopListText() {
   const f = partsFilter(), t = partsTotals();
   const out = ["C1500 Rebuild Quest — shopping list" + (f.need ? " (still need)" : ""), "1994 C1500 2WD 5.7L TBI + 4L60E. " + PRICE_NOTE, ""];
   for (const p of PHASES) {
-    const ids = allPartIds().filter(id => partPhase(id) === p.id && !isSkipped(id) && partsIncluded(id) && !(f.need && hasItem(id)));
+    const ids = Object.keys(ITEMS).filter(id => FIRST_USE[id].phase === p.id && partsIncluded(id) && !(f.need && hasItem(id)));
     if (!ids.length) continue;
     out.push(p.title);
-    ids.forEach(id => { const it = effItem(id); out.push(`[${hasItem(id) ? "x" : " "}] ${it.name} — ${itemPrice(it)} (${TAGS[it.tag]}${it.nice ? ", nice-to-have" : ""}${hasPaid(id) ? ", actual cost" : ""}${it.added ? ", added from a note" : ""})`); });
+    ids.forEach(id => { const it = ITEMS[id]; out.push(`[${hasItem(id) ? "x" : " "}] ${it.name} — ${itemPrice(it)} (${TAGS[it.tag]}${it.nice ? ", nice-to-have" : ""})`); });
     out.push("");
   }
   out.push(`Still need: ${rng(t.need.lo, t.need.hi)} (${t.need.n} priced items)`);
@@ -1721,18 +1371,17 @@ function renderParts() {
   const root = document.getElementById("tab-parts");
   const f = partsFilter(), t = partsTotals();
   const groups = PHASES.map(p => {
-    const ids = allPartIds().filter(id => partPhase(id) === p.id && partsIncluded(id) && !(f.need && (hasItem(id) || isSkipped(id))));
+    const ids = Object.keys(ITEMS).filter(id => FIRST_USE[id].phase === p.id && partsIncluded(id) && !(f.need && hasItem(id)));
     if (!ids.length) return "";
     let lo = 0, hi = 0;
-    ids.forEach(id => { const it = effItem(id); if (it.lo != null && !hasItem(id) && !isSkipped(id)) { lo += it.lo; hi += it.hi; } });
+    ids.forEach(id => { const it = ITEMS[id]; if (it.lo != null && !hasItem(id)) { lo += it.lo; hi += it.hi; } });
     const notes = p.steps.map(s => STEP_KIT[s.id] && STEP_KIT[s.id].note).filter(Boolean);
     return `<div class="card pgroup" data-phase="${p.id}">
-      <div class="row" style="justify-content:space-between;align-items:baseline"${pa("phase:" + p.id, p.title)}><h3 style="margin:0">${p.title}${noteBadge("phase:" + p.id)}</h3><span class="sub">still need ${rng(lo, hi)}</span></div>
+      <div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="margin:0">${p.title}</h3><span class="sub">still need ${rng(lo, hi)}</span></div>
       ${notes.map(n => `<div class="tip">${esc(n)}</div>`).join("")}
       ${ids.map(id => {
-        const base = ITEMS[id], it = effItem(id), have = hasItem(id), skip = isSkipped(id);
-        if (!base) return `<div class="prow-wrap nextra-part"><label class="prow${have ? " have" : ""}"><input type="checkbox" data-item="${id}" ${have ? "checked" : ""} onchange="toggleHave('${id}', this.checked)" aria-label="Have it: ${esc(it.name)}"><span class="pname"><span class="pn">${esc(it.name)}</span><small><span class="nlabel">Added from your note</span> ${tagHtml(it)}</small></span><span class="pprice">${itemPrice(it)}</span></label><button class="nundo" style="margin-left:38px" data-add="${id}" onclick="event.stopPropagation(); removeAdded(this.dataset.add)">↶ Undo added part</button></div>`;
-        return `<div class="prow-wrap"${pa("item:" + id, base.name)}><label class="prow${have || skip ? " have" : ""}"><input type="checkbox" data-item="${id}" ${have ? "checked" : ""} onchange="toggleHave('${id}', this.checked)" aria-label="Have it: ${esc(it.name)}"><span class="pname"><span class="pn">${esc(it.name)}</span>${noteBadge("item:" + id)}<small>${skip ? "<strong>Skipped</strong> · not in the totals · " : ""}${tagHtml(it)} used in: ${USED_IN[id].map(s => esc(stepTitle(s))).join(", ")}${it.note ? "<br>" + esc(it.note) : ""}</small></span><span class="pprice">${priceCell(id, it, base)}</span></label>${noteExtras("item:" + id, true)}</div>`;
+        const it = ITEMS[id], have = hasItem(id);
+        return `<label class="prow${have ? " have" : ""}"><input type="checkbox" data-item="${id}" ${have ? "checked" : ""} onchange="toggleHave('${id}', this.checked)" aria-label="Have it: ${esc(it.name)}"><span class="pname"><span class="pn">${esc(it.name)}</span><small>${tagHtml(it)} used in: ${USED_IN[id].map(s => esc(stepTitle(s))).join(", ")}${it.note ? "<br>" + esc(it.note) : ""}</small></span><span class="pprice">${itemPrice(it)}</span></label>`;
       }).join("")}
     </div>`;
   }).join("");
@@ -2185,7 +1834,6 @@ function renderPrint() {
       <select id="printKind" onchange="setPrintKind(this.value)">${Object.entries(PRINTS).map(([k, x]) => `<option value="${k}" ${k === kind ? "selected" : ""}>${x.name}</option>`).join("")}</select>
       ${Object.keys(T.presets || {}).length ? `<div style="height:8px"></div><label class="sub">Preset</label>
       <select id="printPreset" onchange="applyPreset(this.value)"><option value="">Custom / defaults</option>${Object.keys(T.presets).map(n => `<option ${printUI.preset === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select>` : ""}
-      <div class="ptpl"${pa("print:" + kind, T.name)}><div class="sub">Template · press and hold for a note</div><strong>${esc(T.name)}</strong>${noteBadge("print:" + kind)}${noteExtras("print:" + kind)}</div>
       <div class="tip" style="margin-top:10px"><strong>Material:</strong> ${esc(USE[T.use])}. ${esc(T.mat)}.<br><strong>Tip:</strong> ${esc(T.hint)}</div>
       <div class="fgrid" id="printFields">
         ${T.fields.map(f => `<div><label for="pf-${f.k}">${f.label}${f.sel || f.int ? "" : " (mm)"}</label>
@@ -2279,560 +1927,6 @@ function downloadGrokScad() {
   saveBlob("// " + g.desc.replace(/\n/g, " ").slice(0, 200) + "\n// Open in OpenSCAD (desktop) → Render (F6) → Export STL\n" + g.code + "\n", "grok-part.scad", "text/plain");
 }
 
-// ================= PRESS-AND-HOLD NOTES =================
-// Hold ~500 ms (or right-click) on anything with data-note-id to add a note. Instant rules run
-// offline on save; free-form notes can ask Grok for a whitelisted JSON plan. Every change records
-// the prior value of each field it touched, so Undo restores exactly.
-const NOTE_HINT = "Tip: press and hold anything to add a note";
-const ENGINES = ["5.7L TBI L05 / VIN K", "5.0L TBI L03 / VIN H", "4.3L V6 TBI", "Other / not sure"];
-const DRIVES = ["2WD", "4WD"];
-const TRANSMISSIONS = ["4L60E", "4L80E", "700R4 / 4L60", "Manual", "Not sure"];
-const NOTE_PHRASES = [
-  ["got it · have it · bought · paid · already own", "marks a part or tool have-it"],
-  ["paid $38 · $38", "sets the actual price on a part; totals update"],
-  ["skip · don't need · n/a", "takes a part out of the totals, or marks a checklist line skipped"],
-  ["done · finished", "completes a step (or checks off a line)"],
-  ["4wd · 2wd · 4.3 / v6 · 5.0 / 305 · 5.7 / 350 V8 · 4l80 · 4l60e · manual", "changes the truck setup in Bay"]
-];
-let noteBusy = {};   // id -> {state:"busy"} | {state:"error", message}
-let noteSheetRef = null;
-
-function normNoteState(st) {
-  const isObj = v => v && typeof v === "object" && !Array.isArray(v);
-  if (!isObj(st.itemNotes)) st.itemNotes = {};
-  if (!isObj(st.checks)) st.checks = {};
-  const a = isObj(st.adjust) ? st.adjust : {};
-  st.adjust = { price: isObj(a.price) ? a.price : {}, skip: isObj(a.skip) ? a.skip : {}, added: Array.isArray(a.added) ? a.added : [] };
-  if (!Array.isArray(st.changes)) st.changes = [];
-  if (typeof st.noteHintSeen !== "boolean") st.noteHintSeen = false;
-  return st;
-}
-function stripTags(s) { return String(s || "").replace(/<[^>]*>/g, ""); }
-function lineText(x) { return x === "{{FIRING}}" ? firingText() : stripTags(x); }
-function slug(t) { return String(t).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60); }
-function pa(id, title, step) {
-  return ` data-note-id="${esc(id)}" data-note-title="${esc(String(title).slice(0, 120))}"${step ? ` data-note-step="${esc(step)}"` : ""}`;
-}
-function findStep(stepId) {
-  if (!stepId) return null;
-  for (const phase of PHASES) { const step = phase.steps.find(s => s.id === stepId); if (step) return { phase, step }; }
-  return null;
-}
-function parseTarget(ref) {
-  const parts = String(ref.id || "").split(":"), kind = parts[0], key = parts.slice(1).join(":");
-  if (!key) return null;
-  if (kind === "step") { const h = findStep(key); return h ? { kind, key, stepId: key, phaseId: h.phase.id } : null; }
-  if (kind === "sub") {
-    const stepId = parts.slice(1, -1).join(":"), idx = Number(parts[parts.length - 1]), h = findStep(stepId);
-    if (!h || !Number.isInteger(idx) || idx < 0 || idx >= h.step.do.length) return null;
-    return { kind, key, stepId, phaseId: h.phase.id, subIndex: idx };
-  }
-  if (kind === "item") {
-    if (!ITEMS[key]) return null;
-    const ctx = ref.step && STEP_KIT[ref.step] && STEP_KIT[ref.step].items.includes(key) ? ref.step : (FIRST_USE[key] || {}).step;
-    const h = findStep(ctx);
-    return { kind, key, itemId: key, stepId: h ? h.step.id : undefined, phaseId: h ? h.phase.id : undefined };
-  }
-  if (kind === "phase") return PHASES.some(p => p.id === key) ? { kind, key, phaseId: key } : null;
-  if (kind === "spec" || kind === "bay" || kind === "print") return { kind, key };
-  return null;
-}
-function noteScope(t) {
-  const steps = [];
-  if (t.stepId) { const h = findStep(t.stepId); if (h) steps.push(h.step); }
-  else if (t.kind === "phase") steps.push(...((PHASES.find(p => p.id === t.phaseId) || {}).steps || []));
-  const items = new Set();
-  steps.forEach(s => ((STEP_KIT[s.id] || {}).items || []).forEach(id => items.add(id)));
-  if (t.itemId) items.add(t.itemId);
-  return { steps, items };
-}
-
-// ---- instant local rules ----
-const NEGATION = /\b(not|never|no|isn'?t|aren'?t|haven'?t|hasn'?t|didn'?t|don'?t|won'?t|almost|nearly|half|until|once|when|before|after|if)\s+(\w+\s+)?$/i;
-function hit(re, text) {
-  const g = new RegExp(re.source, re.flags.includes("g") ? re.flags : re.flags + "g");
-  for (const m of text.matchAll(g)) { if (!NEGATION.test(text.slice(Math.max(0, m.index - 24), m.index))) return m; }
-  return null;
-}
-const RE_HAVE = /\b(got (it|one|them|these)|have (it|one|them|these|this)|bought|paid|already (own|have|got)|own (it|one|them)|picked (it |one |them )?up)\b/i;
-const RE_PRICE = /(?:\bpaid\s*\$?\s*(\d{1,5}(?:\.\d{1,2})?)|\$\s*(\d{1,5}(?:\.\d{1,2})?)|\b(\d{1,5}(?:\.\d{1,2})?)\s*(?:bucks|dollars|usd)\b)/i;
-const RE_SKIP = /\b(skip(ping|ped)?|don'?t need|do not need|not needed|no need|n\/a)(?![\w/])/i;
-const RE_DONE = /\b(done|finished|complete(d)?|all set)\b/i;
-const RE_MANUAL = /\b(manual( trans(mission)?)?|stick shift|5[- ]speed|nv3500|nv4500)\b/i;
-const MANUAL_NOT = /\b(service|shop|repair|factory|owner'?s|haynes|chilton|helms|the|per|in|by)\s+$/i;
-function readConfig(text) {
-  const t = text.replace(new RegExp(RE_PRICE.source, "gi"), " "), out = [];
-  if (hit(/(?<![\d.$])4\.3(?![\d])|\bv-?6\b|\blb4\b/i, t)) out.push({ field: "engine", value: "4.3L V6 TBI" });
-  else if (hit(/(?<![\d.$])5\.0(?![\d])|(?<![\d.$])305\b|\bl03\b/i, t)) out.push({ field: "engine", value: "5.0L TBI L03 / VIN H" });
-  else if (hit(/(?<![\d.$])5\.7(?![\d])|(?<![\d.$])350\s*(ci|cid|v8|sbc|small[- ]block)\b|\bl05\b/i, t)) out.push({ field: "engine", value: "5.7L TBI L05 / VIN K" });
-  if (hit(/\b(4wd|4x4|k1500|four[- ]wheel[- ]drive)\b/i, t)) out.push({ field: "drive", value: "4WD" });
-  else if (hit(/\b(2wd|4x2|two[- ]wheel[- ]drive)\b/i, t)) out.push({ field: "drive", value: "2WD" });
-  if (hit(/\b4l80e?\b/i, t)) out.push({ field: "trans", value: "4L80E" });
-  else if (hit(/\b4l60e\b/i, t)) out.push({ field: "trans", value: "4L60E" });
-  else if (hit(/\b(700r4|700-r4|4l60)\b/i, t)) out.push({ field: "trans", value: "700R4 / 4L60" });
-  else {
-    for (const m of t.matchAll(new RegExp(RE_MANUAL.source, "gi"))) {
-      const before = t.slice(0, m.index);
-      if (!MANUAL_NOT.test(before) && !NEGATION.test(before.slice(-24))) { out.push({ field: "trans", value: "Manual" }); break; }
-    }
-  }
-  return out;
-}
-function readPrice(text) {
-  const m = RE_PRICE.exec(text);
-  if (!m) return null;
-  const v = Number(m[1] || m[2] || m[3]);
-  return Number.isFinite(v) && v >= 0 && v <= 20000 ? v : null;
-}
-function parseLocal(text, t) {
-  const note = String(text || "").trim(), acts = [];
-  if (!note) return acts;
-  if (t.kind === "item") {
-    if (hit(RE_SKIP, note)) acts.push({ type: "skip_item", item: t.itemId });
-    else if (hit(RE_HAVE, note)) acts.push({ type: "set_have", item: t.itemId, on: true });
-    const price = readPrice(note);
-    if (price !== null) acts.push({ type: "set_price", item: t.itemId, usd: price });
-  }
-  if (t.kind === "sub") {
-    if (hit(RE_SKIP, note)) acts.push({ type: "skip_item", item: `sub:${t.stepId}:${t.subIndex}` });
-    else if (hit(RE_DONE, note)) acts.push({ type: "check_sub", step: t.stepId, index: t.subIndex });
-  }
-  if (t.kind === "step" && hit(RE_DONE, note)) acts.push({ type: "complete_step", step: t.stepId });
-  readConfig(note).forEach(c => acts.push({ type: "set_config", field: c.field, value: c.value }));
-  return acts;
-}
-
-// ---- Grok plan: strict whitelist ----
-const UNSAFE_PRINT = /\bprint(ed|ing)?\b[^.]*\b(fuel|brake|exhaust|manifold|header|mount|load|lift|jack|stand|bracket|pulley|hose|line)\b|\b(fuel|brake|exhaust|manifold|header|mount|load|lift|jack|stand|bracket|pulley|hose|line)\b[^.]*\bprint(ed|ing)?\b/i;
-function cleanText(v, max) {
-  if (typeof v !== "string") return null;
-  const t = v.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim();
-  return t.length < 3 || t.length > (max || 240) ? null : t;
-}
-function usdVal(v) {
-  const n = typeof v === "string" ? Number(v.replace(/[$,]/g, "")) : v;
-  return typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= 20000 ? Math.round(n * 100) / 100 : null;
-}
-function pickOption(field, v) {
-  if (typeof v !== "string") return null;
-  const list = field === "engine" ? ENGINES : field === "drive" ? DRIVES : TRANSMISSIONS;
-  return list.find(o => o.toLowerCase() === v.trim().toLowerCase()) || null;
-}
-function validatePlan(raw, t) {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return { summary: "", actions: [], dropped: 1 };
-  const summary = cleanText(raw.summary, 200) || "";
-  const list = Array.isArray(raw.actions) ? raw.actions : [];
-  const scope = noteScope(t), stepIds = new Set(scope.steps.map(s => s.id)), actions = [];
-  let dropped = Array.isArray(raw.actions) ? 0 : 1;
-  for (const e of list.slice(0, 8)) {
-    const a = e && typeof e === "object" ? e : {};
-    let ok = null;
-    if (a.type === "set_have" && typeof a.item === "string" && scope.items.has(a.item)) ok = { type: "set_have", item: a.item, on: a.on !== false };
-    else if (a.type === "set_price") { const n = usdVal(a.usd ?? a.price ?? a.amount); if (typeof a.item === "string" && scope.items.has(a.item) && n !== null) ok = { type: "set_price", item: a.item, usd: n }; }
-    else if (a.type === "skip_item") {
-      const id = typeof a.item === "string" ? a.item : "";
-      if (scope.items.has(id)) ok = { type: "skip_item", item: id };
-      const m = /^sub:(.+):(\d+)$/.exec(id);
-      if (m && stepIds.has(m[1])) { const st = scope.steps.find(s => s.id === m[1]); if (st && Number(m[2]) < st.do.length) ok = { type: "skip_item", item: id }; }
-    } else if (a.type === "add_part") {
-      const name = cleanText(a.name, 80); let lo = usdVal(a.lowUSD), hi = usdVal(a.highUSD);
-      const cat = ["must", "if-worn", "optional"].includes(a.category) ? a.category : null;
-      if (lo !== null && hi !== null && lo > hi) [lo, hi] = [hi, lo];
-      if (name && lo !== null && hi !== null && cat && (t.stepId || t.phaseId) && !UNSAFE_PRINT.test(name)) ok = { type: "add_part", name, lowUSD: lo, highUSD: hi, category: cat };
-    } else if (a.type === "add_tip" || a.type === "add_warning" || a.type === "add_substep") {
-      const text = cleanText(a.text);
-      if (text && !(a.type === "add_substep" && !scope.steps.length) && !(a.type !== "add_warning" && UNSAFE_PRINT.test(text))) ok = { type: a.type, text };
-    } else if (a.type === "set_config") {
-      const field = ["engine", "drive", "trans"].includes(a.field) ? a.field : null, value = field ? pickOption(field, a.value) : null;
-      if (field && value) ok = { type: "set_config", field, value };
-    }
-    if (ok) actions.push(ok); else dropped++;
-  }
-  dropped += Math.max(0, list.length - 8);
-  return { summary, actions, dropped };
-}
-function parsePlanText(text) {
-  const tr = String(text || "").trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
-  try { return JSON.parse(tr); } catch {}
-  const a = tr.indexOf("{"), b = tr.lastIndexOf("}");
-  if (a < 0 || b <= a) return null;
-  try { return JSON.parse(tr.slice(a, b + 1)); } catch { return null; }
-}
-
-// ---- reversible ops on the live state ----
-let noteSeq = 0;
-function newId(p) { noteSeq++; return p + Date.now().toString(36) + noteSeq.toString(36) + Math.random().toString(36).slice(2, 6); }
-function readOp(path, key) {
-  if (path === "have") return state.have[key] ? true : undefined;
-  if (path === "price") return state.adjust.price[key];
-  if (path === "skip") return state.adjust.skip[key] ? true : undefined;
-  if (path === "done") return state.done[key] ? true : undefined;
-  if (path === "checks") return state.checks[key] ? true : undefined;
-  if (path === "truck") return state.truck[key];
-  if (path === "added") return state.adjust.added.find(e => e.id === key);
-}
-function setMap(map, key, v) { if (v === undefined) delete map[key]; else map[key] = v; }
-function writeOp(op, v) {
-  const b = v === true ? true : undefined;
-  if (op.path === "have") setMap(state.have, op.key, b);
-  else if (op.path === "done") setMap(state.done, op.key, b);
-  else if (op.path === "checks") setMap(state.checks, op.key, b);
-  else if (op.path === "skip") setMap(state.adjust.skip, op.key, b);
-  else if (op.path === "price") setMap(state.adjust.price, op.key, typeof v === "number" ? v : undefined);
-  else if (op.path === "truck") { if (typeof v === "string" && ["engine", "drive", "trans", "miles"].includes(op.key)) state.truck[op.key] = v; }
-  else if (op.path === "added") {
-    state.adjust.added = state.adjust.added.filter(e => e.id !== op.key);
-    if (v && typeof v === "object") state.adjust.added.push(v);
-  }
-}
-function cash(n) { return Number.isInteger(n) ? money(n) : "$" + n.toFixed(2); }
-function shortName(id) { return ((ITEMS[id] || {}).name || id).split(/[,(]/)[0].trim(); }
-function applyActions(t, actions) {
-  const ops = [], words = [], now = new Date().toISOString();
-  const put = (path, key, next) => {
-    const prev = readOp(path, key);
-    if (prev === next) return false;
-    const op = { path, key, prev, next };
-    writeOp(op, next); ops.push(op); return true;
-  };
-  const on = (id, w) => t.itemId === id ? w : w + " on " + shortName(id);
-  const LABEL = { engine: "engine", drive: "drive", trans: "transmission" };
-  for (const a of actions) {
-    if (a.type === "set_have") { if (put("have", a.item, a.on ? true : undefined)) words.push(on(a.item, a.on ? "marked have-it" : "marked still-need")); }
-    else if (a.type === "set_price") { if (put("price", a.item, a.usd)) words.push(on(a.item, "set price to " + cash(a.usd))); }
-    else if (a.type === "skip_item") { if (put("skip", a.item, true)) words.push(a.item.startsWith("sub:") ? "marked this line skipped" : on(a.item, "skipped it (out of the totals)")); }
-    else if (a.type === "complete_step") {
-      const h = findStep(a.step);
-      if (h && put("done", a.step, true)) words.push(`completed the step (+${stepXP(h.phase, h.step)} XP)`);
-    } else if (a.type === "check_sub") { if (put("checks", a.step + ":" + a.index, true)) words.push("checked off this line"); }
-    else if (a.type === "set_config") { if (put("truck", a.field, a.value)) words.push(`set ${LABEL[a.field]} to ${a.value}`); }
-    else if (["add_part", "add_tip", "add_substep", "add_warning"].includes(a.type)) {
-      const kind = a.type.slice(4), text = kind === "part" ? a.name : a.text;
-      if (state.adjust.added.some(e => e.target === t.id && e.kind === kind && e.text.toLowerCase() === text.toLowerCase())) continue;
-      const entry = { id: newId("add_"), target: t.id, kind, text, step: t.stepId, phase: t.phaseId, t: now };
-      if (kind === "part") Object.assign(entry, { lo: a.lowUSD, hi: a.highUSD, category: a.category });
-      put("added", entry.id, entry);
-      words.push(kind === "part" ? `added part “${text}” (${rng(a.lowUSD, a.highUSD)})` : kind === "substep" ? "added a sub-step" : "added a " + kind);
-    }
-  }
-  return { ops, words };
-}
-function sentence(words) {
-  if (!words.length) return "";
-  const t = words.length === 1 ? words[0] : words.slice(0, -1).join(", ") + " and " + words[words.length - 1];
-  return t.charAt(0).toUpperCase() + t.slice(1);
-}
-function recordChange(id, source, summary, ops) {
-  const c = { id: newId("chg_"), target: id, source, summary, ops, t: new Date().toISOString() };
-  state.changes = [c, ...state.changes].slice(0, 60);
-  return c;
-}
-function undoChange(cid) {
-  const c = state.changes.find(x => x.id === cid);
-  if (!c) return;
-  [...c.ops].reverse().forEach(op => writeOp(op, op.prev));
-  state.changes = state.changes.filter(x => x.id !== cid);
-  if (save()) toast("Undone");
-  render();
-}
-function removeAdded(eid) {
-  state.adjust.added = state.adjust.added.filter(e => e.id !== eid);
-  if (save()) toast("Removed");
-  render();
-}
-function toggleCheckKey(k) { if (state.checks[k]) delete state.checks[k]; else state.checks[k] = true; save(); render(); }
-
-// ---- catalog view with note adjustments ----
-const CAT_TAG = { must: "must", "if-worn": "worn", optional: "optional" };
-function extraParts() {
-  return state.adjust.added.filter(e => e.kind === "part" && e.phase).map(e => ({
-    id: e.id, phase: e.phase, step: e.step,
-    item: { name: e.text, cat: "part", tag: CAT_TAG[e.category] || "must", lo: e.lo || 0, hi: e.hi != null ? e.hi : (e.lo || 0), src: "Added from your note", added: true }
-  }));
-}
-function effItem(id) {
-  const base = ITEMS[id];
-  if (!base) { const x = extraParts().find(e => e.id === id); return x ? x.item : null; }
-  const paid = state.adjust.price[id];
-  return typeof paid === "number" ? { ...base, lo: paid, hi: paid } : base;
-}
-function isSkipped(id) { return !!state.adjust.skip[id]; }
-function hasPaid(id) { return typeof state.adjust.price[id] === "number"; }
-function allPartIds() { return [...Object.keys(ITEMS), ...extraParts().map(e => e.id)]; }
-function partPhase(id) { if (FIRST_USE[id]) return FIRST_USE[id].phase; const x = extraParts().find(e => e.id === id); return x ? x.phase : null; }
-function priceCell(id, it, base) {
-  if (!hasPaid(id)) return itemPrice(it);
-  return `<span style="color:var(--accent)">Paid ${itemPrice(it)}</span><br><small style="color:var(--muted)">was ${itemPrice(base)}</small>`;
-}
-
-// ---- rendering bits ----
-function noteBadge(id) { return state.itemNotes[id] ? `<span class="nbadge" role="img" aria-label="Has a note" title="Has a note">📝</span>` : ""; }
-function noteExtras(id, hideParts) {
-  const note = state.itemNotes[id], busy = noteBusy[id];
-  const chips = state.changes.filter(c => c.target === id).slice(0, 2);
-  const added = state.adjust.added.filter(e => e.target === id && !(hideParts && e.kind === "part"));
-  if (!note && !busy && !chips.length && !added.length) return "";
-  let h = `<div class="nextras" data-extras="${esc(id)}">`;
-  if (note) h += `<div class="ntext">📝 ${esc(note.text)}</div>`;
-  if (busy && busy.state === "busy") h += `<div class="nbusy" role="status"><span class="spin"></span>Grok is adjusting from your note…</div>`;
-  else if (busy && busy.state === "error") h += `<div class="nerr" role="status">${esc(busy.message)}<br><span style="color:var(--muted)">Your note and any instant changes are saved.</span><div class="row">${note ? `<button class="nundo" data-retry="${esc(id)}" onclick="event.stopPropagation(); retryNoteGrok(this.dataset.retry)">Try again</button>` : ""}<button class="nundo" data-dismiss="${esc(id)}" onclick="event.stopPropagation(); delete noteBusy[this.dataset.dismiss]; render()">Dismiss</button></div></div>`;
-  chips.forEach(c => {
-    h += `<div class="nchip" role="status"><span>${c.source === "grok" ? "✨ <b>Grok:</b> " : "⚡ "}${esc(c.summary)}</span>${c.ops.length ? `<button class="nundo" data-chg="${c.id}" onclick="event.stopPropagation(); undoChange(this.dataset.chg)">↶ Undo</button>` : ""}</div>`;
-  });
-  added.forEach(e => {
-    const label = { tip: "💡 Tip", warning: "⚠ Warning", substep: "➕ Sub-step", part: "📦 Part" }[e.kind];
-    let body = `<p>${esc(e.text)}</p>`;
-    if (e.kind === "substep") { const on = !!state.checks["add:" + e.id]; body = `<p><label class="pill" style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" ${on ? "checked" : ""} data-k="add:${e.id}" onclick="event.stopPropagation()" onchange="toggleCheckKey(this.dataset.k)"> <span class="${on ? "lskip" : ""}">${esc(e.text)}</span></label></p>`; }
-    if (e.kind === "part") body = `<p>${esc(e.text)} — ${rng(e.lo || 0, e.hi || 0)} <span class="sub">(${TAGS[CAT_TAG[e.category] || "must"]}, in the totals)</span></p>`;
-    h += `<div class="nadd ${e.kind}"><div class="nhead"><span class="nlabel">${label} · Added from your note</span><button class="nundo" data-add="${e.id}" onclick="event.stopPropagation(); removeAdded(this.dataset.add)">↶ Undo</button></div>${body}</div>`;
-  });
-  return h + `</div>`;
-}
-function noteHintHtml() {
-  if (state.noteHintSeen) return "";
-  return `<div class="banner nhint" id="noteHint"><span>📝 ${NOTE_HINT}</span><button class="btn ghost sm" onclick="state.noteHintSeen=true; save(); render()">Got it</button></div>`;
-}
-function allNotesHtml() {
-  const list = Object.entries(state.itemNotes).sort((a, b) => String(b[1].t).localeCompare(String(a[1].t)));
-  const KIND = { step: "Step", sub: "Checklist line", item: "Part / tool", spec: "Spec", bay: "Bay", print: "Print", phase: "Phase" };
-  const rows = list.map(([id, n]) => `<div class="noterow" data-noterow="${esc(id)}"><div class="top"><div><div class="sub">${KIND[id.split(":")[0]] || "Note"}</div><h4>${esc(n.title)}</h4></div><button class="btn ghost sm" data-goto="${esc(id)}" onclick="gotoNote(this.dataset.goto)">Go to</button></div><div class="ntext" style="margin-top:4px">${esc(n.text)}</div><div class="sub" style="margin-top:4px">${esc(fmtTime(n.t))}</div></div>`).join("");
-  return `<div class="card" id="allNotes"><h3 style="margin-top:0">All notes</h3>${rows || `<p class="sub">${NOTE_HINT}. Steps, checklist lines, parts, specs, Bay fields, print templates, and phases all take notes.</p>`}</div>`;
-}
-
-// ---- the sheet ----
-function openNoteSheet(ref) {
-  if (!parseTarget(ref)) return;
-  noteSheetRef = ref;
-  const existing = state.itemNotes[ref.id], busy = noteBusy[ref.id], hasKey = !!state.grokKey;
-  const el = document.getElementById("noteSheet");
-  el.innerHTML = `<div class="nsheet" role="dialog" aria-modal="true" aria-labelledby="nsTitle" onclick="event.stopPropagation()">
-    <div class="grab"></div>
-    <div class="row" style="justify-content:space-between;align-items:flex-start;flex-wrap:nowrap">
-      <div><div class="sub" style="color:var(--accent)">${existing ? "Edit note" : "Add a note"}</div><h3 id="nsTitle">${esc(ref.title)}</h3></div>
-      <button class="btn ghost sm" aria-label="Close" onclick="closeNoteSheet()">✕</button>
-    </div>
-    <label class="sub hidden" for="nsText">Note</label>
-    <textarea id="nsText" maxlength="2000" placeholder="got it, paid $38 · skip · done · it's a 4wd · or anything else">${esc(existing ? existing.text : "")}</textarea>
-    <details><summary>Words that change things instantly</summary><ul class="clean">${NOTE_PHRASES.map(([a, b]) => `<li><strong>${a}</strong> — ${b}</li>`).join("")}<li>Anything else can go to Grok, which may add a tip, sub-step, warning, or part.</li></ul></details>
-    ${hasKey ? "" : `<div class="sub" id="nsNoKey" style="margin-top:8px">Grok adjustments need an xAI API key (add it in the Grok tab). The instant words above work without one.</div>`}
-    ${busy && busy.state === "busy" ? `<div class="nbusy" style="margin-top:8px"><span class="spin"></span>Grok is adjusting from this note…</div>` : busy && busy.state === "error" ? `<div class="nerr" style="margin-top:8px">${esc(busy.message)}</div>` : ""}
-    <div class="grid2">
-      <button class="btn" id="nsSave" onclick="saveNoteSheet(false)">Save note</button>
-      <button class="btn ghost" id="nsGrok" onclick="saveNoteSheet(true)" ${hasKey ? "" : "disabled"}>Ask Grok to adjust</button>
-    </div>
-    <div class="grid2">
-      ${existing ? `<button class="btn danger sm" id="nsDelete" onclick="deleteNoteSheet(this)">Delete note</button>` : ""}
-      <button class="btn ghost sm" id="nsCancel" onclick="closeNoteSheet()" ${existing ? "" : `style="grid-column:1 / -1"`}>Cancel</button>
-    </div>
-  </div>`;
-  el.classList.remove("hidden");
-  el.onclick = closeNoteSheet;
-  setTimeout(() => { const ta = document.getElementById("nsText"); if (ta) ta.focus({ preventScroll: true }); }, 60);
-}
-function closeNoteSheet() {
-  noteSheetRef = null;
-  const el = document.getElementById("noteSheet");
-  el.classList.add("hidden");
-  el.innerHTML = "";
-}
-function deleteNoteSheet(btn) {
-  if (!btn.dataset.sure) { btn.dataset.sure = "1"; btn.textContent = "Tap again to delete"; return; }
-  const ref = noteSheetRef;
-  delete state.itemNotes[ref.id];
-  closeNoteSheet();
-  if (save()) toast("Note deleted");
-  render();
-}
-function saveNoteSheet(askGrok) {
-  const ref = noteSheetRef;
-  if (!ref) return;
-  const text = (document.getElementById("nsText").value || "").trim().slice(0, 2000);
-  closeNoteSheet();
-  if (!text) {
-    if (state.itemNotes[ref.id]) { delete state.itemNotes[ref.id]; if (save()) toast("Note deleted"); render(); }
-    return;
-  }
-  const res = saveItemNote(ref, text);
-  if (askGrok || (!res.matched && state.grokKey)) runNoteGrok(ref, text);
-}
-function saveItemNote(ref, text) {
-  const t = parseTarget(ref);
-  if (!t) return { matched: false };
-  state.itemNotes[ref.id] = { text, t: new Date().toISOString(), title: String(ref.title).slice(0, 120), ...(ref.step ? { step: ref.step } : {}) };
-  state.noteHintSeen = true;
-  const acts = parseLocal(text, t);
-  const r = applyActions({ ...t, id: ref.id }, acts);
-  const summary = r.ops.length ? sentence(r.words) : "";
-  if (r.ops.length) recordChange(ref.id, "local", summary, r.ops);
-  state.log.unshift({ t: new Date().toISOString(), text: "Note on " + String(ref.title).slice(0, 60) + (r.ops.some(o => o.path === "done" && o.next) ? " — step cleared" : "") });
-  if (save()) toast(summary || "Note saved");
-  render();
-  return { matched: acts.length > 0, summary };
-}
-
-// ---- Grok adjustment ----
-const ADJUST_SYSTEM = [
-  "You turn one note a mechanic left on a checklist item into small, safe app adjustments for a 1994 Chevy C1500 engine and transmission rebuild app.",
-  'Reply with ONLY one JSON object, no prose, shaped {"summary": string, "actions": [ ... ]}.',
-  "summary: under 140 characters, plain words, says what you changed (or that nothing needed changing).",
-  "Allowed actions, nothing else:",
-  '{"type":"set_have","item":ITEM_ID,"on":true|false}',
-  '{"type":"set_price","item":ITEM_ID,"usd":number}  (actual price paid, US dollars)',
-  '{"type":"skip_item","item":ITEM_ID or "sub:STEP_ID:INDEX"}',
-  '{"type":"add_part","name":string,"lowUSD":number,"highUSD":number,"category":"must"|"if-worn"|"optional"}',
-  '{"type":"add_tip","text":string}', '{"type":"add_substep","text":string}', '{"type":"add_warning","text":string}',
-  '{"type":"set_config","field":"engine"|"drive"|"trans","value":one of the options listed in the context}',
-  "Only use ITEM_IDs and sub-step ids listed in the context. Never remove or rewrite built-in steps. At most 5 actions. Texts under 200 characters.",
-  "Use an empty actions list when the note is just a record and nothing should change.",
-  "Suggest cheap durable parts. Torque numbers are typical only; tell the user to verify bolt type and the cam card.",
-  "Never recommend printing anything that carries engine or transmission weight, holds fuel or brake fluid, or is exposed to exhaust heat."
-].join("\n");
-function noteContext(ref, text) {
-  const t = parseTarget(ref); if (!t) return "";
-  const scope = noteScope(t);
-  const L = [`Truck: 1994 Chevy C1500 · engine ${state.truck.engine} · drive ${state.truck.drive} · trans ${state.truck.trans}`,
-    "Engine options: " + ENGINES.join(" | "), "Drive options: " + DRIVES.join(" | "), "Trans options: " + TRANSMISSIONS.join(" | "),
-    `Pressed item (${t.kind}): ${ref.title}`];
-  scope.steps.forEach(s => {
-    L.push(`Step ${s.id}: ${s.title}${state.done[s.id] ? " (done)" : ""}`, "Why: " + stripTags(s.why));
-    s.do.forEach((x, i) => L.push(`  sub:${s.id}:${i} ${state.adjust.skip[`sub:${s.id}:${i}`] ? "[skipped] " : state.checks[`${s.id}:${i}`] ? "[checked] " : ""}${lineText(x)}`));
-    L.push("Warning: " + stripTags(s.warn), "Tip: " + stripTags(s.tip));
-  });
-  if (scope.items.size) {
-    L.push("Parts and tools in scope (ITEM_ID | name | tag | price | status):");
-    scope.items.forEach(id => {
-      const it = ITEMS[id]; if (!it) return;
-      const st = [hasItem(id) ? "have it" : "", isSkipped(id) ? "skipped" : "", hasPaid(id) ? "paid " + cash(state.adjust.price[id]) : ""].filter(Boolean).join(", ");
-      L.push(`  ${id} | ${it.name} | ${it.tag} | ${it.lo == null ? "not checked" : rng(it.lo, it.hi)} | ${st || "-"}`);
-    });
-  }
-  const rel = Object.entries(state.itemNotes).filter(([id]) => id !== ref.id).filter(([id, n]) => {
-    const o = parseTarget({ id, step: n.step }); if (!o) return false;
-    return (t.phaseId && o.phaseId === t.phaseId) || (o.itemId && scope.items.has(o.itemId));
-  }).slice(0, 8).map(([, n]) => `  ${n.title}: ${String(n.text).slice(0, 200)}`);
-  if (rel.length) L.push("Related notes:", ...rel);
-  const add = state.adjust.added.filter(e => e.target === ref.id).map(e => `  ${e.kind}: ${e.text}`);
-  if (add.length) L.push("Already added from earlier notes:", ...add);
-  L.push("", "The note: " + String(text).trim().slice(0, 1200));
-  return L.join("\n").slice(0, 6000);
-}
-async function callXaiJson(messages) {
-  const res = await fetch("https://api.x.ai/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + state.grokKey },
-    body: JSON.stringify({ model: state.grokModel || "grok-4-fast", messages, temperature: 0.2, max_tokens: 600, response_format: { type: "json_object" } })
-  });
-  let data;
-  try { data = await res.json(); } catch { throw new Error("HTTP " + res.status + " with a non-JSON response"); }
-  if (data.choices && data.choices[0] && data.choices[0].message) return data.choices[0].message.content;
-  throw new Error((data.error && (data.error.message || data.error)) || "HTTP " + res.status);
-}
-async function runNoteGrok(ref, text) {
-  const t = parseTarget(ref);
-  if (!t || !text) return;
-  if (!state.grokKey) { noteBusy[ref.id] = { state: "error", message: "Grok adjustments need an xAI API key (Grok tab)." }; render(); return; }
-  if (noteBusy[ref.id] && noteBusy[ref.id].state === "busy") return;
-  noteBusy[ref.id] = { state: "busy" };
-  render();
-  const fail = (message) => { noteBusy[ref.id] = { state: "error", message }; render(); };
-  let reply;
-  try {
-    reply = await callXaiJson([{ role: "system", content: ADJUST_SYSTEM }, { role: "user", content: noteContext(ref, text) }]);
-  } catch (err) {
-    return fail("Grok could not adjust this: " + err.message + (err instanceof TypeError ? " (no signal or the request was blocked)." : ""));
-  }
-  const raw = parsePlanText(reply);
-  if (raw === null) return fail("Grok's reply was not valid JSON, so nothing from it was applied.");
-  const plan = validatePlan(raw, t);
-  if (!plan.actions.length && plan.dropped && !plan.summary) return fail("Grok's reply did not match the changes this app allows, so nothing from it was applied.");
-  const r = applyActions({ ...t, id: ref.id }, plan.actions);
-  const summary = (r.ops.length ? sentence(r.words) : plan.summary || "Grok read the note. Nothing needed changing.") +
-    (plan.dropped ? ` (${plan.dropped} invalid change${plan.dropped === 1 ? "" : "s"} ignored)` : "");
-  recordChange(ref.id, "grok", summary, r.ops);
-  delete noteBusy[ref.id];
-  if (save()) toast(r.ops.length ? "Grok adjusted it" : "Grok: nothing to change");
-  render();
-}
-function retryNoteGrok(id) {
-  const n = state.itemNotes[id];
-  if (!n) return;
-  delete noteBusy[id];
-  runNoteGrok({ id, title: n.title, step: n.step }, n.text);
-}
-
-// ---- jump from "All notes" ----
-function gotoNote(id) {
-  const kind = id.split(":")[0], key = id.slice(kind.length + 1);
-  if (kind === "step" || kind === "sub") {
-    const h = findStep(kind === "sub" ? key.split(":").slice(0, -1).join(":") : key);
-    if (h) openPhaseId = h.phase.id;
-    setTab("home");
-  } else if (kind === "phase") { openPhaseId = key; setTab("home"); }
-  else if (kind === "item") setTab("parts");
-  else if (kind === "spec") setTab("specs");
-  else if (kind === "bay") setTab("bay");
-  else if (kind === "print") { if (PRINTS[key]) openPrint(key, ""); else setTab("print"); }
-  requestAnimationFrame(() => {
-    const el = document.querySelector(`[data-note-id="${CSS.escape(id)}"]`);
-    if (!el) return toast(kind === "item" ? "That item is hidden by a Parts filter" : "Could not find that item");
-    for (let p = el.parentElement; p; p = p.parentElement) if (p.tagName === "DETAILS") { p.open = true; if (p.id && p.id.startsWith("kit-")) openKits.add(p.id.slice(4)); }
-    el.scrollIntoView({ block: "center", behavior: "smooth" });
-    el.classList.remove("nflash"); void el.offsetWidth; el.classList.add("nflash");
-    setTimeout(() => el.classList.remove("nflash"), 1600);
-  });
-}
-
-// ---- the long-press listener (one, delegated) ----
-(function installLongPress() {
-  const HOLD = 500, SLOP = 10;
-  const EDITABLE = "textarea, select, input:not([type=checkbox]):not([type=radio]), [contenteditable=true], .ntext, #printCanvas, .nsheet";
-  let timer = 0, pressT = 0, start = null, pressed = null, fired = false, swallowUntil = 0, openedAt = 0, openedEl = null;
-  const refOf = el => ({ id: el.dataset.noteId, title: el.dataset.noteTitle || el.dataset.noteId, ...(el.dataset.noteStep ? { step: el.dataset.noteStep } : {}) });
-  const clear = () => { clearTimeout(timer); clearTimeout(pressT); if (pressed) pressed.classList.remove("npressing"); pressed = null; start = null; };
-  const open = el => { openedAt = Date.now(); openedEl = el; openNoteSheet(refOf(el)); };
-  document.addEventListener("pointerdown", e => {
-    if (e.pointerType === "mouse" && e.button !== 0) return;
-    const tg = e.target;
-    if (!tg || !tg.closest || tg.closest(EDITABLE) || noteSheetRef) return;
-    const el = tg.closest("[data-note-id]");
-    if (!el) return;
-    clear(); fired = false;
-    start = { x: e.clientX, y: e.clientY, id: e.pointerId }; pressed = el;
-    pressT = setTimeout(() => el.classList.add("npressing"), 160);
-    timer = setTimeout(() => {
-      fired = true; el.classList.remove("npressing");
-      try { if (navigator.vibrate) navigator.vibrate(15); } catch {}
-      open(el); start = null;
-    }, HOLD);
-  }, true);
-  document.addEventListener("pointermove", e => {
-    if (!start || e.pointerId !== start.id) return;
-    if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > SLOP) clear();
-  }, true);
-  let swallowAt = null;
-  document.addEventListener("pointerup", e => { if (fired) { swallowUntil = Date.now() + 450; swallowAt = { x: e.clientX, y: e.clientY }; } fired = false; clear(); }, true);
-  document.addEventListener("pointercancel", () => { fired = false; clear(); }, true);
-  window.addEventListener("scroll", () => { fired = false; clear(); }, { capture: true, passive: true });
-  // swallow only the click that ends the hold: same spot, not a control inside the open sheet
-  document.addEventListener("click", e => {
-    if (Date.now() >= swallowUntil) return;
-    const near = !swallowAt || Math.hypot(e.clientX - swallowAt.x, e.clientY - swallowAt.y) <= 24;
-    if (!near || (e.target.closest && e.target.closest(".nsheet"))) return;
-    swallowUntil = 0; e.preventDefault(); e.stopPropagation();
-  }, true);
-  document.addEventListener("contextmenu", e => {
-    const tg = e.target;
-    if (!tg || !tg.closest || tg.closest(EDITABLE)) return;
-    const el = tg.closest("[data-note-id]");
-    if (!el) return;
-    e.preventDefault();
-    // a touch long-press also fires contextmenu on the same element: don't reopen what the hold just opened
-    if ((Date.now() - openedAt < 900 && el === openedEl) || noteSheetRef) return;
-    clear(); open(el);
-  }, true);
-  document.addEventListener("keydown", e => { if (e.key === "Escape" && noteSheetRef) closeNoteSheet(); });
-})();
-
 function render() {
   renderHeader();
   const active = document.querySelector(".nav button.active").dataset.tab;
@@ -2845,32 +1939,9 @@ function render() {
   if (active === "log") renderLog();
 }
 
-// ---- Install/offline: service worker + "Updated, tap to reload" ----
-(function registerSW() {
-  if (!("serviceWorker" in navigator) || !/^https?:$/.test(location.protocol)) return;
-  let wantReload = false;
-  navigator.serviceWorker.addEventListener("controllerchange", () => { if (wantReload) location.reload(); });
-  const offer = reg => {
-    const w = reg.waiting;
-    if (!w || !navigator.serviceWorker.controller) return; // first install: nothing to reload
-    const el = document.getElementById("swToast");
-    el.classList.remove("hidden");
-    el.onclick = () => { wantReload = true; el.textContent = "Reloading…"; w.postMessage("skipWaiting"); };
-  };
-  const go = () => navigator.serviceWorker.register("sw.js").then(reg => {
-    offer(reg);
-    reg.addEventListener("updatefound", () => {
-      const nw = reg.installing;
-      if (nw) nw.addEventListener("statechange", () => { if (nw.state === "installed") offer(reg); });
-    });
-    setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
-  }).catch(err => console.warn("service worker not registered", err));
-  if (document.readyState === "complete") go(); else window.addEventListener("load", go);
-})();
-
 renderHeader();
 render(); // renders with photo placeholders; photos fill in once IndexedDB has loaded
-initPhotos().finally(() => { render(); initBackups(); });
+initPhotos().finally(render);
 </script>
 </body>
 </html>
